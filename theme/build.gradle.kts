@@ -39,7 +39,7 @@ android {
 }
 
 dependencies {
-//    implementation(project(mapOf("path" to ":coreLib")))
+    implementation(project(mapOf("path" to ":theme:coreLib")))
 
     implementation(libs.bundles.android)
     implementation(libs.bundles.compose)
