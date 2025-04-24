@@ -84,6 +84,7 @@ android {
 }
 
 dependencies {
+    implementation(project(mapOf("path" to ":theme")))
 //    implementation(project(mapOf("path" to ":openWith")))
 //    implementation(project(mapOf("path" to ":coreLib")))
 //    implementation(project(mapOf("path" to ":m3theme")))
