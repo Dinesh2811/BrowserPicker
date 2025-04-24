@@ -70,4 +70,9 @@ dependencies {
     // DataStore
     implementation(libs.bundles.datastore.preferences)
     implementation(libs.splashscreen)
+
+    debugImplementation(libs.bundles.debugImplementation)
+    releaseImplementation(libs.bundles.releaseImplementation)
+    androidTestImplementation(libs.bundles.androidTestImplementation)
+    testImplementation(libs.bundles.testImplementation)
 }

@@ -40,4 +40,9 @@ dependencies {
     implementation(libs.bundles.compose)
     implementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(platform(libs.androidx.compose.bom))
+
+    debugImplementation(libs.bundles.debugImplementation)
+    releaseImplementation(libs.bundles.releaseImplementation)
+    androidTestImplementation(libs.bundles.androidTestImplementation)
+    testImplementation(libs.bundles.testImplementation)
 }

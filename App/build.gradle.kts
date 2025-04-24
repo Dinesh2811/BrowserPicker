@@ -88,7 +88,6 @@ dependencies {
 //    implementation(project(mapOf("path" to ":coreLib")))
 //    implementation(project(mapOf("path" to ":m3theme")))
 
-//    implementation("commons-net:commons-net:3.11.1")
     implementation(libs.timeago)
     implementation(libs.kotlinx.datetime)
 
@@ -103,12 +102,6 @@ dependencies {
     //  Room components
     implementation(libs.bundles.room)
     ksp(libs.androidx.room.compiler)
-
-//    // Retrofit
-//    implementation(libs.bundles.retrofit)
-//
-//    // Gson
-//    implementation(libs.bundles.gson)
 
     // Serialization
     implementation(libs.bundles.serialization)
@@ -126,30 +119,13 @@ dependencies {
 
     // Navigation Component
     implementation(libs.bundles.navigation)
-//    // Navigation Component
-//    implementation("androidx.navigation:navigation-fragment-ktx:2.8.2")
-//    implementation("androidx.navigation:navigation-ui-ktx:2.8.2")
-//    implementation("androidx.navigation:navigation-compose:2.8.2")  // Navigation Compose
-//
-//    // Paging
-//    implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
-//    implementation("androidx.paging:paging-runtime-ktx:3.3.2")
-//    implementation("androidx.paging:paging-runtime:3.3.2")
-//    implementation("androidx.paging:paging-compose:3.3.2")
 
     // Paging
     implementation(libs.bundles.paging)
 
-//    //  Dagger
-//    implementation(libs.bundles.dagger)
-//    ksp(libs.dagger.compiler)
-//
     //  Hilt
     implementation(libs.bundles.hilt)
     ksp(libs.bundles.hilt.compiler)
-
-    // WorkManager
-    implementation(libs.work.manager)
 
     // DataStore
     implementation(libs.bundles.datastore.preferences)
@@ -162,6 +138,8 @@ dependencies {
 //    releaseImplementation(libs.bundles.release.pluto)
 
 
-//    testImplementation("junit:junit:4.13.2")
-//    testImplementation("org.robolectric:robolectric:4.14.1")
+    debugImplementation(libs.bundles.debugImplementation)
+    releaseImplementation(libs.bundles.releaseImplementation)
+    androidTestImplementation(libs.bundles.androidTestImplementation)
+    testImplementation(libs.bundles.testImplementation)
 }

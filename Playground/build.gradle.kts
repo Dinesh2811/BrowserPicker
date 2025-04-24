@@ -53,12 +53,6 @@ dependencies {
     implementation(libs.bundles.room)
     ksp(libs.androidx.room.compiler)
 
-//    // Retrofit
-//    implementation(libs.bundles.retrofit)
-//
-//    // Gson
-//    implementation(libs.bundles.gson)
-
     implementation(libs.bundles.paging)
     // Serialization
     implementation(libs.bundles.serialization)
@@ -66,18 +60,10 @@ dependencies {
     // HTTP
     implementation(libs.bundles.okhttp)
 
-//    // Chucker
-//    debugImplementation(libs.chucker.debug)
-//    releaseImplementation(libs.chucker.release)
-
     androidTestImplementation(libs.bundles.android.test)
     debugImplementation(libs.bundles.debug)
     testImplementation(libs.bundles.test)
 
-//    //  Dagger
-//    implementation(libs.bundles.dagger)
-//    ksp(libs.dagger.compiler)
-//
     //  Hilt
     implementation(libs.bundles.hilt)
     ksp(libs.bundles.hilt.compiler)
@@ -88,4 +74,9 @@ dependencies {
     // DataStore
     implementation(libs.bundles.datastore.preferences)
     implementation(libs.splashscreen)
+
+    debugImplementation(libs.bundles.debugImplementation)
+    releaseImplementation(libs.bundles.releaseImplementation)
+    androidTestImplementation(libs.bundles.androidTestImplementation)
+    testImplementation(libs.bundles.testImplementation)
 }
