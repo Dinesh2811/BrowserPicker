@@ -9,11 +9,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
-import com.dinesh.m3theme.di.GetThemeStateUseCase
-import com.dinesh.m3theme.di.SaveContrastLevelUseCase
-import com.dinesh.m3theme.di.SavePaletteStyleUseCase
-import com.dinesh.m3theme.di.SaveSeedColorUseCase
-import com.dinesh.m3theme.di.SaveThemeModeUseCase
+import com.dinesh.m3theme.domain.*
 import com.dinesh.m3theme.model.PaletteStyle
 import com.dinesh.m3theme.model.ThemeMode
 import com.dinesh.m3theme.model.ThemeState
