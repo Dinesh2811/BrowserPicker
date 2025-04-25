@@ -1,8 +1,8 @@
-package browserpicker.playground.browserpicker.data.local.datasource
+package browserpicker.core.results
 
 import browserpicker.core.utils.logDebug
 import browserpicker.core.utils.logError
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 
@@ -61,26 +61,4 @@ fun <T, E : AppError> Flow<Result<T, E>>.safeCatch(
         logError("Flow<Result<T, E>>.safeCatch caught an exception", throwable)
         emit(Result.Error(errorMapper(throwable)))
     }
-}
-
-sealed interface AppError {
-    val message: String
-    val cause: Throwable?
-
-    data class UnknownError(override val message: String = "An unexpected error occurred.", override val cause: Throwable?): AppError
-}
-
-sealed class DataSourceError(override val message: String, override val cause: Throwable?): AppError {
-    // TODO: Add more specific error types
-    data class UnknownError(override val cause: Throwable?): DataSourceError("An unexpected error occurred.", cause)
-}
-
-sealed class RepositoryError(override val message: String, override val cause: Throwable?): AppError {
-    // TODO: Add more specific error types
-    data class UnknownError(override val cause: Throwable?): RepositoryError("An unexpected error occurred.", cause)
-}
-
-sealed class DomainError(override val message: String, override val cause: Throwable?): AppError {
-    // TODO: Add more specific error types
-    data class UnknownError(override val cause: Throwable?): DomainError("An unexpected error occurred.", cause)
 }

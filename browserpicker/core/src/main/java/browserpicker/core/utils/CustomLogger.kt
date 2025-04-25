@@ -1,4 +1,4 @@
-package browserpicker.core
+package browserpicker.core.utils
 
 import android.util.Log
 import javax.inject.Inject

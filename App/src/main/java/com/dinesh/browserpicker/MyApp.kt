@@ -1,10 +1,10 @@
 package com.dinesh.browserpicker
 
 import android.app.Application
-import browserpicker.core.AppConfig
-import browserpicker.core.CustomLogger
-import browserpicker.core.LogLevel
-import browserpicker.core.log
+import browserpicker.core.utils.AppConfig
+import browserpicker.core.utils.CustomLogger
+import browserpicker.core.utils.LogLevel
+import browserpicker.core.utils.log
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 

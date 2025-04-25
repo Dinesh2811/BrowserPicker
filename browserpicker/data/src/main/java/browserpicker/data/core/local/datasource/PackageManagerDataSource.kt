@@ -1,10 +1,8 @@
 package browserpicker.data.core.local.datasource
 
 import android.content.ActivityNotFoundException
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.net.Uri
@@ -16,9 +14,7 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.core.net.toUri
-import browserpicker.core.LogLevel
-import browserpicker.core.log
-import browserpicker.core.logError
+import browserpicker.core.utils.logError
 
 interface PackageManagerDataSource {
     suspend fun getInstalledBrowserApps(): List<ResolveInfo>

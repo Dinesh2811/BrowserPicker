@@ -36,6 +36,7 @@ android {
 }
 
 dependencies {
+    implementation(project(mapOf("path" to ":browserpicker:core")))
     implementation(libs.bundles.android)
     implementation(libs.bundles.compose)
     implementation(platform(libs.androidx.compose.bom))

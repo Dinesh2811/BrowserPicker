@@ -6,11 +6,9 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.util.LruCache
 import androidx.core.graphics.createBitmap
-import browserpicker.core.LogLevel
-import browserpicker.core.log
-import kotlinx.coroutines.Dispatchers
+import browserpicker.core.utils.LogLevel
+import browserpicker.core.utils.log
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.apply
 import kotlin.let

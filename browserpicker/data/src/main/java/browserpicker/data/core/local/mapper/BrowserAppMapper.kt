@@ -1,7 +1,7 @@
 package browserpicker.data.core.local.mapper
 
-import browserpicker.core.LogLevel
-import browserpicker.core.log
+import browserpicker.core.utils.LogLevel
+import browserpicker.core.utils.log
 import browserpicker.domain.BrowserAppInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
