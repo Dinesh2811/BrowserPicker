@@ -1,9 +1,9 @@
-package com.dinesh.m3theme
+package browserpicker.core
 
 object AppConfig {
     val isLoggingEnable: Boolean
         get() {
-            return com.dinesh.m3theme.BuildConfig.DEBUG
+            return browserpicker.core.BuildConfig.DEBUG
 //            return true
         }
 }

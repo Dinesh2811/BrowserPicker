@@ -39,6 +39,7 @@ android {
 }
 
 dependencies {
+    implementation(project(mapOf("path" to ":browserpicker:core")))
     implementation(project(mapOf("path" to ":browserpicker:data")))
     implementation(libs.timeago)
     implementation(libs.kotlinx.datetime)

@@ -3,6 +3,7 @@
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel>
       <module name="BrowserPicker.app" target="21" />
+      <module name="BrowserPicker.browserpicker.model" target="21" />
       <module name="BrowserPicker.playground" target="21" />
     </bytecodeTargetLevel>
   </component>

@@ -22,7 +22,6 @@ dependencyResolutionManagement {
 rootProject.name = "BrowserPicker"
 include(":theme")
 include(":theme:coreLib")
-include(":browserpicker:model")
 include(":browserpicker:data")
 include(":browserpicker:domain")
 include(":browserpicker:presentation")

@@ -1,4 +1,4 @@
-package com.dinesh.m3theme
+package browserpicker.core
 
 import android.util.Log
 import javax.inject.Inject
