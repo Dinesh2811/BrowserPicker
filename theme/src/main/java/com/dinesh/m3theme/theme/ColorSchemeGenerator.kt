@@ -10,8 +10,6 @@ import com.dinesh.m3theme.util.ThemeDefaults
 import com.dinesh.m3theme.util.ThemeUtils.toHexString
 import dynamiccolor.DynamicScheme
 import hct.Hct
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import scheme.SchemeContent
 import scheme.SchemeExpressive
@@ -27,8 +25,6 @@ import javax.inject.Singleton
 
 @Singleton
 class ColorSchemeGenerator @Inject constructor() {
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default    //  withContext(defaultDispatcher)
-
     @Stable
     fun generateSchemes(seedColor: Color, isDark: Boolean, style: PaletteStyle, contrastLevel: Double): Pair<DynamicScheme, ColorScheme> {
         val hct: Hct? = Hct.fromInt(seedColor.toArgb())
