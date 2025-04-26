@@ -49,5 +49,6 @@ enum class FolderType(val value: Int) {
 
     companion object {
         fun fromValue(value: Int) = entries.find { it.value == value }?: throw IllegalArgumentException("Unknown FolderType value: $value")
+        fun fromValueOrNull(value: Int) = entries.find { it.value == value }
     }
 }

@@ -1,4 +1,4 @@
-package browserpicker.data.core.local.model
+package browserpicker.data.local.model
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -16,25 +16,27 @@ import kotlinx.datetime.Instant
             parentColumns = ["bookmark_folder_id"],
             childColumns = ["bookmark_folder_id"],
             onDelete = ForeignKey.SET_NULL, // If folder deleted, remove link but keep rule
-            onUpdate = ForeignKey.CASCADE
+            onUpdate = ForeignKey.CASCADE,
+            deferred = true
         ),
         ForeignKey(
             entity = BlockFolderEntity::class,
             parentColumns = ["block_folder_id"],
             childColumns = ["block_folder_id"],
             onDelete = ForeignKey.SET_NULL, // If folder deleted, remove link but keep rule
-            onUpdate = ForeignKey.CASCADE
-        )
+            onUpdate = ForeignKey.CASCADE,
+            deferred = true
+        ),
     ],
     indices = [
-        Index("host", unique = true), // Ensure host uniqueness
+        Index("host", unique = true),
         Index("rule_type"),
-        Index("bookmark_folder_id"), // Index for finding rules in a specific bookmark folder
-        Index("block_folder_id")     // Index for finding rules in a specific block folder
+        Index("bookmark_folder_id"),
+        Index("block_folder_id"),
+        Index("is_preference_enabled"),
+        Index("updated_at")
     ]
-    // CHECK constraint for folder_id based on rule_type is not directly supported in Room annotations.
-    // This logic MUST be enforced in the Repository/Use Case layer during inserts/updates.
-    // Ensure:
+    // IMPORTANT CONSTRAINT (Enforced in Repository/Use Case Layer):
     // - If ruleType == BOOKMARK, blockFolderId MUST be null.
     // - If ruleType == BLOCK, bookmarkFolderId MUST be null.
     // - If ruleType == NONE, both folderIds MUST be null.
@@ -42,8 +44,8 @@ import kotlinx.datetime.Instant
 )
 data class HostRuleEntity(
     @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "host_id")
-    val hostId: Long = 0,
+    @ColumnInfo(name = "host_rule_id")
+    val id: Long = 0,
 
     @ColumnInfo(name = "host")
     val host: String,

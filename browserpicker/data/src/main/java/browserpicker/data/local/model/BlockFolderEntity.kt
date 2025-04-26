@@ -1,4 +1,4 @@
-package browserpicker.data.core.local.model
+package browserpicker.data.local.model
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -15,21 +15,22 @@ import kotlinx.datetime.Instant
             parentColumns = ["block_folder_id"],
             childColumns = ["parent_block_folder_id"],
             onDelete = ForeignKey.SET_NULL, // If parent deleted, make this a top-level folder
-            onUpdate = ForeignKey.CASCADE
+            onUpdate = ForeignKey.CASCADE,
+            deferred = true
         )
     ],
     indices = [
-        Index("parent_block_folder_id")
+        Index("parent_block_folder_id"),
+        Index("name")
     ]
 )
 data class BlockFolderEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "block_folder_id")
-    val blockFolderId: Long = 0,
+    val id: Long = 0,
 
-    /** Null indicates a top-level folder. */
-    @ColumnInfo(name = "parent_block_folder_id", index = true)
-    val parentBookmarkFolderId: Long? = null,
+    @ColumnInfo(name = "parent_block_folder_id") // Null indicates a top-level folder
+    val parentFolderId: Long? = null,
 
     @ColumnInfo(name = "name")
     val name: String,
