@@ -2,6 +2,7 @@ package browserpicker.data.local.di
 
 import android.content.Context
 import androidx.room.Room
+import browserpicker.data.local.dao.*
 import browserpicker.data.local.db.BrowserPickerDatabase
 import browserpicker.data.local.db.InstantConverter
 import browserpicker.data.local.db.InteractionActionConverter
@@ -31,15 +32,36 @@ object DatabaseModule {
             BrowserPickerDatabase::class.java,
             BrowserPickerDatabase.DATABASE_NAME
         )
-            .addTypeConverter(
-                arrayOf(
-                    instantConverter,
-                    uriSourceConverter,
-                    interactionActionConverter,
-                    ruleTypeConverter
-                )
-            )
+            .addTypeConverter(instantConverter)
+            .addTypeConverter(uriSourceConverter)
+            .addTypeConverter(interactionActionConverter)
+            .addTypeConverter(ruleTypeConverter)
             .fallbackToDestructiveMigration(false)
+            // Consider adding .setQueryCallback for logging/debugging during development if needed
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideUriRecordDao(database: BrowserPickerDatabase): UriRecordDao {
+        return database.uriRecordDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideHostRuleDao(database: BrowserPickerDatabase): HostRuleDao {
+        return database.hostRuleDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideBookmarkFolderDao(database: BrowserPickerDatabase): BookmarkFolderDao {
+        return database.bookmarkFolderDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideBlockFolderDao(database: BrowserPickerDatabase): BlockFolderDao {
+        return database.blockFolderDao()
     }
 }

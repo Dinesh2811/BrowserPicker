@@ -1,0 +1,2 @@
+package browserpicker.domain.model
+

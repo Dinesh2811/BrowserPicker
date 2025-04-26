@@ -15,7 +15,7 @@ class InstantConverter @Inject constructor() {
 
     @TypeConverter
     fun longToInstant(value: Long?): Instant? = value?.let {
-        try { Instant.fromEpochMilliseconds(it) } catch (e: IllegalArgumentException) { null }
+        runCatching { Instant.fromEpochMilliseconds(it) }.getOrNull()
     }
 }
 
@@ -31,8 +31,7 @@ class UriSourceConverter @Inject constructor() {
 @ProvidedTypeConverter
 class InteractionActionConverter @Inject constructor() {
     @TypeConverter
-    fun interactionActionToInt(interactionAction: InteractionAction?): Int =
-        interactionAction?.value ?: InteractionAction.UNKNOWN.value
+    fun interactionActionToInt(interactionAction: InteractionAction?): Int = interactionAction?.value?: InteractionAction.UNKNOWN.value
 
     @TypeConverter
     fun intToInteractionAction(value: Int): InteractionAction = InteractionAction.fromValue(value)
@@ -41,7 +40,7 @@ class InteractionActionConverter @Inject constructor() {
 @ProvidedTypeConverter
 class RuleTypeConverter @Inject constructor() {
     @TypeConverter
-    fun ruleTypeToInt(ruleType: RuleType?): Int = ruleType?.value ?: RuleType.UNKNOWN.value
+    fun ruleTypeToInt(ruleType: RuleType?): Int = ruleType?.value?: RuleType.UNKNOWN.value
 
     @TypeConverter
     fun intToRuleType(value: Int): RuleType = RuleType.fromValue(value)

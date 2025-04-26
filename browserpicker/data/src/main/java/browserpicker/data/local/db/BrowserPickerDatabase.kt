@@ -3,10 +3,14 @@ package browserpicker.data.local.db
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import browserpicker.data.local.model.BlockFolderEntity
-import browserpicker.data.local.model.BookmarkFolderEntity
-import browserpicker.data.local.model.HostRuleEntity
-import browserpicker.data.local.model.UriRecordEntity
+import browserpicker.data.local.dao.BlockFolderDao
+import browserpicker.data.local.dao.BookmarkFolderDao
+import browserpicker.data.local.dao.HostRuleDao
+import browserpicker.data.local.dao.UriRecordDao
+import browserpicker.data.local.entity.BlockFolderEntity
+import browserpicker.data.local.entity.BookmarkFolderEntity
+import browserpicker.data.local.entity.HostRuleEntity
+import browserpicker.data.local.entity.UriRecordEntity
 
 @Database(
     entities = [
@@ -27,11 +31,10 @@ import browserpicker.data.local.model.UriRecordEntity
 )
 abstract class BrowserPickerDatabase : RoomDatabase() {
 
-//    // Abstract DAO getters - Room generates the implementation
-//    abstract fun uriRecordDao(): UriRecordDao
-//    abstract fun hostRuleDao(): HostRuleDao
-//    abstract fun bookmarkFolderDao(): BookmarkFolderDao
-//    abstract fun blockFolderDao(): BlockFolderDao
+    abstract fun uriRecordDao(): UriRecordDao
+    abstract fun hostRuleDao(): HostRuleDao
+    abstract fun bookmarkFolderDao(): BookmarkFolderDao
+    abstract fun blockFolderDao(): BlockFolderDao
 
     companion object {
         const val DATABASE_NAME = "browser_picker_database"
