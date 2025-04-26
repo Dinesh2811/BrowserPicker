@@ -42,6 +42,7 @@ dependencies {
     implementation(project(mapOf("path" to ":browserpicker:core")))
     implementation(libs.timeago)
     implementation(libs.kotlinx.datetime)
+    implementation(libs.timber)
 
     implementation(libs.bundles.android)
     implementation(libs.bundles.compose)

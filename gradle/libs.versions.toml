@@ -70,6 +70,7 @@ biometric = "1.2.0-alpha05"
 splashscreen = "1.0.1"
 leakcanary = "3.0-alpha-8"
 pluto = "2.2.2"
+timber = "5.0.1"
 firebaseCrashlyticsBuildtools = "3.0.3"
 
 [libraries]
@@ -218,6 +219,7 @@ debug-pluto = { module = "com.plutolib:pluto", version.ref = "pluto" }
 debug-pluto-exceptions = { module = "com.plutolib.plugins:exceptions", version.ref = "pluto" }
 release-pluto = { module = "com.plutolib.plugins:exceptions-no-op", version.ref = "pluto" }
 release-pluto-exceptions = { module = "com.plutolib:pluto-no-op", version.ref = "pluto" }
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
 
 
