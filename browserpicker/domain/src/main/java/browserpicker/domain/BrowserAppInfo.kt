@@ -7,8 +7,6 @@ import kotlin.random.Random
 data class BrowserAppInfo(
     val appName: String,
     val packageName: String,
-    val appIcon: Bitmap?,
-    val isDefaultBrowser: Boolean,
 
 //    val browserApp: BrowserApp = BrowserApp(packageName, appName, Clock.System.now().toEpochMilliseconds()),
 //    val lastUsedTimestamp: Long? = null
@@ -33,8 +31,8 @@ data class BrowserAppInfo(
                     packageName = "${packageNames[randomIndex]}_$it",
 //                    versionName = "${Random.Default.nextInt(1, 10)}.${Random.Default.nextInt(0, 10)}.${Random.Default.nextInt(0, 100)}",
 //                    versionCode = Random.Default.nextLong(1, 1000),
-                    isDefaultBrowser = Random.Default.nextBoolean(),
-                    appIcon = null,
+//                    isDefaultBrowser = Random.Default.nextBoolean(),
+//                    appIcon = null,
                 )
             }
         }

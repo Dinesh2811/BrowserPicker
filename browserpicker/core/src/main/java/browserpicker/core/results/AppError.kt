@@ -9,6 +9,7 @@ sealed interface AppError {
 
 sealed class DataSourceError(override val message: String, override val cause: Throwable?): AppError {
     // TODO: Add more specific error types
+    class EmptyResolveInfo(override val cause: Throwable?): Exception("No apps handle ACTION_VIEW with http/https scheme", cause)
     data class UnknownError(override val cause: Throwable?): DataSourceError("An unexpected error occurred.", cause)
 }
 

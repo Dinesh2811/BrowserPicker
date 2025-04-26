@@ -2,6 +2,7 @@ package browserpicker.data.core.local.mapper
 
 import browserpicker.core.utils.LogLevel
 import browserpicker.core.utils.log
+import browserpicker.data.core.local.model.BrowserAppInfoEntity
 import browserpicker.domain.BrowserAppInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -19,20 +20,15 @@ import kotlin.sequences.map
 import kotlin.sequences.toList
 import kotlin.text.CASE_INSENSITIVE_ORDER
 
-class BrowserAppMapper @Inject constructor(
-    private val iconConverter: IconConverter,
-) {
+class BrowserAppMapper @Inject constructor() {
     private val TAG = "log_BrowserAppMapper"
 
     suspend fun mapToDomain(entity: BrowserAppInfoEntity): BrowserAppInfo? = coroutineScope {
         try {
             entity.run {
-                val appIconBitmap = appIcon?.let { iconConverter.convertDrawableToBitmap(it, packageName) }
                 BrowserAppInfo(
                     packageName = packageName ?: return@coroutineScope null,
                     appName = appName ?: return@coroutineScope null,
-                    appIcon = appIconBitmap,
-                    isDefaultBrowser = isDefaultBrowser
                 )
             }
         } catch (e: Exception) {
@@ -73,8 +69,6 @@ class BrowserAppMapper @Inject constructor(
         return BrowserAppInfoEntity(
             appName = domain.appName,
             packageName = domain.packageName,
-            appIcon = null,
-            isDefaultBrowser = domain.isDefaultBrowser
         )
     }
 
