@@ -13,7 +13,12 @@ data class UriRecord(
     val uriSource: UriSource,
     val interactionAction: InteractionAction,
     val chosenBrowserPackage: String? = null,
-)
+) {
+    init {
+        require(uriString.isNotBlank()) { "uriString must not be blank" }
+        require(host.isNotBlank()) { "host must not be blank" }
+    }
+}
 
 @Serializable
 data class HostRule(
@@ -25,7 +30,14 @@ data class HostRule(
     val isPreferenceEnabled: Boolean = true,
     val createdAt: Instant,
     val updatedAt: Instant
-)
+) {
+    init {
+        require(host.isNotBlank()) { "host must not be blank" }
+        require(uriStatus != UriStatus.UNKNOWN) { "uriStatus must not be UNKNOWN" }
+        if (uriStatus == UriStatus.NONE) require(folderId == null && preferredBrowserPackage == null) { "NONE status may not have folder or preference" }
+        if (uriStatus == UriStatus.BLOCKED) require(preferredBrowserPackage == null && !isPreferenceEnabled) { "BLOCKED status must not have preference" }
+    }
+}
 
 @Serializable
 data class Folder(
@@ -36,6 +48,10 @@ data class Folder(
     val createdAt: Instant,
     val updatedAt: Instant
 ) {
+    init {
+        require(name.isNotBlank()) { "folder name must not be blank" }
+        require(createdAt <= updatedAt) { "createdAt must not be after updatedAt" }
+    }
     companion object {
         const val DEFAULT_BOOKMARK_ROOT_FOLDER_ID = 1L
         const val DEFAULT_BLOCKED_ROOT_FOLDER_ID = 2L
@@ -49,4 +65,9 @@ data class BrowserUsageStat(
     val browserPackageName: String,
     val usageCount: Long,
     val lastUsedTimestamp: Instant
-)
+) {
+    init {
+        require(browserPackageName.isNotBlank()) { "browserPackageName must not be blank" }
+        require(usageCount >= 0) { "usageCount must be non-negative" }
+    }
+}
