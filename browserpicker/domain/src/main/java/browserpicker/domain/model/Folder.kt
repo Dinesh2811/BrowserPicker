@@ -17,7 +17,7 @@ data class UriRecord(
 data class HostRule(
     val id: Long = 0,
     val host: String,
-    val ruleType: RuleType, // BOOKMARK, BLOCK, or NONE (if just preference is set)
+    val uriStatus: UriStatus, // BOOKMARK, BLOCK, or NONE (if just preference is set)
     val bookmarkFolderId: Long? = null, // Null if ruleType is not BOOKMARK
     val blockFolderId: Long? = null, // Null if ruleType is not BLOCK
     val preferredBrowserPackage: String? = null, // Package name of preferred browser

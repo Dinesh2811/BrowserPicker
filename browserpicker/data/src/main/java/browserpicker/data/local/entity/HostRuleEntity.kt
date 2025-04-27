@@ -6,7 +6,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import browserpicker.domain.model.RuleType
+import browserpicker.domain.model.UriStatus
 import kotlinx.datetime.Instant
 
 @Entity(
@@ -53,7 +53,7 @@ data class HostRuleEntity(
     val host: String,
 
     @ColumnInfo(name = "rule_type", typeAffinity = ColumnInfo.INTEGER)
-    val ruleType: RuleType, // BOOKMARK or BLOCK. Can't be UNKNOWN or NONE or 'null'
+    val uriStatus: UriStatus, // BOOKMARK or BLOCK. Can't be UNKNOWN or NONE or 'null'
 
     @ColumnInfo(name = "bookmark_folder_id") // 'null' if ruleType is not BOOKMARK.
     val bookmarkFolderId: Long? = null,

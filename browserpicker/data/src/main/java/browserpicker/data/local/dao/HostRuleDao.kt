@@ -9,7 +9,6 @@ import androidx.room.RawQuery
 import androidx.room.Update
 import androidx.sqlite.db.SupportSQLiteQuery
 import browserpicker.data.local.entity.HostRuleEntity
-import browserpicker.domain.model.RuleType
 import kotlinx.coroutines.flow.Flow
 
 @Dao

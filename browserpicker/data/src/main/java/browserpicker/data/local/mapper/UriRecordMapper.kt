@@ -35,7 +35,7 @@ object HostRuleMapper {
         return HostRule(
             id = this.id,
             host = this.host,
-            ruleType = this.ruleType, // Assumes enum conversion is correct
+            uriStatus = this.uriStatus, // Assumes enum conversion is correct
             bookmarkFolderId = this.bookmarkFolderId,
             blockFolderId = this.blockFolderId,
             preferredBrowserPackage = this.preferredBrowserPackage,
@@ -51,7 +51,7 @@ object HostRuleMapper {
         return HostRuleEntity(
             id = this.id,
             host = this.host,
-            ruleType = this.ruleType,
+            uriStatus = this.uriStatus,
             bookmarkFolderId = this.bookmarkFolderId,
             blockFolderId = this.blockFolderId,
             preferredBrowserPackage = this.preferredBrowserPackage,

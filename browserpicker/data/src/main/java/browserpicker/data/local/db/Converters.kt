@@ -3,7 +3,7 @@ package browserpicker.data.local.db
 import androidx.room.ProvidedTypeConverter
 import androidx.room.TypeConverter
 import browserpicker.domain.model.InteractionAction
-import browserpicker.domain.model.RuleType
+import browserpicker.domain.model.UriStatus
 import browserpicker.domain.model.UriSource
 import kotlinx.datetime.Instant
 import javax.inject.Inject
@@ -40,9 +40,9 @@ class InteractionActionConverter @Inject constructor() {
 @ProvidedTypeConverter
 class RuleTypeConverter @Inject constructor() {
     @TypeConverter
-    fun ruleTypeToInt(ruleType: RuleType?): Int = ruleType?.value?: RuleType.UNKNOWN.value
+    fun ruleTypeToInt(uriStatus: UriStatus?): Int = uriStatus?.value?: UriStatus.UNKNOWN.value
 
     @TypeConverter
-    fun intToRuleType(value: Int): RuleType = RuleType.fromValue(value)
+    fun intToRuleType(value: Int): UriStatus = UriStatus.fromValue(value)
 }
 

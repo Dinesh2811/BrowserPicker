@@ -26,12 +26,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
-import androidx.core.net.toUri
 import androidx.paging.PagingConfig
-import androidx.paging.PagingSource
-import browserpicker.data.local.mapper.FolderMapper
-import browserpicker.data.local.mapper.HostRuleMapper
-import browserpicker.data.local.mapper.UriRecordMapper
 import browserpicker.data.local.mapper.UriRecordMapper.toDomainModel
 
 @Singleton
@@ -80,16 +75,16 @@ class BrowserPickerRepositoryImpl @Inject constructor(
             val currentTime = clock.now()
 
             // --- Constraint Validation --- (Keep this logic here or move to a Use Case)
-            if (rule.ruleType == RuleType.UNKNOWN) {
+            if (rule.uriStatus == UriStatus.UNKNOWN) {
                 throw InvalidRuleDataException("Cannot save rule with type UNKNOWN.")
             }
-            if (rule.ruleType == RuleType.NONE && (rule.bookmarkFolderId != null || rule.blockFolderId != null)) {
+            if (rule.uriStatus == UriStatus.NONE && (rule.bookmarkFolderId != null || rule.blockFolderId != null)) {
                 throw InvalidRuleDataException("Bookmark/Block folder ID must be null when RuleType is NONE.")
             }
-            if (rule.ruleType == RuleType.BOOKMARK && rule.blockFolderId != null) {
+            if (rule.uriStatus == UriStatus.BOOKMARKED && rule.blockFolderId != null) {
                 throw InvalidRuleDataException("Block folder ID must be null when RuleType is BOOKMARK.")
             }
-            if (rule.ruleType == RuleType.BLOCK && rule.bookmarkFolderId != null) {
+            if (rule.uriStatus == UriStatus.BLOCKED && rule.bookmarkFolderId != null) {
                 throw InvalidRuleDataException("Bookmark folder ID must be null when RuleType is BLOCK.")
             }
             if (rule.host.isBlank()) {
@@ -164,7 +159,7 @@ class BrowserPickerRepositoryImpl @Inject constructor(
                 // as we know the exact state (NONE ruleType, null folder IDs).
                 val newRuleEntity = HostRuleEntity(
                     host = host,
-                    ruleType = RuleType.NONE, // Default to NONE if only setting preference
+                    uriStatus = UriStatus.NONE, // Default to NONE if only setting preference
                     preferredBrowserPackage = browserPackage,
                     isPreferenceEnabled = isEnabled,
                     createdAt = currentTime,
@@ -191,7 +186,7 @@ class BrowserPickerRepositoryImpl @Inject constructor(
             config = config.toAndroidConfig(),
             pagingSourceFactory = { // -> PagingSource<Int, HostRuleEntity> // Optional: explicit type hint here too if needed
                 hostRuleDao.getRulesPagingSource(
-                    ruleTypeValue = RuleType.BOOKMARK.value,
+                    ruleTypeValue = UriStatus.BOOKMARKED.value,
                     searchTerm = searchTerm,
                     isSortAsc = sort.order == SortOrder.ASCENDING
                 )
@@ -265,7 +260,7 @@ class BrowserPickerRepositoryImpl @Inject constructor(
             config = config.toAndroidConfig(),
             pagingSourceFactory = { // -> PagingSource<Int, HostRuleEntity> // Optional: explicit type hint here too if needed
                 hostRuleDao.getRulesPagingSource(
-                    ruleTypeValue = RuleType.BLOCK.value,
+                    ruleTypeValue = UriStatus.BLOCKED.value,
                     searchTerm = searchTerm,
                     isSortAsc = sort.order == SortOrder.ASCENDING
                 )

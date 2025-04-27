@@ -31,11 +31,11 @@ enum class InteractionAction(val value: Int) {
 }
 
 @Keep @Serializable
-enum class RuleType(val value: Int) {
+enum class UriStatus(val value: Int) {
     UNKNOWN(-1),
     NONE(0),
-    BOOKMARK(1),
-    BLOCK(2);
+    BOOKMARKED(1),
+    BLOCKED(2);
 
     companion object {
         fun fromValue(value: Int) = entries.find { it.value == value }?: UNKNOWN
