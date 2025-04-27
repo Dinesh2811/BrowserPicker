@@ -42,7 +42,7 @@ data class UriRecordEntity(
     val hostRuleId: Long?,
 
     @ColumnInfo(name = "timestamp")
-    val timestamp: Long,
+    val timestamp: Instant,
 
     @ColumnInfo(name = "uri_source", typeAffinity = ColumnInfo.INTEGER)
     val uriSource: UriSource,
