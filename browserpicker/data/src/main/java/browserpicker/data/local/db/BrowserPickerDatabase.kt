@@ -35,8 +35,6 @@ abstract class BrowserPickerDatabase : RoomDatabase() {
     abstract fun hostRuleDao(): HostRuleDao
     abstract fun folderDao(): FolderDao
     abstract fun browserUsageStatDao(): BrowserUsageStatDao
-//    abstract fun bookmarkFolderDao(): BookmarkFolderDao
-//    abstract fun blockFolderDao(): BlockFolderDao
 
     companion object {
         const val DATABASE_NAME = "browser_picker_database"
