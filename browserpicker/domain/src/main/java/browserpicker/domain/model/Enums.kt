@@ -5,13 +5,13 @@ import kotlinx.serialization.Serializable
 
 @Keep @Serializable
 enum class UriSource(val value: Int) {
-    UNKNOWN(-1),
     INTENT(1),
     CLIPBOARD(2),
     MANUAL(3);
 
     companion object {
-        fun fromValue(value: Int) = entries.find { it.value == value }?: UNKNOWN
+        fun fromValue(value: Int) = entries.find { it.value == value }?: throw IllegalArgumentException("Unknown UriSource value: $value")
+        fun fromValueOrNull(value: Int): UriSource? = entries.find { it.value == value }
     }
 }
 
@@ -27,6 +27,7 @@ enum class InteractionAction(val value: Int) {
 
     companion object {
         fun fromValue(value: Int) = entries.find { it.value == value }?: UNKNOWN
+        fun fromValueOrNull(value: Int): InteractionAction? = entries.find { it.value == value }
     }
 }
 
@@ -39,6 +40,7 @@ enum class UriStatus(val value: Int) {
 
     companion object {
         fun fromValue(value: Int) = entries.find { it.value == value }?: UNKNOWN
+        fun fromValueOrNull(value: Int): UriStatus? = entries.find { it.value == value }
     }
 }
 
