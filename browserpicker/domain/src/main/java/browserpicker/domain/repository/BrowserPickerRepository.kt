@@ -8,6 +8,10 @@ import kotlinx.datetime.Instant
 
 interface UriHistoryRepository {
     //  TODO("Not yet implemented")
+//    fun getPaginatedUriRecord(config: LogQueryConfig): Flow<PagingData<UriRecord>>
+//    fun getTotalUriRecordCount(config: LogQueryConfig): Flow<Int>
+//    fun getGroupedUriRecordCounts(config: LogQueryConfig): Flow<Map<GroupKey, Int>>
+//    fun getDistinctBrowserPackages(): Flow<List<String>>
 }
 interface HostRuleRepository {
     //  TODO("Not yet implemented")
