@@ -14,57 +14,46 @@ import kotlinx.datetime.Instant
     tableName = "host_rules",
     foreignKeys = [
         ForeignKey(
-            entity = BookmarkFolderEntity::class,
-            parentColumns = ["bookmark_folder_id"],
-            childColumns = ["bookmark_folder_id"],
-            onDelete = ForeignKey.SET_NULL, // If folder deleted, remove link but keep rule
+            entity = FolderEntity::class,
+            parentColumns = ["folder_id"],
+            childColumns = ["folder_id"],
+            onDelete = ForeignKey.SET_NULL, // If folder deleted, unlink but keep the rule
             onUpdate = ForeignKey.CASCADE,
             deferred = true
-        ),
-        ForeignKey(
-            entity = BlockFolderEntity::class,
-            parentColumns = ["block_folder_id"],
-            childColumns = ["block_folder_id"],
-            onDelete = ForeignKey.SET_NULL, // If folder deleted, remove link but keep rule
-            onUpdate = ForeignKey.CASCADE,
-            deferred = true
-        ),
+        )
     ],
     indices = [
-        Index("host", unique = true),
-        Index("rule_type"),
-        Index("bookmark_folder_id"),
-        Index("block_folder_id"),
+        Index("host", unique = true), // Host must be unique
+        Index("uri_status"),
+        Index("folder_id"), // Link to the single folder table
         Index("is_preference_enabled"),
         Index("updated_at")
     ]
-    // IMPORTANT CONSTRAINT (Enforced in Repository/Use Case Layer):
-    // - If ruleType == BOOKMARK, blockFolderId MUST be null.
-    // - If ruleType == BLOCK, bookmarkFolderId MUST be null.
-    // - If ruleType == NONE, both folderIds MUST be null.
-    // - ruleType should never be UNKNOWN in the database.
+    // === Business Logic Constraints (Enforced in Repository/Use Case Layer) ===
+    // 1. `uriStatus` MUST NOT be `UriStatus.UNKNOWN`.
+    // 2. If `uriStatus` is `UriStatus.NONE`, `folder_id` MUST be null.
+    // 3. If `uriStatus` is `UriStatus.BOOKMARKED`, `folder_id` MAY be non-null and MUST point to a FolderEntity with `type = FolderType.BOOKMARK`.
+    // 4. If `uriStatus` is `UriStatus.BLOCKED`, `folder_id` MAY be non-null and MUST point to a FolderEntity with `type = FolderType.BLOCK`.
+    // 5. If `uriStatus` is `UriStatus.BLOCKED`, `preferredBrowserPackage` and `isPreferenceEnabled` should ideally be cleared/ignored, but the DB schema allows them.
 )
 data class HostRuleEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "host_rule_id")
     val id: Long = 0,
 
-    @ColumnInfo(name = "host")
+    @ColumnInfo(name = "host", collate = ColumnInfo.NOCASE) // Hosts are case-insensitive
     val host: String,
 
-    @ColumnInfo(name = "rule_type", typeAffinity = ColumnInfo.INTEGER)
-    val uriStatus: UriStatus, // BOOKMARK or BLOCK. Can't be UNKNOWN or NONE or 'null'
+    @ColumnInfo(name = "uri_status") // Use non-null converter (NONE, BOOKMARKED, BLOCKED)
+    val uriStatus: UriStatus,
 
-    @ColumnInfo(name = "bookmark_folder_id") // 'null' if ruleType is not BOOKMARK.
-    val bookmarkFolderId: Long? = null,
-
-    @ColumnInfo(name = "block_folder_id") // 'null' if ruleType is not BLOCK
-    val blockFolderId: Long? = null,
+    @ColumnInfo(name = "folder_id") // Single Folder ID (nullable)
+    val folderId: Long? = null,
 
     @ColumnInfo(name = "preferred_browser_package")
     val preferredBrowserPackage: String? = null,
 
-    @ColumnInfo(name = "is_preference_enabled", defaultValue = "1")
+    @ColumnInfo(name = "is_preference_enabled", defaultValue = "1") // SQLite uses 1 for true
     val isPreferenceEnabled: Boolean = true,
 
     @ColumnInfo(name = "created_at")

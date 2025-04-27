@@ -17,40 +17,44 @@ import kotlinx.datetime.Instant
         ForeignKey(
             entity = HostRuleEntity::class,
             parentColumns = ["host_rule_id"],
-            childColumns = ["host_rule_id"],
-            onDelete = ForeignKey.SET_NULL, // If the rule for the host is deleted, keep the history but unlink the specific rule ID
+            childColumns = ["associated_host_rule_id"],
+            onDelete = ForeignKey.SET_NULL, // Keep history even if rule deleted
             onUpdate = ForeignKey.CASCADE,
             deferred = true
-        ),
+        )
     ],
     indices = [
-        Index("host_rule_id"),
+        Index("associated_host_rule_id"),
+        Index("host"), // Added index on host
         Index("timestamp"),
         Index("uri_string"),
         Index("interaction_action"),
         Index("uri_source")
-    ],
+    ]
 )
 data class UriRecordEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "uri_record_id")
     val id: Long = 0,
 
-    @ColumnInfo(name = "uri_string")
+    @ColumnInfo(name = "uri_string", collate = ColumnInfo.NOCASE) // Store URI for display/search
     val uriString: String,
 
-    @ColumnInfo(name = "host_rule_id")
-    val hostRuleId: Long?,
+    @ColumnInfo(name = "host", collate = ColumnInfo.NOCASE) // Extracted host for efficient rule lookup
+    val host: String,
 
     @ColumnInfo(name = "timestamp")
     val timestamp: Instant,
 
-    @ColumnInfo(name = "uri_source", typeAffinity = ColumnInfo.INTEGER)
+    @ColumnInfo(name = "uri_source") // Use non-null converter
     val uriSource: UriSource,
 
-    @ColumnInfo(name = "interaction_action", typeAffinity = ColumnInfo.INTEGER)
+    @ColumnInfo(name = "interaction_action") // Use non-null converter
     val interactionAction: InteractionAction,
 
     @ColumnInfo(name = "chosen_browser_package")
     val chosenBrowserPackage: String? = null,
+
+    @ColumnInfo(name = "associated_host_rule_id")
+    val associatedHostRuleId: Long?
 )

@@ -6,9 +6,10 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.datetime.Instant
 
 @Entity(
-    tableName = "browser_usage_stat",
+    tableName = "browser_usage_stats", // Renamed table slightly
     indices = [
         Index(value = ["last_used_timestamp"]),
         Index(value = ["usage_count"])
@@ -22,6 +23,6 @@ data class BrowserUsageStatEntity(
     @ColumnInfo(name = "usage_count", defaultValue = "0")
     val usageCount: Long = 0,
 
-    @ColumnInfo(name = "last_used_timestamp")
-    val lastUsedTimestamp: Long
+    @ColumnInfo(name = "last_used_timestamp") // Using Instant now
+    val lastUsedTimestamp: Instant
 )

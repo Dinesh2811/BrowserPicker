@@ -7,7 +7,8 @@ import kotlinx.serialization.Serializable
 data class UriRecord(
     val id: Long = 0,
     val uriString: String,
-    val hostRuleId: Long?,
+    val host: String,
+    val associatedHostRuleId: Long? = null,
     val timestamp: Instant,
     val uriSource: UriSource,
     val interactionAction: InteractionAction,
@@ -19,8 +20,7 @@ data class HostRule(
     val id: Long = 0,
     val host: String,
     val uriStatus: UriStatus,
-    val bookmarkFolderId: Long? = null,
-    val blockFolderId: Long? = null,
+    val folderId: Long? = null,
     val preferredBrowserPackage: String? = null,
     val isPreferenceEnabled: Boolean = true,
     val createdAt: Instant,
@@ -35,4 +35,11 @@ data class Folder(
     val type: FolderType,
     val createdAt: Instant,
     val updatedAt: Instant
+)
+
+@Serializable
+data class BrowserUsageStat(
+    val browserPackageName: String,
+    val usageCount: Long,
+    val lastUsedTimestamp: Instant
 )

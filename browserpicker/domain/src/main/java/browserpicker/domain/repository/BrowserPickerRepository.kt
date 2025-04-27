@@ -6,6 +6,11 @@ import browserpicker.domain.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 
+interface UriHistoryRepository {}
+interface HostRuleRepository {}
+interface FolderRepository {}
+interface BrowserStatsRepository {}
+
 interface BrowserPickerRepository {
 
     // --- Host Rules ---
