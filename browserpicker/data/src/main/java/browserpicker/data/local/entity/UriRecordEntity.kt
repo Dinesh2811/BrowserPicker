@@ -1,5 +1,6 @@
 package browserpicker.data.local.entity
 
+import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -28,6 +29,7 @@ import kotlinx.datetime.Instant
         Index("uri_source")
     ],
 )
+@Immutable
 data class UriRecordEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "uri_record_id")
@@ -40,7 +42,7 @@ data class UriRecordEntity(
     val hostRuleId: Long?,
 
     @ColumnInfo(name = "timestamp")
-    val timestamp: Instant,
+    val timestamp: Long,
 
     @ColumnInfo(name = "uri_source", typeAffinity = ColumnInfo.INTEGER)
     val uriSource: UriSource,

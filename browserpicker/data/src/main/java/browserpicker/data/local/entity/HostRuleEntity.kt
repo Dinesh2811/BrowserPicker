@@ -1,5 +1,6 @@
 package browserpicker.data.local.entity
 
+import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -42,6 +43,7 @@ import kotlinx.datetime.Instant
     // - If ruleType == NONE, both folderIds MUST be null.
     // - ruleType should never be UNKNOWN in the database.
 )
+@Immutable
 data class HostRuleEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "host_rule_id")
