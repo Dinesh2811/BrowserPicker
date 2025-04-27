@@ -25,7 +25,7 @@ import kotlinx.datetime.Instant
     ],
     indices = [
         Index("associated_host_rule_id"),
-        Index("host"), // Added index on host
+        Index("host"),
         Index("timestamp"),
         Index("uri_string"),
         Index("interaction_action"),
@@ -37,19 +37,19 @@ data class UriRecordEntity(
     @ColumnInfo(name = "uri_record_id")
     val id: Long = 0,
 
-    @ColumnInfo(name = "uri_string", collate = ColumnInfo.NOCASE) // Store URI for display/search
+    @ColumnInfo(name = "uri_string", collate = ColumnInfo.NOCASE)
     val uriString: String,
 
-    @ColumnInfo(name = "host", collate = ColumnInfo.NOCASE) // Extracted host for efficient rule lookup
+    @ColumnInfo(name = "host", collate = ColumnInfo.NOCASE)
     val host: String,
 
     @ColumnInfo(name = "timestamp")
     val timestamp: Instant,
 
-    @ColumnInfo(name = "uri_source") // Use non-null converter
+    @ColumnInfo(name = "uri_source")
     val uriSource: UriSource,
 
-    @ColumnInfo(name = "interaction_action") // Use non-null converter
+    @ColumnInfo(name = "interaction_action")
     val interactionAction: InteractionAction,
 
     @ColumnInfo(name = "chosen_browser_package")

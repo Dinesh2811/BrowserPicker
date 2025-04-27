@@ -9,13 +9,13 @@ import browserpicker.domain.model.FolderType
 import kotlinx.datetime.Instant
 
 @Entity(
-    tableName = "folders", // Unified folder table
+    tableName = "folders",
     foreignKeys = [
         ForeignKey(
             entity = FolderEntity::class, // Self-referencing for parent folder
             parentColumns = ["folder_id"],
             childColumns = ["parent_folder_id"],
-            onDelete = ForeignKey.SET_NULL, // Make orphaned folders top-level
+            onDelete = ForeignKey.SET_NULL,
             onUpdate = ForeignKey.CASCADE,
             deferred = true
         )
@@ -23,7 +23,7 @@ import kotlinx.datetime.Instant
     indices = [
         Index("parent_folder_id"),
         Index("name"),
-        Index("type") // Index on type for filtering bookmark/block folders
+        Index("folder_type")
     ]
 )
 data class FolderEntity(
@@ -37,8 +37,8 @@ data class FolderEntity(
     @ColumnInfo(name = "name")
     val name: String,
 
-    @ColumnInfo(name = "type") // Use non-null converter (BOOKMARK or BLOCK)
-    val type: FolderType,
+    @ColumnInfo(name = "folder_type")
+    val folderType: FolderType,
 
     @ColumnInfo(name = "created_at")
     val createdAt: Instant,

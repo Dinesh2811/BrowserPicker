@@ -2,7 +2,6 @@ package browserpicker.data.local.mapper
 
 import browserpicker.data.local.entity.*
 import browserpicker.domain.model.*
-import kotlinx.datetime.Instant
 
 object UriRecordMapper {
     fun UriRecordEntity.toDomainModel(): UriRecord = UriRecord(
@@ -61,7 +60,7 @@ object FolderMapper  {
         id = this.id,
         parentFolderId = this.parentFolderId,
         name = this.name,
-        type = this.type,
+        type = this.folderType,
         createdAt = this.createdAt,
         updatedAt = this.updatedAt
     )
@@ -70,7 +69,7 @@ object FolderMapper  {
         id = this.id,
         parentFolderId = this.parentFolderId,
         name = this.name,
-        type = this.type,
+        folderType = this.type,
         createdAt = this.createdAt,
         updatedAt = this.updatedAt
     )

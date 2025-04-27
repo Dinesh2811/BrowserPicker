@@ -23,17 +23,17 @@ import kotlinx.datetime.Instant
         )
     ],
     indices = [
-        Index("host", unique = true), // Host must be unique
+        Index("host", unique = true),
         Index("uri_status"),
-        Index("folder_id"), // Link to the single folder table
+        Index("folder_id"),
         Index("is_preference_enabled"),
         Index("updated_at")
     ]
     // === Business Logic Constraints (Enforced in Repository/Use Case Layer) ===
     // 1. `uriStatus` MUST NOT be `UriStatus.UNKNOWN`.
     // 2. If `uriStatus` is `UriStatus.NONE`, `folder_id` MUST be null.
-    // 3. If `uriStatus` is `UriStatus.BOOKMARKED`, `folder_id` MAY be non-null and MUST point to a FolderEntity with `type = FolderType.BOOKMARK`.
-    // 4. If `uriStatus` is `UriStatus.BLOCKED`, `folder_id` MAY be non-null and MUST point to a FolderEntity with `type = FolderType.BLOCK`.
+    // 3. If `uriStatus` is `UriStatus.BOOKMARKED`, `folder_id` MAY be non-null and MUST point to a FolderEntity with `folder_type = FolderType.BOOKMARK`.
+    // 4. If `uriStatus` is `UriStatus.BLOCKED`, `folder_id` MAY be non-null and MUST point to a FolderEntity with `folder_type = FolderType.BLOCK`.
     // 5. If `uriStatus` is `UriStatus.BLOCKED`, `preferredBrowserPackage` and `isPreferenceEnabled` should ideally be cleared/ignored, but the DB schema allows them.
 )
 data class HostRuleEntity(
@@ -41,19 +41,19 @@ data class HostRuleEntity(
     @ColumnInfo(name = "host_rule_id")
     val id: Long = 0,
 
-    @ColumnInfo(name = "host", collate = ColumnInfo.NOCASE) // Hosts are case-insensitive
+    @ColumnInfo(name = "host", collate = ColumnInfo.NOCASE)
     val host: String,
 
-    @ColumnInfo(name = "uri_status") // Use non-null converter (NONE, BOOKMARKED, BLOCKED)
+    @ColumnInfo(name = "uri_status")
     val uriStatus: UriStatus,
 
-    @ColumnInfo(name = "folder_id") // Single Folder ID (nullable)
+    @ColumnInfo(name = "folder_id")
     val folderId: Long? = null,
 
     @ColumnInfo(name = "preferred_browser_package")
     val preferredBrowserPackage: String? = null,
 
-    @ColumnInfo(name = "is_preference_enabled", defaultValue = "1") // SQLite uses 1 for true
+    @ColumnInfo(name = "is_preference_enabled", defaultValue = "1")
     val isPreferenceEnabled: Boolean = true,
 
     @ColumnInfo(name = "created_at")

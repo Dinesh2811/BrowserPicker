@@ -6,10 +6,18 @@ import browserpicker.domain.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 
-interface UriHistoryRepository {}
-interface HostRuleRepository {}
-interface FolderRepository {}
-interface BrowserStatsRepository {}
+interface UriHistoryRepository {
+    //  TODO("Not yet implemented")
+}
+interface HostRuleRepository {
+    //  TODO("Not yet implemented")
+}
+interface FolderRepository {
+    //  TODO("Not yet implemented")
+}
+interface BrowserStatsRepository {
+    //  TODO("Not yet implemented")
+}
 
 interface BrowserPickerRepository {
 
