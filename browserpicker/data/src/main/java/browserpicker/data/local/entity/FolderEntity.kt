@@ -23,7 +23,8 @@ import kotlinx.datetime.Instant
     indices = [
         Index("parent_folder_id"),
         Index("name"),
-        Index("folder_type")
+        Index("folder_type"),
+        Index(value = ["parent_folder_id", "name", "folder_type"], unique = true)
     ]
 )
 data class FolderEntity(
@@ -37,7 +38,7 @@ data class FolderEntity(
     @ColumnInfo(name = "name")
     val name: String,
 
-    @ColumnInfo(name = "folder_type")
+    @ColumnInfo(name = "folder_type", typeAffinity = ColumnInfo.INTEGER)
     val folderType: FolderType,
 
     @ColumnInfo(name = "created_at")

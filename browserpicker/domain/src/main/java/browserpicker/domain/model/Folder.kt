@@ -35,7 +35,14 @@ data class Folder(
     val type: FolderType,
     val createdAt: Instant,
     val updatedAt: Instant
-)
+) {
+    companion object {
+        const val DEFAULT_BOOKMARK_ROOT_FOLDER_ID = 1L
+        const val DEFAULT_BLOCKED_ROOT_FOLDER_ID = 2L
+        const val DEFAULT_BOOKMARK_ROOT_FOLDER_NAME = "Bookmarks"
+        const val DEFAULT_BLOCKED_ROOT_FOLDER_NAME = "Blocked"
+    }
+}
 
 @Serializable
 data class BrowserUsageStat(

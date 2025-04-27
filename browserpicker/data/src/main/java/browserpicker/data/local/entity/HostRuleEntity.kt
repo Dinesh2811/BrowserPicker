@@ -29,12 +29,14 @@ import kotlinx.datetime.Instant
         Index("is_preference_enabled"),
         Index("updated_at")
     ]
-    // === Business Logic Constraints (Enforced in Repository/Use Case Layer) ===
-    // 1. `uriStatus` MUST NOT be `UriStatus.UNKNOWN`.
+    // === Business Logic Constraints (MUST be enforced in Repository/Use Case Layer) ===
+    // 1. `uriStatus` MUST NOT be `UriStatus.UNKNOWN` when saving. Default to `NONE` if unset.
     // 2. If `uriStatus` is `UriStatus.NONE`, `folder_id` MUST be null.
-    // 3. If `uriStatus` is `UriStatus.BOOKMARKED`, `folder_id` MAY be non-null and MUST point to a FolderEntity with `folder_type = FolderType.BOOKMARK`.
-    // 4. If `uriStatus` is `UriStatus.BLOCKED`, `folder_id` MAY be non-null and MUST point to a FolderEntity with `folder_type = FolderType.BLOCK`.
-    // 5. If `uriStatus` is `UriStatus.BLOCKED`, `preferredBrowserPackage` and `isPreferenceEnabled` should ideally be cleared/ignored, but the DB schema allows them.
+    // 3. If `uriStatus` is `UriStatus.BOOKMARKED`, `folder_id` MAY be non-null and MUST point to a FolderEntity with `folder_type = FolderType.BOOKMARK`. If null, implies root bookmark folder.
+    // 4. If `uriStatus` is `UriStatus.BLOCKED`, `folder_id` MAY be non-null and MUST point to a FolderEntity with `folder_type = FolderType.BLOCK`. If null, implies root block folder.
+    // 5. If `uriStatus` is set to `UriStatus.BLOCKED`, `preferredBrowserPackage` MUST be set to null and `isPreferenceEnabled` MUST be set to false.
+    // 6. If `uriStatus` is set to `UriStatus.NONE`, `folder_id` MUST be set to null. (Redundant with 2, but emphasizes cleanup)
+    // 7. `folderId` must reference a FolderEntity whose `folderType` matches the intent implied by `uriStatus` (BOOKMARK for BOOKMARKED, BLOCK for BLOCKED).
 )
 data class HostRuleEntity(
     @PrimaryKey(autoGenerate = true)
@@ -44,7 +46,7 @@ data class HostRuleEntity(
     @ColumnInfo(name = "host", collate = ColumnInfo.NOCASE)
     val host: String,
 
-    @ColumnInfo(name = "uri_status")
+    @ColumnInfo(name = "uri_status", typeAffinity = ColumnInfo.INTEGER)
     val uriStatus: UriStatus,
 
     @ColumnInfo(name = "folder_id")

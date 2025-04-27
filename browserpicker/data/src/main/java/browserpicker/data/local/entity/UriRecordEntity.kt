@@ -29,7 +29,8 @@ import kotlinx.datetime.Instant
         Index("timestamp"),
         Index("uri_string"),
         Index("interaction_action"),
-        Index("uri_source")
+        Index("uri_source"),
+        Index("chosen_browser_package")
     ]
 )
 data class UriRecordEntity(
@@ -46,10 +47,10 @@ data class UriRecordEntity(
     @ColumnInfo(name = "timestamp")
     val timestamp: Instant,
 
-    @ColumnInfo(name = "uri_source")
+    @ColumnInfo(name = "uri_source", typeAffinity = ColumnInfo.INTEGER)
     val uriSource: UriSource,
 
-    @ColumnInfo(name = "interaction_action")
+    @ColumnInfo(name = "interaction_action", typeAffinity = ColumnInfo.INTEGER)
     val interactionAction: InteractionAction,
 
     @ColumnInfo(name = "chosen_browser_package")
