@@ -1,8 +1,11 @@
 package browserpicker.domain.model
 
+import androidx.annotation.Keep
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 
 // Represents a single interaction with a URI, linked to a potential HostRule
+@Serializable
 data class UriRecord(
     val id: Long = 0,
     val uriString: String,
@@ -14,6 +17,7 @@ data class UriRecord(
 )
 
 // Represents a rule or preference applied to a specific host
+@Serializable
 data class HostRule(
     val id: Long = 0,
     val host: String,
@@ -26,7 +30,7 @@ data class HostRule(
     val updatedAt: Instant
 )
 
-// Represents a folder for organizing bookmarks or blocks
+@Serializable
 data class Folder(
     val id: Long = 0,
     val parentFolderId: Long? = null, // Null for root folders

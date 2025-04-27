@@ -1,5 +1,6 @@
 package browserpicker.data.local.entity
 
+import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -13,7 +14,6 @@ import androidx.room.PrimaryKey
         Index(value = ["usage_count"])
     ]
 )
-@Immutable
 data class BrowserUsageStatEntity(
     @PrimaryKey
     @ColumnInfo(name = "browser_package_name")

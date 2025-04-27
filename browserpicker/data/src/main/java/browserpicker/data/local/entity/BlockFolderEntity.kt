@@ -1,5 +1,6 @@
 package browserpicker.data.local.entity
 
+import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -25,7 +26,6 @@ import kotlinx.datetime.Instant
         Index("name")
     ]
 )
-@Immutable
 data class BlockFolderEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "block_folder_id")
