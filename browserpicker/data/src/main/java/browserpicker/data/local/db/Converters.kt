@@ -22,7 +22,7 @@ class InstantConverter @Inject constructor() {
 @ProvidedTypeConverter
 class UriSourceConverter @Inject constructor() {
     @TypeConverter
-    fun uriSourceToInt(uriSource: UriSource?): Int = uriSource?.value?: UriSource.UNKNOWN.value
+    fun uriSourceToInt(uriSource: UriSource): Int = uriSource.value
 
     @TypeConverter
     fun intToUriSource(value: Int): UriSource = UriSource.fromValue(value)

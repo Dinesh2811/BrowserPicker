@@ -1,6 +1,5 @@
 package browserpicker.domain.model
 
-import androidx.annotation.Keep
 import kotlinx.serialization.Serializable
 
 @Serializable
