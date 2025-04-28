@@ -19,8 +19,9 @@ class FoldersViewModel @Inject constructor(
     private val getFoldersUseCase: GetFoldersUseCase, // Use case to get folders
     private val createFolderUseCase: CreateFolderUseCase,
     private val updateFolderUseCase: UpdateFolderUseCase,
-    private val deleteFolderUseCase: DeleteFolderUseCase
+    private val deleteFolderUseCase: DeleteFolderUseCase,
     // TODO: Need Get *ALL* Folders use case if building tree from flat list
+//    private val getAllFoldersByTypeUseCase: GetAllFoldersByTypeUseCase
     // Let's assume for now GetFoldersUseCase(null, type) gets all roots,
     // and we recursively fetch children. This is inefficient.
     // ---->> REVISION: Need a use case to get ALL folders of a type.
@@ -42,10 +43,8 @@ class FoldersViewModel @Inject constructor(
         }
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000), replay = 1)
 
-
     private val _uiState = MutableStateFlow(FoldersScreenState())
     val uiState: StateFlow<FoldersScreenState> = _uiState.asStateFlow()
-
 
     init {
         viewModelScope.launch {

@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import browserpicker.presentation.*
+import browserpicker.presentation.folders.FoldersScreen
 import browserpicker.presentation.history.HistoryScreen
 import browserpicker.presentation.picker.BrowserAppInfo
 import browserpicker.presentation.rules.RulesScreen
@@ -65,11 +66,11 @@ private fun NavGraphBuilder.addRulesDestination(
 private fun NavGraphBuilder.addFoldersDestination(navController: NavHostController) {
     composable<Folders> { backStackEntry ->
         val args: Folders = backStackEntry.toRoute()
-//        FoldersScreen(
-//            viewModel = hiltViewModel(),
-//            initialType = args.type
-//            // onRuleClick = { ... }
-//        )
+        FoldersScreen(
+            viewModel = hiltViewModel(),
+            initialType = args.type
+            // onRuleClick = { ... }
+        )
     }
 }
 
