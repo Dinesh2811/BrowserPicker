@@ -17,7 +17,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class DataSourceModule {
+abstract class BrowserPickerDataSourceModule {
 
     // Bind implementations to their interfaces
     @Binds

@@ -11,14 +11,14 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module // Declare this as a Hilt module
-@InstallIn(ViewModelComponent::class) // Install in ViewModelComponent
-abstract class UseCaseModule { // Must be an abstract class for @Binds
+@InstallIn(SingletonComponent::class) // Install in ViewModelComponent
+abstract class BrowserPickerUseCaseModule { // Must be an abstract class for @Binds
 
     // InitializeAppDefaultsUseCase could arguably be Singleton if needed early,
     // but let's keep it ViewModelScoped for consistency with others here.
     // If it were Singleton, you'd use @InstallIn(SingletonComponent::class) and @Singleton
     @Binds // Bind the interface to the implementation
-    @ViewModelScoped // Apply the scope annotation to the binding method
+    @Singleton // Apply the scope annotation to the binding method
     abstract fun bindInitializeAppDefaultsUseCase(
         impl: InitializeAppDefaultsUseCaseImpl
     ): InitializeAppDefaultsUseCase
@@ -26,43 +26,43 @@ abstract class UseCaseModule { // Must be an abstract class for @Binds
 
     // URI Handling & History
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindHandleInterceptedUriUseCase(
         impl: HandleInterceptedUriUseCaseImpl
     ): HandleInterceptedUriUseCase
 
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindGetPagedUriHistoryUseCase(
         impl: GetPagedUriHistoryUseCaseImpl
     ): GetPagedUriHistoryUseCase
 
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindGetHistoryOverviewUseCase(
         impl: GetHistoryOverviewUseCaseImpl
     ): GetHistoryOverviewUseCase
 
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindRecordUriInteractionUseCase(
         impl: RecordUriInteractionUseCaseImpl
     ): RecordUriInteractionUseCase
 
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindGetHistoryFilterOptionsUseCase(
         impl: GetHistoryFilterOptionsUseCaseImpl
     ): GetHistoryFilterOptionsUseCase
 
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindDeleteUriRecordUseCase(
         impl: DeleteUriRecordUseCaseImpl
     ): DeleteUriRecordUseCase
 
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindClearUriHistoryUseCase(
         impl: ClearUriHistoryUseCaseImpl
     ): ClearUriHistoryUseCase
@@ -70,25 +70,25 @@ abstract class UseCaseModule { // Must be an abstract class for @Binds
 
     // Host Rules
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindGetHostRuleUseCase(
         impl: GetHostRuleUseCaseImpl
     ): GetHostRuleUseCase
 
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindGetHostRulesUseCase(
         impl: GetHostRulesUseCaseImpl
     ): GetHostRulesUseCase
 
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindSaveHostRuleUseCase(
         impl: SaveHostRuleUseCaseImpl
     ): SaveHostRuleUseCase
 
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindDeleteHostRuleUseCase(
         impl: DeleteHostRuleUseCaseImpl
     ): DeleteHostRuleUseCase
@@ -96,25 +96,25 @@ abstract class UseCaseModule { // Must be an abstract class for @Binds
 
     // Folders
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindGetFoldersUseCase(
         impl: GetFoldersUseCaseImpl
     ): GetFoldersUseCase
 
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindCreateFolderUseCase(
         impl: CreateFolderUseCaseImpl
     ): CreateFolderUseCase
 
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindUpdateFolderUseCase(
         impl: UpdateFolderUseCaseImpl
     ): UpdateFolderUseCase
 
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindDeleteFolderUseCase(
         impl: DeleteFolderUseCaseImpl
     ): DeleteFolderUseCase
@@ -122,13 +122,13 @@ abstract class UseCaseModule { // Must be an abstract class for @Binds
 
     // Browser Stats
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindGetBrowserStatsUseCase(
         impl: GetBrowserStatsUseCaseImpl
     ): GetBrowserStatsUseCase
 
     @Binds
-    @ViewModelScoped
+    @Singleton
     abstract fun bindClearBrowserStatsUseCase(
         impl: ClearBrowserStatsUseCaseImpl
     ): ClearBrowserStatsUseCase

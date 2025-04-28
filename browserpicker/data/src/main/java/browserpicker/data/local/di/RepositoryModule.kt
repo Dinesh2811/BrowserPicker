@@ -16,7 +16,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class RepositoryModule {
+abstract class BrowserPickerRepositoryModule {
     @Binds
     @Singleton
     abstract fun bindUriHistoryRepository(repositoryImpl: UriHistoryRepositoryImpl): UriHistoryRepository

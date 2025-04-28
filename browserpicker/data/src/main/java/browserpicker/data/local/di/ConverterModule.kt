@@ -13,7 +13,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object ConverterModule {
+object BrowserPickerConverterModule {
     @Provides @Singleton
     fun provideInstantConverter(): InstantConverter = InstantConverter()
 
