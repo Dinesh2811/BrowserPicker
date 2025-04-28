@@ -1,31 +1,39 @@
 package browserpicker.domain.model.query
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 enum class SortOrder {
     ASC,
     DESC
 }
 
-enum class LogSortField(val dbColumnName: String) {
-    TIMESTAMP("intercepted_timestamp"),
-    URI("intercepted_uri"),
-    BROWSER_PACKAGE("chosen_browser_package_name"),
-    ACTION("action_taken"),
+@Immutable
+enum class UriRecordSortField(val dbColumnName: String) {
+    TIMESTAMP("timestamp"),
+    URI_STRING("uri_string"),
+    HOST("host"),
+    CHOSEN_BROWSER("chosen_browser_package"),
+    INTERACTION_ACTION("interaction_action"),
     URI_SOURCE("uri_source")
+    // Add more fields if needed, e.g., ID("uri_record_id")
 }
 
-enum class LogGroupField(val dbColumnName: String?) {
+@Immutable
+enum class UriRecordGroupField(val dbColumnNameOrExpression: String?) {
     NONE(null),
-    ACTION("action_taken"),
-    BROWSER("chosen_browser_package_name"),
+    INTERACTION_ACTION("interaction_action"),
+    CHOSEN_BROWSER("chosen_browser_package"),
     URI_SOURCE("uri_source"),
-    DATE("DATE(intercepted_timestamp / 1000, 'unixepoch')")
+    HOST("host"),
+    DATE("STRFTIME('%Y-%m-%d', timestamp / 1000, 'unixepoch', 'localtime')")
 }
 
-data class LogAdvancedFilter(
-    val customSqlCondition: String, // e.g. "action_taken IN (?, ?)" OR "LENGTH(intercepted_uri) > ?"
+@Immutable
+data class UriRecordAdvancedFilter(
+    val customSqlCondition: String,
     val args: List<Any>
 ) {
-    // Basic validation to ensure placeholders match arg count (optional but helpful)
     init {
         require(customSqlCondition.count { it == '?' } == args.size) {
             "Number of placeholders '?' in customSqlCondition must match the number of args. " +

@@ -7,23 +7,30 @@ import kotlinx.datetime.LocalDate
 
 @Immutable
 sealed interface GroupKey {
-
     @Immutable
     data class Date(val value: LocalDate): GroupKey
 
     @Immutable
-    data class Action(val value: InteractionAction): GroupKey
+    data class InteractionActionKey(val value: InteractionAction): GroupKey
 
     @Immutable
-    data class Browser(val value: String): GroupKey
+    data class UriSourceKey(val value: UriSource): GroupKey
 
     @Immutable
-    data class Source(val value: UriSource): GroupKey
+    data class HostKey(val value: String): GroupKey
+
+    @Immutable
+    data class ChosenBrowserKey(val value: String): GroupKey {
+        companion object {
+            const val NULL_BROWSER_MARKER = "Unknown Browser"
+        }
+    }
 }
 
 fun groupKeyToStableString(key: GroupKey): String = when (key) {
-    is GroupKey.Date -> key.value.toString()
-    is GroupKey.Action -> key.value.name
-    is GroupKey.Browser -> key.value
-    is GroupKey.Source -> key.value.name
+    is GroupKey.Date -> "DATE_${key.value.toString()}"
+    is GroupKey.InteractionActionKey -> "ACTION_${key.value.name}"
+    is GroupKey.UriSourceKey -> "SOURCE_${key.value.name}"
+    is GroupKey.HostKey -> "HOST_${key.value}"
+    is GroupKey.ChosenBrowserKey -> "BROWSER_${key.value}"
 }
