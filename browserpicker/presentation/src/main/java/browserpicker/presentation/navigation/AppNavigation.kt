@@ -13,6 +13,7 @@ import browserpicker.presentation.folders.FoldersScreen
 import browserpicker.presentation.history.HistoryScreen
 import browserpicker.presentation.picker.BrowserAppInfo
 import browserpicker.presentation.rules.RulesScreen
+import browserpicker.presentation.settings.SettingsScreen
 import browserpicker.presentation.stats.StatsScreen
 
 @Composable
@@ -85,8 +86,8 @@ private fun NavGraphBuilder.addStatsDestination(navController: NavHostController
 
 private fun NavGraphBuilder.addSettingsDestination(navController: NavHostController) {
     composable<Settings> {
-//        SettingsScreen(
-//            // viewModel = hiltViewModel() // If settings has a VM
-//        )
+        SettingsScreen(
+            // viewModel = hiltViewModel() // If settings has a VM
+        )
     }
 }
