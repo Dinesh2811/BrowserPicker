@@ -78,15 +78,11 @@ fun MainScreen(
     // Show messages from MainViewModel (global messages)
     LaunchedEffect(mainState.userMessages) {
         mainState.userMessages.firstOrNull()?.let { message ->
-            val result = snackbarHostState.showSnackbar(
-                message = message.message,
-                duration = SnackbarDuration.Short
-            )
+            snackbarHostState.showSnackbar(message.message, duration = SnackbarDuration.Short)
             // TODO: Add action button if needed based on result
             viewModel.clearMessage(message.id) // Consume message
         }
     }
-
 
     BottomSheetScaffold(
         scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState),

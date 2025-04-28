@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import browserpicker.presentation.*
+import browserpicker.presentation.history.HistoryScreen
 
 @Composable
 fun AppNavigation(
@@ -35,11 +36,11 @@ fun AppNavigation(
 
 private fun NavGraphBuilder.addHistoryDestination(navController: NavHostController) {
     composable<History> { // Type-safe destination
-//        HistoryScreen(
-//            viewModel = hiltViewModel()
-//            // Pass navigation lambdas if needed, e.g.:
-//            // onRuleClick = { host -> navController.navigate(/* specific rule screen */) }
-//        )
+        HistoryScreen(
+            viewModel = hiltViewModel()
+            // Pass navigation lambdas if needed, e.g.:
+            // onRuleClick = { host -> navController.navigate(/* specific rule screen */) }
+        )
     }
 }
 
