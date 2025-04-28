@@ -1,112 +1,173 @@
 package browserpicker.data.local.query
 
+import androidx.room.ColumnInfo
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteQuery
 import browserpicker.domain.model.query.UriRecordGroupField
-import browserpicker.domain.model.query.UriRecordQueryConfig
 import browserpicker.domain.model.query.UriRecordSortField
 import browserpicker.domain.model.InteractionAction
 import browserpicker.domain.model.UriSource
-import browserpicker.domain.model.query.GroupKey
-import browserpicker.domain.model.query.UriRecordAdvancedFilter
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.compose.runtime.Immutable
+import browserpicker.domain.model.query.SortOrder
+import kotlinx.datetime.LocalDate
+
+@Immutable
+data class UriRecordQueryConfig(
+    val searchQuery: String? = null,
+    val filterByUriSource: Set<UriSource>? = null,
+    val filterByInteractionAction: Set<InteractionAction>? = null,
+    val filterByChosenBrowser: Set<String?>? = null,
+    val filterByHost: Set<String>? = null,
+    val filterByDateRange: Pair<Instant, Instant>? = null,
+    val sortBy: UriRecordSortField = UriRecordSortField.TIMESTAMP,
+    val sortOrder: SortOrder = SortOrder.DESC,
+    val groupBy: UriRecordGroupField = UriRecordGroupField.NONE,
+    val groupSortOrder: SortOrder = SortOrder.ASC,
+    val advancedFilters: List<UriRecordAdvancedFilter> = emptyList()
+) {
+    companion object {
+        val DEFAULT = UriRecordQueryConfig()
+    }
+}
+
+@Immutable
+data class UriRecordAdvancedFilter(
+    val customSqlCondition: String,
+    val args: List<Any>
+) {
+    init {
+        val placeholderCount = customSqlCondition.count { it == '?' }
+        require(placeholderCount == args.size) {
+            "Number of placeholders '?' ($placeholderCount) in customSqlCondition must match the number of args (${args.size}). " +
+                    "SQL: '$customSqlCondition', Args: $args"
+        }
+    }
+}
+
+@Immutable
+sealed interface GroupKey {
+    @Immutable @JvmInline value class Date(val value: LocalDate) : GroupKey
+    @Immutable @JvmInline value class InteractionActionKey(val value: InteractionAction) : GroupKey
+    @Immutable @JvmInline value class UriSourceKey(val value: UriSource) : GroupKey
+    @Immutable @JvmInline value class HostKey(val value: String) : GroupKey
+    @Immutable @JvmInline value class ChosenBrowserKey(val value: String) : GroupKey
+
+    companion object {
+        const val NULL_BROWSER_GROUP_VALUE = "browser_picker_null_browser"
+        const val NULL_BROWSER_DISPLAY_NAME = "Unknown Browser"
+    }
+}
+
+fun groupKeyToStableString(key: GroupKey): String = when (key) {
+    is GroupKey.Date -> "DATE_${key.value}"
+    is GroupKey.InteractionActionKey -> "ACTION_${key.value.name}"
+    is GroupKey.UriSourceKey -> "SOURCE_${key.value.name}"
+    is GroupKey.HostKey -> "HOST_${key.value}"
+    is GroupKey.ChosenBrowserKey -> "BROWSER_${key.value}"
+}
+
+@Serializable
+data class GroupCount(
+    @ColumnInfo(name = "groupValue")
+    val groupValue: String?,
+    @ColumnInfo(name = "count")
+    val count: Int
+)
+
+@Serializable
+data class DateCount(
+    @ColumnInfo(name = "dateString")
+    val dateString: String?,
+    @ColumnInfo(name = "count")
+    val count: Int
+)
 
 @Singleton
 class UriRecordQueryBuilder @Inject constructor() {
-    private val TAG = "UriRecordQueryBuilder"
 
-    // --- Column Name Constants (Ensure these EXACTLY match UriRecordEntity @ColumnInfo names) ---
-    // It's crucial these are accurate and maintained alongside the Entity definition.
-    private object Columns {
-        const val TABLE_NAME = "uri_records"
-        const val ID = "uri_record_id"
-        const val URI_STRING = "uri_string"
-        const val HOST = "host"
-        const val TIMESTAMP = "timestamp"
-        const val URI_SOURCE = "uri_source"
-        const val INTERACTION_ACTION = "interaction_action"
-        const val CHOSEN_BROWSER = "chosen_browser_package"
-        const val ASSOCIATED_RULE_ID = "associated_host_rule_id"
-    }
+    companion object {
+        private const val TAG = "UriRecordQueryBuilder"
 
-    private object SafeQuery {
-        // --- Selected Columns for standard queries ---
-        val SELECT_COLUMNS_SQL = """
-        ${Columns.ID}, ${Columns.URI_STRING}, ${Columns.HOST}, ${Columns.TIMESTAMP}, ${Columns.URI_SOURCE},
-        ${Columns.INTERACTION_ACTION}, ${Columns.CHOSEN_BROWSER}, ${Columns.ASSOCIATED_RULE_ID}
-    """.trimIndent()
+        internal object Columns {
+            const val TABLE_NAME = "uri_records"
+            const val ID = "uri_record_id"
+            const val URI_STRING = "uri_string"
+            const val HOST = "host"
+            const val TIMESTAMP = "timestamp"
+            const val URI_SOURCE = "uri_source"
+            const val INTERACTION_ACTION = "interaction_action"
+            const val CHOSEN_BROWSER = "chosen_browser_package"
+            const val ASSOCIATED_RULE_ID = "associated_host_rule_id"
+        }
 
-        // --- Safe Fallback Queries ---
-        val SAFE_EMPTY_QUERY by lazy {
+        internal object Expressions {
+            val DATE_GROUP = "STRFTIME('%Y-%m-%d', ${Columns.TIMESTAMP} / 1000, 'unixepoch', 'localtime')"
+        }
+
+        private val SELECT_COLUMNS_SQL = """
+            ${Columns.ID}, ${Columns.URI_STRING}, ${Columns.HOST}, ${Columns.TIMESTAMP}, ${Columns.URI_SOURCE},
+            ${Columns.INTERACTION_ACTION}, ${Columns.CHOSEN_BROWSER}, ${Columns.ASSOCIATED_RULE_ID}
+        """.trimIndent()
+
+        val SAFE_EMPTY_QUERY: SupportSQLiteQuery by lazy {
+            Timber.tag(TAG).w("Returning SAFE_EMPTY_QUERY")
             SimpleSQLiteQuery("SELECT $SELECT_COLUMNS_SQL FROM ${Columns.TABLE_NAME} WHERE 0")
         }
-        val SAFE_EMPTY_COUNT_QUERY by lazy {
-            SimpleSQLiteQuery("SELECT COUNT(*) FROM ${Columns.TABLE_NAME} WHERE 0")
+        val SAFE_EMPTY_COUNT_QUERY: SupportSQLiteQuery by lazy {
+            Timber.tag(TAG).w("Returning SAFE_EMPTY_COUNT_QUERY")
+            SimpleSQLiteQuery("SELECT COUNT(${Columns.ID}) FROM ${Columns.TABLE_NAME} WHERE 0")
         }
-        val SAFE_EMPTY_DATE_COUNT_QUERY by lazy {
-            // Provides the expected columns (dateString, count) with zero results
+        val SAFE_EMPTY_DATE_COUNT_QUERY: SupportSQLiteQuery by lazy {
+            Timber.tag(TAG).w("Returning SAFE_EMPTY_DATE_COUNT_QUERY")
             SimpleSQLiteQuery("SELECT NULL as dateString, 0 as count WHERE 0")
         }
-        val SAFE_EMPTY_GROUP_COUNT_QUERY by lazy {
-            // Provides the expected columns (groupValue, count) with zero results
+        val SAFE_EMPTY_GROUP_COUNT_QUERY: SupportSQLiteQuery by lazy {
+            Timber.tag(TAG).w("Returning SAFE_EMPTY_GROUP_COUNT_QUERY")
             SimpleSQLiteQuery("SELECT NULL as groupValue, 0 as count WHERE 0")
         }
     }
 
-
-    // === Public Query Building Methods ===
-
-    /**
-     * Builds a query suitable for PagingSource, incorporating filtering, sorting, and grouping display logic.
-     */
     fun buildPagedQuery(config: UriRecordQueryConfig): SupportSQLiteQuery {
         return runCatching {
             val (whereStatement, queryArgs) = buildWhereClause(config)
             val orderByStatement = buildOrderByClause(config)
 
-            val queryString = "SELECT ${SafeQuery.SELECT_COLUMNS_SQL} FROM ${Columns.TABLE_NAME}$whereStatement$orderByStatement"
+            val queryString = "SELECT $SELECT_COLUMNS_SQL FROM ${Columns.TABLE_NAME}$whereStatement$orderByStatement"
 
             Timber.tag(TAG).d("Generated Paged Query: %s | Args: %s", queryString, queryArgs)
-
             SimpleSQLiteQuery(queryString, queryArgs.toTypedArray())
 
         }.getOrElse { e ->
             Timber.tag(TAG).e(e, "Failed to build paged query for config: %s", config)
-            SafeQuery.SAFE_EMPTY_QUERY
+            SAFE_EMPTY_QUERY
         }
     }
 
-    /**
-     * Builds a query to count the total number of records matching the filter criteria.
-     */
     fun buildTotalCountQuery(config: UriRecordQueryConfig): SupportSQLiteQuery {
         return runCatching {
             val (whereStatement, queryArgs) = buildWhereClause(config)
             val queryString = "SELECT COUNT(${Columns.ID}) FROM ${Columns.TABLE_NAME}$whereStatement"
 
             Timber.tag(TAG).d("Generated Total Count Query: %s | Args: %s", queryString, queryArgs)
-
             SimpleSQLiteQuery(queryString, queryArgs.toTypedArray())
 
         }.getOrElse { e ->
             Timber.tag(TAG).e(e, "Failed to build total count query for config: %s", config)
-            SafeQuery.SAFE_EMPTY_COUNT_QUERY
+            SAFE_EMPTY_COUNT_QUERY
         }
     }
 
-    /**
-     * Builds a query to count records grouped by date (YYYY-MM-DD).
-     */
     fun buildDateCountQuery(config: UriRecordQueryConfig): SupportSQLiteQuery {
-        val dateGroupingExpression = UriRecordGroupField.DATE.dbColumnNameOrExpression
-        requireNotNull(dateGroupingExpression) { "Date grouping SQL expression is unexpectedly missing!" }
+        val dateGroupingExpression = mapGroupFieldToSql(UriRecordGroupField.DATE)
+        requireNotNull(dateGroupingExpression)
 
         return runCatching {
             val (whereStatement, queryArgs) = buildWhereClause(config)
-            // Alias the grouping expression to match the DateCount DTO
             val queryString = """
                 SELECT $dateGroupingExpression as dateString, COUNT(${Columns.ID}) as count
                 FROM ${Columns.TABLE_NAME}
@@ -116,102 +177,111 @@ class UriRecordQueryBuilder @Inject constructor() {
             """.trimIndent()
 
             Timber.tag(TAG).d("Generated Date Count Query: %s | Args: %s", queryString, queryArgs)
-
             SimpleSQLiteQuery(queryString, queryArgs.toTypedArray())
 
         }.getOrElse { e ->
             Timber.tag(TAG).e(e, "Failed to build date count query for config: %s", config)
-            SafeQuery.SAFE_EMPTY_DATE_COUNT_QUERY
+            SAFE_EMPTY_DATE_COUNT_QUERY
         }
     }
 
-    /**
-     * Builds a query to count records grouped by a specific field (excluding Date and None).
-     */
     fun buildGroupCountQuery(config: UriRecordQueryConfig): SupportSQLiteQuery {
         return runCatching {
             val groupingField = config.groupBy
-            val groupingColumn = groupingField.dbColumnNameOrExpression
+            val groupingColumnOrExpr = mapGroupFieldToSql(groupingField)
 
-            // Validate if grouping is feasible and requested
-            if (groupingColumn == null || groupingField == UriRecordGroupField.NONE || groupingField == UriRecordGroupField.DATE) {
+            if (groupingColumnOrExpr == null || groupingField == UriRecordGroupField.NONE || groupingField == UriRecordGroupField.DATE) {
                 Timber.tag(TAG).w("buildGroupCountQuery called with invalid/unsupported group field: %s. Returning empty.", groupingField)
-                return SafeQuery.SAFE_EMPTY_GROUP_COUNT_QUERY
+                return SAFE_EMPTY_GROUP_COUNT_QUERY
             }
 
             val (whereStatement, queryArgs) = buildWhereClause(config)
+
             val effectiveGroupingColumn = if (groupingField == UriRecordGroupField.CHOSEN_BROWSER) {
-                "COALESCE($groupingColumn, '${GroupKey.NULL_BROWSER_GROUP_VALUE}')"
+                "COALESCE($groupingColumnOrExpr, '${GroupKey.NULL_BROWSER_GROUP_VALUE}')"
             } else {
-                groupingColumn
+                groupingColumnOrExpr
             }
+
+            val groupOrderBy = "groupValue ${config.groupSortOrder.name}"
 
             val queryString = """
                 SELECT $effectiveGroupingColumn as groupValue, COUNT(${Columns.ID}) as count
                 FROM ${Columns.TABLE_NAME}
                 $whereStatement
                 GROUP BY groupValue
-                ORDER BY groupValue ASC
+                ORDER BY $groupOrderBy
             """.trimIndent()
 
             Timber.tag(TAG).d("Generated Group Count Query (%s): %s | Args: %s", groupingField, queryString, queryArgs)
-
             SimpleSQLiteQuery(queryString, queryArgs.toTypedArray())
 
         }.getOrElse { e ->
             Timber.tag(TAG).e(e, "Failed to build group count query for config: %s", config)
-            SafeQuery.SAFE_EMPTY_GROUP_COUNT_QUERY // Return safe query on error
+            SAFE_EMPTY_GROUP_COUNT_QUERY
         }
     }
 
+    private fun mapSortFieldToSql(field: UriRecordSortField): String {
+        return when (field) {
+            UriRecordSortField.TIMESTAMP -> Columns.TIMESTAMP
+            UriRecordSortField.URI_STRING -> Columns.URI_STRING
+            UriRecordSortField.HOST -> Columns.HOST
+            UriRecordSortField.CHOSEN_BROWSER -> Columns.CHOSEN_BROWSER
+            UriRecordSortField.INTERACTION_ACTION -> Columns.INTERACTION_ACTION
+            UriRecordSortField.URI_SOURCE -> Columns.URI_SOURCE
+        }
+    }
 
-    // === Private Helper Methods ===
+    private fun mapGroupFieldToSql(field: UriRecordGroupField): String? {
+        return when (field) {
+            UriRecordGroupField.NONE -> null
+            UriRecordGroupField.INTERACTION_ACTION -> Columns.INTERACTION_ACTION
+            UriRecordGroupField.CHOSEN_BROWSER -> Columns.CHOSEN_BROWSER
+            UriRecordGroupField.URI_SOURCE -> Columns.URI_SOURCE
+            UriRecordGroupField.HOST -> Columns.HOST
+            UriRecordGroupField.DATE -> Expressions.DATE_GROUP
+        }
+    }
 
-    /**
-     * Constructs the ORDER BY clause based on grouping and sorting configuration.
-     * Ensures stable sorting by adding primary key as a secondary sort criterion.
-     */
     private fun buildOrderByClause(config: UriRecordQueryConfig): String {
         val orderByClauses = mutableListOf<String>()
         val groupField = config.groupBy
-        val groupingExpression = groupField.dbColumnNameOrExpression
+        val groupingExpression = mapGroupFieldToSql(groupField)
+        val groupSortOrder = config.groupSortOrder
 
-        // 1. Grouping Order (if grouping is enabled)
         if (groupField != UriRecordGroupField.NONE && groupingExpression != null) {
             val groupSortExpression = when (groupField) {
-                UriRecordGroupField.CHOSEN_BROWSER -> "CASE WHEN $groupingExpression IS NULL THEN 1 ELSE 0 END, COALESCE($groupingExpression, '${GroupKey.NULL_BROWSER_GROUP_VALUE}')" // Sort nulls last
-                UriRecordGroupField.DATE -> groupingExpression
-                else -> groupingExpression
+                UriRecordGroupField.CHOSEN_BROWSER -> {
+                    "CASE WHEN $groupingExpression IS NULL THEN 1 ELSE 0 END ${groupSortOrder.name}, " +
+                            "COALESCE($groupingExpression, '${GroupKey.NULL_BROWSER_GROUP_VALUE}') ${groupSortOrder.name}"
+                }
+                UriRecordGroupField.DATE -> "$groupingExpression ${groupSortOrder.name}"
+                else -> "$groupingExpression ${groupSortOrder.name}" // Corrected line
             }
-            // TODO: Make the Group sorting dynamic and should me customisable on sorting instead of hard coded sorting.
-            orderByClauses.add("$groupSortExpression ASC")
+            orderByClauses.add(groupSortExpression)
         }
 
-        // 2. User-defined Sort Order
-        val userSortByColumn = config.sortBy.dbColumnName
+        val userSortByColumn = mapSortFieldToSql(config.sortBy)
         val userSortOrder = config.sortOrder.name
         val userSortExpression = when (config.sortBy) {
-            UriRecordSortField.CHOSEN_BROWSER -> "CASE WHEN $userSortByColumn IS NULL THEN 1 ELSE 0 END, $userSortByColumn"
-            else -> userSortByColumn
+            UriRecordSortField.CHOSEN_BROWSER -> {
+                "CASE WHEN $userSortByColumn IS NULL THEN 1 ELSE 0 END ${userSortOrder}, " +
+                        "$userSortByColumn ${userSortOrder}"
+            }
+            else -> "$userSortByColumn $userSortOrder"
         }
-        orderByClauses.add("$userSortExpression $userSortOrder")
+        orderByClauses.add(userSortExpression)
 
-        // 3. Stable Sort: Add primary key descending as the final tie-breaker
-        // Ensures consistent ordering even if all other fields are identical.
         orderByClauses.add("${Columns.ID} DESC")
 
         return " ORDER BY ${orderByClauses.joinToString(", ")}"
     }
 
-    /**
-     * Constructs the WHERE clause and collects bind arguments based on the config.
-     * Returns Pair(whereStatement: String, queryArgs: List<Any>).
-     */
     private fun buildWhereClause(config: UriRecordQueryConfig): Pair<String, List<Any>> {
         val conditions = mutableListOf<String>()
         val queryArgs = mutableListOf<Any>()
 
-        // Apply filters sequentially, modifying conditions and queryArgs
         appendSearchTermClause(config.searchQuery, conditions, queryArgs)
         appendUriSourceFilter(config.filterByUriSource, conditions, queryArgs)
         appendInteractionActionFilter(config.filterByInteractionAction, conditions, queryArgs)
@@ -220,7 +290,6 @@ class UriRecordQueryBuilder @Inject constructor() {
         appendDateRangeFilter(config.filterByDateRange, conditions, queryArgs)
         appendAdvancedFilters(config.advancedFilters, conditions, queryArgs)
 
-        // Combine all conditions with AND
         val whereStatement = if (conditions.isNotEmpty()) {
             " WHERE ${conditions.joinToString(" AND ")}"
         } else {
@@ -230,15 +299,14 @@ class UriRecordQueryBuilder @Inject constructor() {
         return Pair(whereStatement, queryArgs)
     }
 
-    // --- Specific Clause Appenders ---
-
     private fun appendSearchTermClause(
         searchTerm: String?,
         conditions: MutableList<String>,
         queryArgs: MutableList<Any>
     ) {
-        searchTerm?.trim()?.takeIf { it.isNotEmpty() }?.let { trimmedSearchTerm ->
-            val likePattern = "%$trimmedSearchTerm%"
+        val trimmedSearch = searchTerm?.trim()
+        if (!trimmedSearch.isNullOrEmpty()) {
+            val likePattern = "%$trimmedSearch%"
             conditions.add("(${Columns.URI_STRING} LIKE ? OR ${Columns.HOST} LIKE ? OR COALESCE(${Columns.CHOSEN_BROWSER}, '') LIKE ?)")
             queryArgs.add(likePattern)
             queryArgs.add(likePattern)
@@ -251,10 +319,10 @@ class UriRecordQueryBuilder @Inject constructor() {
         conditions: MutableList<String>,
         queryArgs: MutableList<Any>
     ) {
-        sources?.takeIf { it.isNotEmpty() }?.let { validSources ->
-            val placeholders = validSources.joinToString { "?" }
+        if (!sources.isNullOrEmpty()) {
+            val placeholders = sources.joinToString { "?" }
             conditions.add("${Columns.URI_SOURCE} IN ($placeholders)")
-            queryArgs.addAll(validSources.map { it.value })
+            queryArgs.addAll(sources.map { it.value })
         }
     }
 
@@ -263,10 +331,10 @@ class UriRecordQueryBuilder @Inject constructor() {
         conditions: MutableList<String>,
         queryArgs: MutableList<Any>
     ) {
-        actions?.takeIf { it.isNotEmpty() }?.let { validActions ->
-            val placeholders = validActions.joinToString { "?" }
+        if (!actions.isNullOrEmpty()) {
+            val placeholders = actions.joinToString { "?" }
             conditions.add("${Columns.INTERACTION_ACTION} IN ($placeholders)")
-            queryArgs.addAll(validActions.map { it.value })
+            queryArgs.addAll(actions.map { it.value })
         }
     }
 
@@ -275,9 +343,9 @@ class UriRecordQueryBuilder @Inject constructor() {
         conditions: MutableList<String>,
         queryArgs: MutableList<Any>
     ) {
-        browsers?.takeIf { it.isNotEmpty() }?.let { validBrowsers ->
-            val nonNullBrowsers = validBrowsers.filterNotNull()
-            val containsNullFilter = validBrowsers.any { it == null }
+        if (!browsers.isNullOrEmpty()) {
+            val nonNullBrowsers = browsers.filterNotNull()
+            val containsNullFilter = browsers.any { it == null }
             val browserConditions = mutableListOf<String>()
 
             if (nonNullBrowsers.isNotEmpty()) {
@@ -300,10 +368,10 @@ class UriRecordQueryBuilder @Inject constructor() {
         conditions: MutableList<String>,
         queryArgs: MutableList<Any>
     ) {
-        hosts?.takeIf { it.isNotEmpty() }?.let { validHosts ->
-            val placeholders = validHosts.joinToString { "?" }
+        if (!hosts.isNullOrEmpty()) {
+            val placeholders = hosts.joinToString { "?" }
             conditions.add("${Columns.HOST} IN ($placeholders)")
-            queryArgs.addAll(validHosts)
+            queryArgs.addAll(hosts)
         }
     }
 
@@ -321,7 +389,8 @@ class UriRecordQueryBuilder @Inject constructor() {
                 queryArgs.add(startMillis)
                 queryArgs.add(endMillis)
             } else {
-                Timber.tag(TAG).w("Invalid date range provided: startTime=%s, endTime=%s. Ignoring filter.", startTime, endTime)
+                Timber.tag(TAG).w("Invalid date range provided: startTime=%s (%dms), endTime=%s (%dms). Ignoring filter.",
+                    startTime, startMillis, endTime, endMillis)
             }
         }
     }
@@ -334,6 +403,8 @@ class UriRecordQueryBuilder @Inject constructor() {
         advancedFilters.forEach { advFilter ->
             conditions.add("(${advFilter.customSqlCondition})")
             queryArgs.addAll(advFilter.args)
+            Timber.tag(TAG).d("Appending advanced filter: SQL='%s', Args=%s", advFilter.customSqlCondition, advFilter.args)
         }
     }
 }
+

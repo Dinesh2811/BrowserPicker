@@ -58,20 +58,20 @@ interface BrowserPickerRepository {
     suspend fun getUriHost(uriString: String): Result<String> // Utility maybe needed
 }
 
-// Helper domain models/enums for repository parameters (place in domain/model)
-//data class PagingConfig(
-//    val pageSize: Int = 20,
-//    val prefetchDistance: Int = 5,
-//    val enablePlaceholders: Boolean = false,
-//    val initialLoadSize: Int = 60, // Often 3 * pageSize
-//    val maxSize: Int = PagingConfig.MAX_SIZE_UNBOUNDED
+//// Helper domain models/enums for repository parameters (place in domain/model)
+////data class PagingConfig(
+////    val pageSize: Int = 20,
+////    val prefetchDistance: Int = 5,
+////    val enablePlaceholders: Boolean = false,
+////    val initialLoadSize: Int = 60, // Often 3 * pageSize
+////    val maxSize: Int = PagingConfig.MAX_SIZE_UNBOUNDED
+////)
+//
+//// Example Sort Preference - Adapt as needed
+//data class SortPreference(
+//    val column: SortColumn,
+//    val order: SortOrder
 //)
-
-// Example Sort Preference - Adapt as needed
-data class SortPreference(
-    val column: SortColumn,
-    val order: SortOrder
-)
-
-enum class SortColumn { TIMESTAMP, HOST, URI_STRING /* ... other relevant columns */ }
-enum class SortOrder { ASCENDING, DESCENDING }
+//
+//enum class SortColumn { TIMESTAMP, HOST, URI_STRING /* ... other relevant columns */ }
+//enum class SortOrder { ASCENDING, DESCENDING }
