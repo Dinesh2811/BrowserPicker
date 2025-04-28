@@ -5,7 +5,6 @@ import browserpicker.data.local.dao.FolderDao
 import browserpicker.data.local.dao.HostRuleDao
 import browserpicker.data.local.dao.UriRecordDao
 import browserpicker.data.local.repository.*
-import browserpicker.domain.repository.BrowserPickerRepository
 import browserpicker.domain.repository.*
 import dagger.Binds
 import dagger.Module
