@@ -35,8 +35,4 @@ abstract class DataSourceModule {
     @Binds
     @Singleton
     abstract fun bindBrowserStatsLocalDataSource(impl: BrowserStatsLocalDataSourceImpl): BrowserStatsLocalDataSource
-
-    @Binds
-    @Singleton
-    abstract fun bindInstantProvider(impl: SystemClockInstantProvider): InstantProvider
 }

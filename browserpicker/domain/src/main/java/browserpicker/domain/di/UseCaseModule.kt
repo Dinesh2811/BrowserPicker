@@ -1,6 +1,7 @@
 package browserpicker.domain.di
 
 import browserpicker.domain.usecase.*
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -9,95 +10,127 @@ import dagger.hilt.android.scopes.ViewModelScoped
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+@Module // Declare this as a Hilt module
+@InstallIn(ViewModelComponent::class) // Install in ViewModelComponent
+abstract class UseCaseModule { // Must be an abstract class for @Binds
 
-// --- Use Cases can often be scoped shorter than Singleton ---
-// ViewModelScoped is common if UseCases hold no state and are used by ViewModels.
-// Use Singleton if they truly need to be single instances across the app lifecycle.
-// Let's start with ViewModelScoped as a reasonable default. Adjust if needed.
+    // InitializeAppDefaultsUseCase could arguably be Singleton if needed early,
+    // but let's keep it ViewModelScoped for consistency with others here.
+    // If it were Singleton, you'd use @InstallIn(SingletonComponent::class) and @Singleton
+    @Binds // Bind the interface to the implementation
+    @ViewModelScoped // Apply the scope annotation to the binding method
+    abstract fun bindInitializeAppDefaultsUseCase(
+        impl: InitializeAppDefaultsUseCaseImpl
+    ): InitializeAppDefaultsUseCase
 
-@Module
-@InstallIn(ViewModelComponent::class) // Scope to ViewModel lifecycle
-object UseCaseModule {
-
-    // Initialization (Could be Singleton if needed early)
-    @Provides
-    @ViewModelScoped
-    fun provideInitializeAppDefaultsUseCase(impl: InitializeAppDefaultsUseCaseImpl): InitializeAppDefaultsUseCase = impl
 
     // URI Handling & History
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideHandleInterceptedUriUseCase(impl: HandleInterceptedUriUseCaseImpl): HandleInterceptedUriUseCase = impl
+    abstract fun bindHandleInterceptedUriUseCase(
+        impl: HandleInterceptedUriUseCaseImpl
+    ): HandleInterceptedUriUseCase
 
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideGetPagedUriHistoryUseCase(impl: GetPagedUriHistoryUseCaseImpl): GetPagedUriHistoryUseCase = impl
+    abstract fun bindGetPagedUriHistoryUseCase(
+        impl: GetPagedUriHistoryUseCaseImpl
+    ): GetPagedUriHistoryUseCase
 
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideGetHistoryOverviewUseCase(impl: GetHistoryOverviewUseCaseImpl): GetHistoryOverviewUseCase = impl
+    abstract fun bindGetHistoryOverviewUseCase(
+        impl: GetHistoryOverviewUseCaseImpl
+    ): GetHistoryOverviewUseCase
 
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideRecordUriInteractionUseCase(impl: RecordUriInteractionUseCaseImpl): RecordUriInteractionUseCase = impl
+    abstract fun bindRecordUriInteractionUseCase(
+        impl: RecordUriInteractionUseCaseImpl
+    ): RecordUriInteractionUseCase
 
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideGetHistoryFilterOptionsUseCase(impl: GetHistoryFilterOptionsUseCaseImpl): GetHistoryFilterOptionsUseCase = impl
+    abstract fun bindGetHistoryFilterOptionsUseCase(
+        impl: GetHistoryFilterOptionsUseCaseImpl
+    ): GetHistoryFilterOptionsUseCase
 
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideDeleteUriRecordUseCase(impl: DeleteUriRecordUseCaseImpl): DeleteUriRecordUseCase = impl
+    abstract fun bindDeleteUriRecordUseCase(
+        impl: DeleteUriRecordUseCaseImpl
+    ): DeleteUriRecordUseCase
 
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideClearUriHistoryUseCase(impl: ClearUriHistoryUseCaseImpl): ClearUriHistoryUseCase = impl
+    abstract fun bindClearUriHistoryUseCase(
+        impl: ClearUriHistoryUseCaseImpl
+    ): ClearUriHistoryUseCase
+
 
     // Host Rules
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideGetHostRuleUseCase(impl: GetHostRuleUseCaseImpl): GetHostRuleUseCase = impl
+    abstract fun bindGetHostRuleUseCase(
+        impl: GetHostRuleUseCaseImpl
+    ): GetHostRuleUseCase
 
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideGetHostRulesUseCase(impl: GetHostRulesUseCaseImpl): GetHostRulesUseCase = impl
+    abstract fun bindGetHostRulesUseCase(
+        impl: GetHostRulesUseCaseImpl
+    ): GetHostRulesUseCase
 
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideSaveHostRuleUseCase(impl: SaveHostRuleUseCaseImpl): SaveHostRuleUseCase = impl
+    abstract fun bindSaveHostRuleUseCase(
+        impl: SaveHostRuleUseCaseImpl
+    ): SaveHostRuleUseCase
 
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideDeleteHostRuleUseCase(impl: DeleteHostRuleUseCaseImpl): DeleteHostRuleUseCase = impl
+    abstract fun bindDeleteHostRuleUseCase(
+        impl: DeleteHostRuleUseCaseImpl
+    ): DeleteHostRuleUseCase
+
 
     // Folders
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideGetFoldersUseCase(impl: GetFoldersUseCaseImpl): GetFoldersUseCase = impl
+    abstract fun bindGetFoldersUseCase(
+        impl: GetFoldersUseCaseImpl
+    ): GetFoldersUseCase
 
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideCreateFolderUseCase(impl: CreateFolderUseCaseImpl): CreateFolderUseCase = impl
+    abstract fun bindCreateFolderUseCase(
+        impl: CreateFolderUseCaseImpl
+    ): CreateFolderUseCase
 
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideUpdateFolderUseCase(impl: UpdateFolderUseCaseImpl): UpdateFolderUseCase = impl
+    abstract fun bindUpdateFolderUseCase(
+        impl: UpdateFolderUseCaseImpl
+    ): UpdateFolderUseCase
 
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideDeleteFolderUseCase(impl: DeleteFolderUseCaseImpl): DeleteFolderUseCase = impl
+    abstract fun bindDeleteFolderUseCase(
+        impl: DeleteFolderUseCaseImpl
+    ): DeleteFolderUseCase
+
 
     // Browser Stats
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideGetBrowserStatsUseCase(impl: GetBrowserStatsUseCaseImpl): GetBrowserStatsUseCase = impl
+    abstract fun bindGetBrowserStatsUseCase(
+        impl: GetBrowserStatsUseCaseImpl
+    ): GetBrowserStatsUseCase
 
-    @Provides
+    @Binds
     @ViewModelScoped
-    fun provideClearBrowserStatsUseCase(impl: ClearBrowserStatsUseCaseImpl): ClearBrowserStatsUseCase = impl
+    abstract fun bindClearBrowserStatsUseCase(
+        impl: ClearBrowserStatsUseCaseImpl
+    ): ClearBrowserStatsUseCase
 
 }
-
-// NOTE: If InitializeAppDefaultsUseCase needs to run very early, maybe from Application#onCreate,
-// then IT should be @Singleton and installed in SingletonComponent.
-// The rest are typically fine as @ViewModelScoped.

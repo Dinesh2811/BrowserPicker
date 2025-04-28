@@ -1,5 +1,6 @@
 package browserpicker.core.di
 
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,4 +25,12 @@ object ClockModule {
     @Provides
     @Singleton
     fun provideClock(): Clock = Clock.System
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class InstantProviderModule {
+    @Binds
+    @Singleton
+    abstract fun bindInstantProvider(impl: SystemClockInstantProvider): InstantProvider
 }
