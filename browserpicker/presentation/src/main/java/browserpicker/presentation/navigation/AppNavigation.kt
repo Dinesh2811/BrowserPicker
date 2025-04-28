@@ -10,10 +10,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import browserpicker.presentation.*
 import browserpicker.presentation.history.HistoryScreen
+import browserpicker.presentation.picker.BrowserAppInfo
+import browserpicker.presentation.rules.RulesScreen
 
 @Composable
 fun AppNavigation(
     navController: NavHostController,
+    availableBrowsers: List<BrowserAppInfo>,
     modifier: Modifier = Modifier
     // Pass actions needed by screens if they trigger sheet, etc.
     // showBrowserPicker: (uri: String, host: String, source: UriSource, ruleId: Long?) -> Unit
@@ -24,7 +27,7 @@ fun AppNavigation(
         modifier = modifier
     ) {
         addHistoryDestination(navController)
-        addRulesDestination(navController)
+        addRulesDestination(navController, availableBrowsers)
         addFoldersDestination(navController)
         addStatsDestination(navController)
         addSettingsDestination(navController)
@@ -44,14 +47,18 @@ private fun NavGraphBuilder.addHistoryDestination(navController: NavHostControll
     }
 }
 
-private fun NavGraphBuilder.addRulesDestination(navController: NavHostController) {
+private fun NavGraphBuilder.addRulesDestination(
+    navController: NavHostController,
+    availableBrowsers: List<BrowserAppInfo> // Added parameter
+) {
     composable<Rules> { backStackEntry ->
-        val args: Rules = backStackEntry.toRoute() // Deserialize arguments type-safely
-//        RulesScreen(
-//            viewModel = hiltViewModel(),
-//            initialType = args.type // Pass deserialized argument
-//            // onFolderClick = { folderId -> navController.navigate(Folders(type = args.type, selectedFolder = folderId)) }
-//        )
+        val args: Rules = backStackEntry.toRoute()
+        RulesScreen(
+            viewModel = hiltViewModel(),
+            initialType = args.type,
+            availableBrowsers = availableBrowsers // Pass browsers
+            // onFolderClick = { folderId -> navController.navigate(Folders(type = args.type, selectedFolder = folderId)) }
+        )
     }
 }
 
