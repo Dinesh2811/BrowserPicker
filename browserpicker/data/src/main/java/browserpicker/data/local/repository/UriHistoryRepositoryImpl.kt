@@ -1,13 +1,10 @@
 package browserpicker.data.local.repository
 
-import browserpicker.data.local.dao.BrowserUsageStatDao
-import browserpicker.data.local.dao.FolderDao
-import browserpicker.data.local.dao.HostRuleDao
-import browserpicker.data.local.dao.UriRecordDao
 import browserpicker.domain.repository.*
-import kotlinx.datetime.Clock
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.room.Transaction
+import androidx.room.withTransaction
 import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
 import browserpicker.data.local.datasource.*
@@ -148,9 +145,9 @@ class UriHistoryRepositoryImpl @Inject constructor(
 @Singleton
 class HostRuleRepositoryImpl @Inject constructor(
     private val hostRuleDataSource: HostRuleLocalDataSource,
-    private val folderDataSource: FolderLocalDataSource, // Needed for validation
+    private val folderDataSource: FolderLocalDataSource,
     private val instantProvider: InstantProvider,
-    private val appDatabase: BrowserPickerDatabase, // Inject the database instance for transactions
+    private val browserPickerDatabase: BrowserPickerDatabase,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : HostRuleRepository {
 
@@ -184,87 +181,75 @@ class HostRuleRepositoryImpl @Inject constructor(
         return hostRuleDataSource.getDistinctRuleHosts()
     }
 
+    @Transaction
     override suspend fun saveHostRule(
         host: String,
         status: UriStatus,
         folderId: Long?,
         preferredBrowser: String?,
         isPreferenceEnabled: Boolean
-    ): Result<Long> = runCatching {
-        if (host.isBlank()) {
-            throw IllegalArgumentException("Host cannot be blank.")
-        }
-        if (status == UriStatus.UNKNOWN) {
-            throw IllegalArgumentException("Cannot save rule with UNKNOWN status.")
-        }
+    ): Result<Long> = browserPickerDatabase.withTransaction {
+        runCatching {
+            if (host.isBlank()) {
+                throw IllegalArgumentException("Host cannot be blank.")
+            }
+            if (status == UriStatus.UNKNOWN) {
+                throw IllegalArgumentException("Cannot save rule with UNKNOWN status.")
+            }
 
-        // Perform operations within IO context
-        withContext(ioDispatcher) {
             val now = instantProvider.now()
-            val currentRule = hostRuleDataSource.getHostRuleByHost(host).firstOrNull() // Get current state
+            val currentRule = hostRuleDataSource.getHostRuleByHost(host).firstOrNull()
 
-            // --- Business Logic & Validation ---
             var effectiveFolderId = folderId
             var effectivePreferredBrowser = preferredBrowser
             var effectiveIsPreferenceEnabled = isPreferenceEnabled
 
-            // 1. Blocked status enforcement
             if (status == UriStatus.BLOCKED) {
                 effectivePreferredBrowser = null
                 effectiveIsPreferenceEnabled = false
-                // Folder type check below will handle folder assignment
             }
 
-            // 2. None status enforcement
             if (status == UriStatus.NONE) {
-                effectiveFolderId = null // Rules with NONE status cannot be in a folder
+                effectiveFolderId = null
             }
 
-            // 3. Folder validation (if a folder is assigned)
             if (effectiveFolderId != null && status != UriStatus.NONE) {
-                // Check folder existence using FolderDataSource
                 val folder = folderDataSource.getFolder(effectiveFolderId).firstOrNull()
                 if (folder == null) {
                     throw IllegalArgumentException("Folder with ID $effectiveFolderId does not exist.")
                 }
-                // Check folder type matches rule status intent
                 val expectedFolderType = when (status) {
                     UriStatus.BOOKMARKED -> FolderType.BOOKMARK
                     UriStatus.BLOCKED -> FolderType.BLOCK
-                    else -> null // Should not happen due to earlier checks
+                    else -> null
                 }
                 if (expectedFolderType != null && folder.type != expectedFolderType) {
                     throw IllegalArgumentException("Folder type mismatch: Rule status ($status) requires folder type $expectedFolderType, but folder $effectiveFolderId has type ${folder.type}.")
                 }
             } else {
-                // Ensure folderId is null if status is NONE or no folder was intended
                 effectiveFolderId = null
             }
-            // --- End Business Logic & Validation ---
-
 
             val ruleToSave = HostRule(
-                id = currentRule?.id ?: 0, // Use existing ID if updating, 0 for insert
+                id = currentRule?.id ?: 0,
                 host = host,
                 uriStatus = status,
                 folderId = effectiveFolderId,
                 preferredBrowserPackage = effectivePreferredBrowser,
                 isPreferenceEnabled = effectiveIsPreferenceEnabled,
-                createdAt = currentRule?.createdAt ?: now, // Keep original creation time
-                updatedAt = now // Always update modification time
+                createdAt = currentRule?.createdAt ?: now,
+                updatedAt = now
             )
 
-            hostRuleDataSource.upsertHostRule(ruleToSave) // Let DataSource handle upsert
-        }
-    }.onFailure { Timber.e(it, "Failed to save host rule for host: $host") }
+            hostRuleDataSource.upsertHostRule(ruleToSave)
+        }.onFailure { Timber.e(it, "Failed to save host rule for host: $host inside transaction") }
+    }
 
     override suspend fun deleteHostRuleById(id: Long): Result<Unit> = runCatching {
         withContext(ioDispatcher) {
             val deleted = hostRuleDataSource.deleteHostRuleById(id)
             if (!deleted) {
-                // Optional: Check if it didn't exist or if delete failed for other reasons
                 Timber.w("Host rule with ID $id not found or delete failed.")
-                // You could throw here if deletion *must* succeed if the ID exists.
             }
         }
     }.onFailure { Timber.e(it, "Failed to delete host rule by ID: $id") }
@@ -292,8 +277,9 @@ class HostRuleRepositoryImpl @Inject constructor(
 @Singleton
 class FolderRepositoryImpl @Inject constructor(
     private val folderDataSource: FolderLocalDataSource,
-    private val hostRuleDataSource: HostRuleLocalDataSource, // Needed to clear rules on delete
+    private val hostRuleDataSource: HostRuleLocalDataSource,
     private val instantProvider: InstantProvider,
+    private val browserPickerDatabase: BrowserPickerDatabase,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : FolderRepository {
 
@@ -439,32 +425,25 @@ class FolderRepositoryImpl @Inject constructor(
     }.onFailure { Timber.e(it, "Failed to update folder: ID='${folder.id}'") }
 
 
-    override suspend fun deleteFolder(folderId: Long): Result<Unit> = runCatching {
-        if (folderId == Folder.DEFAULT_BOOKMARK_ROOT_FOLDER_ID || folderId == Folder.DEFAULT_BLOCKED_ROOT_FOLDER_ID) {
-            throw IllegalArgumentException("Cannot delete the default root folders.")
-        }
+    @Transaction
+    override suspend fun deleteFolder(folderId: Long): Result<Unit> = browserPickerDatabase.withTransaction {
+        runCatching {
+            if (folderId == Folder.DEFAULT_BOOKMARK_ROOT_FOLDER_ID || folderId == Folder.DEFAULT_BLOCKED_ROOT_FOLDER_ID) {
+                throw IllegalArgumentException("Cannot delete the default root folders.")
+            }
 
-        withContext(ioDispatcher) {
-            // --- Add recursive delete logic here if required ---
-            // 1. Check if folder has children: folderDataSource.hasChildFolders(folderId)
-            // 2. If yes, decide behavior: fail, delete recursively, or move children.
-            // 3. If recursive: Fetch children, call deleteFolder on each child BEFORE deleting parent.
-            // Note: Recursive deletion needs careful handling of transactions and potential cycles if structure allows.
-            // For now, assuming non-recursive delete. UseCases can orchestrate recursion if needed.
-
-            // Unlink HostRules associated with this folder
+            val hasChildren = folderDataSource.hasChildFolders(folderId)
+            if (hasChildren) {
+                throw IllegalStateException("Folder with ID $folderId has child folders and cannot be deleted directly.")
+            }
             hostRuleDataSource.clearFolderIdForRules(folderId)
 
-            // Delete the folder itself
             val deleted = folderDataSource.deleteFolder(folderId)
             if (!deleted) {
-                // Could mean folder didn't exist or concurrent modification
-                Timber.w("Folder with ID $folderId not found or delete failed.")
-                // Throw an exception if deletion failure is critical
-                throw IllegalStateException("Folder with ID $folderId could not be deleted.")
+                Timber.w("Folder with ID $folderId not found during deletion attempt inside transaction.")
             }
-        }
-    }.onFailure { Timber.e(it, "Failed to delete folder: ID='$folderId'") }
+        }.onFailure { Timber.e(it, "Failed to delete folder: ID='$folderId' inside transaction") }
+    }
 }
 
 
