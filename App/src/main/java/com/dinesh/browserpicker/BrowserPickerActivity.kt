@@ -40,8 +40,8 @@ class BrowserPickerActivity: ComponentActivity() {
             }
 
             MaterialTheme(colorScheme = themeUiState.colorScheme) {
-//                browserpicker.presentation.main.MainScreen()
-                CustomizeThemeScreen()
+                browserpicker.presentation.main.MainScreen()
+//                CustomizeThemeScreen()
             }
         }
     }
