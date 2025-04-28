@@ -2,8 +2,11 @@ package browserpicker.data.local.di
 
 import android.content.Context
 import androidx.room.Room
+import browserpicker.core.di.InstantProvider
+import browserpicker.core.di.SystemClockInstantProvider
 import browserpicker.data.local.datasource.*
 import browserpicker.data.local.db.*
+import browserpicker.data.local.query.UriRecordQueryBuilder
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -16,35 +19,24 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 abstract class DataSourceModule {
 
+    // Bind implementations to their interfaces
     @Binds
     @Singleton
-    abstract fun bindUriRecordLocalDataSource(dataSourceImpl: UriRecordLocalDataSourceImpl): UriRecordLocalDataSource
-
-    @Binds
-    @Singleton
-    abstract fun bindHostRuleLocalDataSource(dataSourceImpl: HostRuleLocalDataSourceImpl): HostRuleLocalDataSource
+    abstract fun bindUriHistoryLocalDataSource(impl: UriHistoryLocalDataSourceImpl): UriHistoryLocalDataSource
 
     @Binds
     @Singleton
-    abstract fun bindFolderLocalDataSource(dataSourceImpl: FolderLocalDataSourceImpl): FolderLocalDataSource
+    abstract fun bindHostRuleLocalDataSource(impl: HostRuleLocalDataSourceImpl): HostRuleLocalDataSource
 
     @Binds
     @Singleton
-    abstract fun bindBrowserUsageStatLocalDataSource(dataSourceImpl: BrowserUsageStatLocalDataSourceImpl): BrowserUsageStatLocalDataSource
+    abstract fun bindFolderLocalDataSource(impl: FolderLocalDataSourceImpl): FolderLocalDataSource
 
-//    @Binds // Binds are more efficient for concrete types if possible
-//    abstract fun bindInstantConverter(converter: InstantConverter): Any // Bind to Any or specific interface if converter hierarchy exists
-//
-//    @Binds
-//    abstract fun bindUriSourceConverter(converter: UriSourceConverter): Any
-//
-//    @Binds
-//    abstract fun bindInteractionActionConverter(converter: InteractionActionConverter): Any
-//
-//    @Binds
-//    abstract fun bindUriStatusConverter(converter: UriStatusConverter): Any
-//
-//    @Binds
-//    abstract fun bindFolderTypeConverter(converter: FolderTypeConverter): Any
+    @Binds
+    @Singleton
+    abstract fun bindBrowserStatsLocalDataSource(impl: BrowserStatsLocalDataSourceImpl): BrowserStatsLocalDataSource
 
+    @Binds
+    @Singleton
+    abstract fun bindInstantProvider(impl: SystemClockInstantProvider): InstantProvider
 }

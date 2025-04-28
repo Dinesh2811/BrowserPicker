@@ -4,91 +4,91 @@ import browserpicker.data.local.entity.*
 import browserpicker.domain.model.*
 
 object UriRecordMapper {
-    fun UriRecordEntity.toDomainModel(): UriRecord = UriRecord(
-        id = this.id,
-        uriString = this.uriString,
-        host = this.host,
-        timestamp = this.timestamp,
-        uriSource = this.uriSource,
-        interactionAction = this.interactionAction,
-        chosenBrowserPackage = this.chosenBrowserPackage,
-        associatedHostRuleId = this.associatedHostRuleId
+    fun toDomainModel(entity: UriRecordEntity): UriRecord = UriRecord(
+        id = entity.id,
+        uriString = entity.uriString,
+        host = entity.host,
+        timestamp = entity.timestamp,
+        uriSource = entity.uriSource,
+        interactionAction = entity.interactionAction,
+        chosenBrowserPackage = entity.chosenBrowserPackage,
+        associatedHostRuleId = entity.associatedHostRuleId
     )
 
-    fun UriRecord.toEntity(): UriRecordEntity = UriRecordEntity(
-        id = this.id,
-        uriString = this.uriString,
-        host = this.host,
-        timestamp = this.timestamp,
-        uriSource = this.uriSource,
-        interactionAction = this.interactionAction,
-        chosenBrowserPackage = this.chosenBrowserPackage,
-        associatedHostRuleId = this.associatedHostRuleId
+    fun toEntity(model: UriRecord): UriRecordEntity = UriRecordEntity(
+        id = model.id,
+        uriString = model.uriString,
+        host = model.host,
+        timestamp = model.timestamp,
+        uriSource = model.uriSource,
+        interactionAction = model.interactionAction,
+        chosenBrowserPackage = model.chosenBrowserPackage,
+        associatedHostRuleId = model.associatedHostRuleId
     )
 
-    fun List<UriRecordEntity>.toDomainModels(): List<UriRecord> = this.map { it.toDomainModel() }
+    fun toDomainModels(entities: List<UriRecordEntity>): List<UriRecord> = entities.map { toDomainModel(it) }
 }
 
 object HostRuleMapper {
-    fun HostRuleEntity.toDomainModel(): HostRule = HostRule(
-        id = this.id,
-        host = this.host,
-        uriStatus = this.uriStatus,
-        folderId = this.folderId,
-        preferredBrowserPackage = this.preferredBrowserPackage,
-        isPreferenceEnabled = this.isPreferenceEnabled,
-        createdAt = this.createdAt,
-        updatedAt = this.updatedAt
+    fun toDomainModel(entity: HostRuleEntity): HostRule = HostRule(
+        id = entity.id,
+        host = entity.host,
+        uriStatus = entity.uriStatus,
+        folderId = entity.folderId,
+        preferredBrowserPackage = entity.preferredBrowserPackage,
+        isPreferenceEnabled = entity.isPreferenceEnabled,
+        createdAt = entity.createdAt,
+        updatedAt = entity.updatedAt
     )
 
-    fun HostRule.toEntity(): HostRuleEntity = HostRuleEntity(
-        id = this.id,
-        host = this.host,
-        uriStatus = this.uriStatus,
-        folderId = this.folderId,
-        preferredBrowserPackage = this.preferredBrowserPackage,
-        isPreferenceEnabled = this.isPreferenceEnabled,
-        createdAt = this.createdAt,
-        updatedAt = this.updatedAt
+    fun toEntity(model: HostRule): HostRuleEntity = HostRuleEntity(
+        id = model.id,
+        host = model.host,
+        uriStatus = model.uriStatus,
+        folderId = model.folderId,
+        preferredBrowserPackage = model.preferredBrowserPackage,
+        isPreferenceEnabled = model.isPreferenceEnabled,
+        createdAt = model.createdAt,
+        updatedAt = model.updatedAt
     )
 
-    fun List<HostRuleEntity>.toDomainModels(): List<HostRule> = this.map { it.toDomainModel() }
+    fun toDomainModels(entities: List<HostRuleEntity>): List<HostRule> = entities.map { toDomainModel(it) }
 }
 
 object FolderMapper  {
-    fun FolderEntity.toDomainModel(): Folder = Folder(
-        id = this.id,
-        parentFolderId = this.parentFolderId,
-        name = this.name,
-        type = this.folderType,
-        createdAt = this.createdAt,
-        updatedAt = this.updatedAt
+    fun toDomainModel(entity: FolderEntity): Folder = Folder(
+        id = entity.id,
+        parentFolderId = entity.parentFolderId,
+        name = entity.name,
+        type = entity.folderType,
+        createdAt = entity.createdAt,
+        updatedAt = entity.updatedAt
     )
 
-    fun Folder.toEntity(): FolderEntity = FolderEntity(
-        id = this.id,
-        parentFolderId = this.parentFolderId,
-        name = this.name,
-        folderType = this.type,
-        createdAt = this.createdAt,
-        updatedAt = this.updatedAt
+    fun toEntity(model: Folder): FolderEntity = FolderEntity(
+        id = model.id,
+        parentFolderId = model.parentFolderId,
+        name = model.name,
+        folderType = model.type,
+        createdAt = model.createdAt,
+        updatedAt = model.updatedAt
     )
 
-    fun List<FolderEntity>.toDomainModels(): List<Folder> = this.map { it.toDomainModel() }
+    fun toDomainModels(entities: List<FolderEntity>): List<Folder> = entities.map { toDomainModel(it) }
 }
 
 object BrowserUsageStatMapper  {
-    fun BrowserUsageStatEntity.toDomainModel(): BrowserUsageStat = BrowserUsageStat(
-        browserPackageName = this.browserPackageName,
-        usageCount = this.usageCount,
-        lastUsedTimestamp = this.lastUsedTimestamp
+    fun toDomainModel(entity: BrowserUsageStatEntity): BrowserUsageStat = BrowserUsageStat(
+        browserPackageName = entity.browserPackageName,
+        usageCount = entity.usageCount,
+        lastUsedTimestamp = entity.lastUsedTimestamp
     )
 
-    fun BrowserUsageStat.toEntity(): BrowserUsageStatEntity = BrowserUsageStatEntity(
-        browserPackageName = this.browserPackageName,
-        usageCount = this.usageCount,
-        lastUsedTimestamp = this.lastUsedTimestamp
+    fun toEntity(model: BrowserUsageStat): BrowserUsageStatEntity = BrowserUsageStatEntity(
+        browserPackageName = model.browserPackageName,
+        usageCount = model.usageCount,
+        lastUsedTimestamp = model.lastUsedTimestamp
     )
 
-    fun List<BrowserUsageStatEntity>.toDomainModels(): List<BrowserUsageStat> = this.map { it.toDomainModel() }
+    fun toDomainModels(entities: List<BrowserUsageStatEntity>): List<BrowserUsageStat> = entities.map { toDomainModel(it) }
 }
