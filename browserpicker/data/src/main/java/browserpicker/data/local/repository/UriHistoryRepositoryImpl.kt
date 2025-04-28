@@ -11,6 +11,7 @@ import androidx.paging.PagingData
 import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
 import browserpicker.data.local.datasource.*
+import browserpicker.data.local.db.BrowserPickerDatabase
 import browserpicker.data.local.query.model.UriRecordQueryConfig
 import browserpicker.domain.model.*
 import browserpicker.domain.model.query.UriHistoryQuery
@@ -149,6 +150,7 @@ class HostRuleRepositoryImpl @Inject constructor(
     private val hostRuleDataSource: HostRuleLocalDataSource,
     private val folderDataSource: FolderLocalDataSource, // Needed for validation
     private val instantProvider: InstantProvider,
+    private val appDatabase: BrowserPickerDatabase, // Inject the database instance for transactions
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : HostRuleRepository {
 
