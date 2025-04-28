@@ -78,23 +78,16 @@ class UriHistoryLocalDataSourceImpl @Inject constructor(
 ) : UriHistoryLocalDataSource {
 
     override fun getPagedUriRecords(config: UriRecordQueryConfig, pagingConfig: PagingConfig): Flow<PagingData<UriRecord>> {
-        val query = queryBuilder.buildPagedQuery(config)
-
         return Pager(
-            config = pagingConfig, // Use the provided config
-            // The factory lambda tells Pager how to get a new PagingSource when needed.
+            config = pagingConfig,
             pagingSourceFactory = {
-                uriRecordDao.getPagedUriRecords(query) // This returns PagingSource<Int, UriRecordEntity>
+                val query = queryBuilder.buildPagedQuery(config)
+                uriRecordDao.getPagedUriRecords(query)
             }
-        )
-            // Get the Flow of PagingData objects
-            .flow
-            // Apply the transformation to each PagingData object in the Flow
-            .map { pagingDataEntity -> // pagingDataEntity is PagingData<UriRecordEntity>
-                // Now, use the map extension function *on PagingData*
-                // This transforms each item (UriRecordEntity) within the PagingData
-                pagingDataEntity.map { entity: UriRecordEntity -> // Explicitly specifying type here helps, but compiler can usually infer
-                    UriRecordMapper.toDomainModel(entity) // Transforms UriRecordEntity to UriRecord
+        ).flow
+            .map { pagingDataEntity: PagingData<UriRecordEntity> ->
+                pagingDataEntity.map { entity ->
+                    UriRecordMapper.toDomainModel(entity)
                 }
             }
     }

@@ -4,6 +4,35 @@ import androidx.compose.runtime.Immutable
 import browserpicker.domain.model.InteractionAction
 import browserpicker.domain.model.UriSource
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Instant
+
+@Immutable
+data class UriHistoryQuery(
+    val searchQuery: String? = null,
+    val filterByUriSource: Set<UriSource>? = null,
+    val filterByInteractionAction: Set<InteractionAction>? = null,
+    val filterByChosenBrowser: Set<String?>? = null,
+    val filterByHost: Set<String>? = null,
+    val filterByDateRange: Pair<Instant, Instant>? = null,
+    val sortBy: UriRecordSortField = UriRecordSortField.TIMESTAMP,
+    val sortOrder: SortOrder = SortOrder.DESC,
+    val groupBy: UriRecordGroupField = UriRecordGroupField.NONE,
+    val groupSortOrder: SortOrder = SortOrder.ASC,
+    // Keep advanced filters simple for domain - pass raw SQL+args if absolutely needed,
+    // or define more structured domain-specific advanced filters later.
+    // For now, let's omit direct SQL from the domain query object.
+    // Advanced filtering logic can be encapsulated within specific use cases or repository methods if required.
+) {
+    companion object {
+        val DEFAULT = UriHistoryQuery()
+    }
+}
+
+// We might need Result wrappers later for complex operations, e.g.:
+// sealed interface RepositoryResult<out T> {
+//     data class Success<T>(val data: T) : RepositoryResult<T>
+//     data class Error(val exception: Throwable) : RepositoryResult<Nothing> // Or specific error types
+// }
 
 @Immutable
 enum class SortOrder { ASC, DESC }

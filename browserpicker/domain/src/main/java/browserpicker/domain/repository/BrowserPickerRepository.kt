@@ -3,75 +3,117 @@ package browserpicker.domain.repository
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import browserpicker.domain.model.*
+import browserpicker.domain.model.query.UriHistoryQuery
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 
+// Domain level representations for group counts
+data class DomainGroupCount(val groupValue: String?, val count: Int)
+data class DomainDateCount(val dateString: String?, val count: Int) // Or use LocalDate? String is simpler from DB.
+
 interface UriHistoryRepository {
-    //  TODO("Not yet implemented")
-//    fun getPaginatedUriRecord(config: LogQueryConfig): Flow<PagingData<UriRecord>>
-//    fun getTotalUriRecordCount(config: LogQueryConfig): Flow<Int>
-//    fun getGroupedUriRecordCounts(config: LogQueryConfig): Flow<Map<GroupKey, Int>>
-//    fun getDistinctBrowserPackages(): Flow<List<String>>
-}
-interface HostRuleRepository {
-    //  TODO("Not yet implemented")
-}
-interface FolderRepository {
-    //  TODO("Not yet implemented")
-}
-interface BrowserStatsRepository {
-    //  TODO("Not yet implemented")
+    fun getPagedUriRecords(
+        query: UriHistoryQuery,
+        pagingConfig: PagingConfig
+    ): Flow<PagingData<UriRecord>>
+
+    fun getTotalUriRecordCount(query: UriHistoryQuery): Flow<Int>
+    fun getGroupCounts(query: UriHistoryQuery): Flow<List<DomainGroupCount>>
+    fun getDateCounts(query: UriHistoryQuery): Flow<List<DomainDateCount>>
+
+    suspend fun addUriRecord(
+        uriString: String,
+        host: String,
+        source: UriSource,
+        action: InteractionAction,
+        chosenBrowser: String?,
+        associatedHostRuleId: Long? = null // Allow associating during creation
+    ): Result<Long> // Return Result wrapper with ID or error
+
+    suspend fun getUriRecord(id: Long): UriRecord?
+    suspend fun deleteUriRecord(id: Long): Boolean
+    suspend fun deleteAllUriRecords(): Result<Unit> // Indicate success/failure
+
+    fun getDistinctHosts(): Flow<List<String>>
+    fun getDistinctChosenBrowsers(): Flow<List<String?>>
 }
 
-//interface BrowserPickerRepository {
-//
-//    // --- Host Rules ---
-//    fun observeHostRule(host: String): Flow<Result<HostRule?>>
-//    suspend fun getHostRule(host: String): Result<HostRule?>
-//    suspend fun saveHostRule(rule: HostRule): Result<Long> // Returns ID or error
-//    suspend fun deleteHostRule(host: String): Result<Unit>
-//    suspend fun deleteHostRuleById(id: Long): Result<Unit>
-//
-//    // --- Preferences ---
-//    suspend fun setHostPreference(host: String, browserPackage: String?, isEnabled: Boolean): Result<Unit>
-//
-//    // --- Bookmarks ---
-//    fun getBookmarkRulesPagingData(config: PagingConfig, searchTerm: String?, sort: SortPreference): Flow<PagingData<HostRule>>
-//    fun observeAllBookmarkFolders(): Flow<Result<List<Folder>>> // Assuming a common Folder domain model
-//    suspend fun saveBookmarkFolder(folder: Folder): Result<Long>
-//    suspend fun deleteBookmarkFolder(folderId: Long, deleteContents: Boolean): Result<Unit>
-//
-//    // --- Blocks ---
-//    fun getBlockRulesPagingData(config: PagingConfig, searchTerm: String?, sort: SortPreference): Flow<PagingData<HostRule>>
-//    fun observeAllBlockFolders(): Flow<Result<List<Folder>>>
-//    suspend fun saveBlockFolder(folder: Folder): Result<Long>
-//    suspend fun deleteBlockFolder(folderId: Long, deleteContents: Boolean): Result<Unit>
-//
-//    // --- URI Interaction History ---
-//    suspend fun recordInteraction(interaction: UriRecord): Result<Long>
-//    fun getHistoryPagingData(config: PagingConfig, searchTerm: String?, sort: SortPreference): Flow<PagingData<UriRecord>>
-//    suspend fun clearAllHistory(): Result<Int>
-//    suspend fun deleteHistoryRecord(id: Long): Result<Unit>
-//
-//    // --- Analysis / Utils ---
-//    suspend fun getInteractionCounts(since: Instant): Result<Map<InteractionAction, Int>>
-//    suspend fun getUriHost(uriString: String): Result<String> // Utility maybe needed
-//}
-//
-//// Helper domain models/enums for repository parameters (place in domain/model)
-////data class PagingConfig(
-////    val pageSize: Int = 20,
-////    val prefetchDistance: Int = 5,
-////    val enablePlaceholders: Boolean = false,
-////    val initialLoadSize: Int = 60, // Often 3 * pageSize
-////    val maxSize: Int = PagingConfig.MAX_SIZE_UNBOUNDED
-////)
-//
-//// Example Sort Preference - Adapt as needed
-//data class SortPreference(
-//    val column: SortColumn,
-//    val order: SortOrder
-//)
-//
-//enum class SortColumn { TIMESTAMP, HOST, URI_STRING /* ... other relevant columns */ }
-//enum class SortOrder { ASCENDING, DESCENDING }
+interface HostRuleRepository {
+    fun getHostRuleByHost(host: String): Flow<HostRule?>
+    suspend fun getHostRuleById(id: Long): HostRule?
+    fun getAllHostRules(): Flow<List<HostRule>>
+    fun getHostRulesByStatus(status: UriStatus): Flow<List<HostRule>>
+    fun getHostRulesByFolder(folderId: Long): Flow<List<HostRule>>
+    fun getRootHostRulesByStatus(status: UriStatus): Flow<List<HostRule>>
+    fun getDistinctRuleHosts(): Flow<List<String>>
+
+    /**
+     * Creates or updates a HostRule, enforcing business logic.
+     * - If status is BLOCKED, preferredBrowser is cleared, preference is disabled.
+     * - If status is NONE, folderId is cleared.
+     * - If folderId is provided, validates folder existence and type match with status.
+     * - Updates timestamps automatically.
+     * @return Result containing the ID of the upserted rule or an error.
+     */
+    suspend fun saveHostRule(
+        host: String, // Use host as the primary business key for upsert logic
+        status: UriStatus,
+        folderId: Long?,
+        preferredBrowser: String?,
+        isPreferenceEnabled: Boolean
+    ): Result<Long>
+
+    suspend fun deleteHostRuleById(id: Long): Result<Unit>
+    suspend fun deleteHostRuleByHost(host: String): Result<Unit>
+
+    /**
+     * Sets the folderId to null for all rules currently associated with the given folderId.
+     * Typically used before deleting a folder.
+     */
+    suspend fun clearFolderAssociation(folderId: Long): Result<Unit>
+}
+
+interface FolderRepository {
+    suspend fun ensureDefaultFoldersExist()
+    fun getFolder(folderId: Long): Flow<Folder?>
+    fun getChildFolders(parentFolderId: Long): Flow<List<Folder>>
+    fun getRootFoldersByType(type: FolderType): Flow<List<Folder>>
+    fun getAllFoldersByType(type: FolderType): Flow<List<Folder>>
+    suspend fun findFolderByNameAndParent(name: String, parentFolderId: Long?, type: FolderType): Folder?
+
+    /**
+     * Creates a new folder, validating name, parent existence, type consistency, and uniqueness.
+     * @return Result containing the ID of the created folder or an error.
+     */
+    suspend fun createFolder(
+        name: String,
+        parentFolderId: Long?,
+        type: FolderType
+    ): Result<Long>
+
+    /**
+     * Updates an existing folder, validating changes (e.g., parent move, name uniqueness).
+     * Cannot change the folder type.
+     * @param folder The folder object with updated details (ID must match existing).
+     * @return Result indicating success or error.
+     */
+    suspend fun updateFolder(folder: Folder): Result<Unit>
+
+    /**
+     * Deletes a folder.
+     * Handles unlinking associated HostRules.
+     * Does NOT delete child folders unless `deleteChildren` is true (potential future enhancement).
+     * @param folderId ID of the folder to delete.
+     * @return Result indicating success or error.
+     */
+    suspend fun deleteFolder(folderId: Long): Result<Unit>
+}
+
+interface BrowserStatsRepository {
+    suspend fun recordBrowserUsage(packageName: String): Result<Unit>
+    fun getBrowserStat(packageName: String): Flow<BrowserUsageStat?>
+    fun getAllBrowserStats(): Flow<List<BrowserUsageStat>> // Default: sorted by count
+    fun getAllBrowserStatsSortedByLastUsed(): Flow<List<BrowserUsageStat>>
+    suspend fun deleteBrowserStat(packageName: String): Result<Unit>
+    suspend fun deleteAllStats(): Result<Unit>
+}
