@@ -89,9 +89,6 @@ dependencies {
     implementation(project(mapOf("path" to ":browserpicker:data")))
     implementation(project(mapOf("path" to ":browserpicker:domain")))
     implementation(project(mapOf("path" to ":browserpicker:presentation")))
-//    implementation(project(mapOf("path" to ":openWith")))
-//    implementation(project(mapOf("path" to ":coreLib")))
-//    implementation(project(mapOf("path" to ":m3theme")))
 
     implementation(libs.timeago)
     implementation(libs.kotlinx.datetime)
