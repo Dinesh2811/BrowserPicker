@@ -14,16 +14,7 @@ import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Builds SupportSQLiteQuery objects for querying UriRecordEntity based on UriRecordQueryConfig.
- * Handles dynamic WHERE clauses, ORDER BY, and specific aggregate queries (count, group count).
- * Ensures basic safety by using bind arguments and providing fallback queries on error.
- *
- * Note: While this builder adds a layer of abstraction, the use of SupportSQLiteQuery
- * means type safety relies heavily on the correct implementation within this class
- * and thorough testing. Advanced filters using `customSqlCondition` require particular care.
- */
-@Singleton // Manage via Hilt
+@Singleton
 class UriRecordQueryBuilder @Inject constructor() {
     private val TAG = "UriRecordQueryBuilder"
 
@@ -84,7 +75,7 @@ class UriRecordQueryBuilder @Inject constructor() {
 
         }.getOrElse { e ->
             Timber.tag(TAG).e(e, "Failed to build paged query for config: %s", config)
-            SafeQuery.SAFE_EMPTY_QUERY // Return safe query on error
+            SafeQuery.SAFE_EMPTY_QUERY
         }
     }
 
@@ -102,7 +93,7 @@ class UriRecordQueryBuilder @Inject constructor() {
 
         }.getOrElse { e ->
             Timber.tag(TAG).e(e, "Failed to build total count query for config: %s", config)
-            SafeQuery.SAFE_EMPTY_COUNT_QUERY // Return safe query on error
+            SafeQuery.SAFE_EMPTY_COUNT_QUERY
         }
     }
 
@@ -111,7 +102,6 @@ class UriRecordQueryBuilder @Inject constructor() {
      */
     fun buildDateCountQuery(config: UriRecordQueryConfig): SupportSQLiteQuery {
         val dateGroupingExpression = UriRecordGroupField.DATE.dbColumnNameOrExpression
-        // This should ideally never be null based on the enum definition, but check defensively.
         requireNotNull(dateGroupingExpression) { "Date grouping SQL expression is unexpectedly missing!" }
 
         return runCatching {
@@ -131,7 +121,7 @@ class UriRecordQueryBuilder @Inject constructor() {
 
         }.getOrElse { e ->
             Timber.tag(TAG).e(e, "Failed to build date count query for config: %s", config)
-            SafeQuery.SAFE_EMPTY_DATE_COUNT_QUERY // Return safe query on error
+            SafeQuery.SAFE_EMPTY_DATE_COUNT_QUERY
         }
     }
 
@@ -150,24 +140,19 @@ class UriRecordQueryBuilder @Inject constructor() {
             }
 
             val (whereStatement, queryArgs) = buildWhereClause(config)
-
-            // Handle potential nulls in the grouping column, especially for browser package
-            // Map NULL to a specific constant string for grouping purposes.
             val effectiveGroupingColumn = if (groupingField == UriRecordGroupField.CHOSEN_BROWSER) {
                 "COALESCE($groupingColumn, '${GroupKey.NULL_BROWSER_GROUP_VALUE}')"
             } else {
-                // Assume other grouping columns are non-null or nulls group naturally
                 groupingColumn
             }
 
-            // Alias the grouping expression and count to match the GroupCount DTO
             val queryString = """
                 SELECT $effectiveGroupingColumn as groupValue, COUNT(${Columns.ID}) as count
                 FROM ${Columns.TABLE_NAME}
                 $whereStatement
                 GROUP BY groupValue
                 ORDER BY groupValue ASC
-            """.trimIndent() // Default ASC order, can be customized if needed
+            """.trimIndent()
 
             Timber.tag(TAG).d("Generated Group Count Query (%s): %s | Args: %s", groupingField, queryString, queryArgs)
 
@@ -193,25 +178,20 @@ class UriRecordQueryBuilder @Inject constructor() {
 
         // 1. Grouping Order (if grouping is enabled)
         if (groupField != UriRecordGroupField.NONE && groupingExpression != null) {
-            // Sort groups, handling nulls consistently (e.g., putting Unknown Browser last)
             val groupSortExpression = when (groupField) {
                 UriRecordGroupField.CHOSEN_BROWSER -> "CASE WHEN $groupingExpression IS NULL THEN 1 ELSE 0 END, COALESCE($groupingExpression, '${GroupKey.NULL_BROWSER_GROUP_VALUE}')" // Sort nulls last
-                UriRecordGroupField.DATE -> "$groupingExpression" // Date sorts naturally
-                // Add other specific group sorting logic if needed
-                else -> groupingExpression // Default: sort by the group value itself
+                UriRecordGroupField.DATE -> groupingExpression
+                else -> groupingExpression
             }
-            // Group sorting usually ASC, but could be configurable
+            // TODO: Make the Group sorting dynamic and should me customisable on sorting instead of hard coded sorting.
             orderByClauses.add("$groupSortExpression ASC")
         }
 
         // 2. User-defined Sort Order
         val userSortByColumn = config.sortBy.dbColumnName
-        val userSortOrder = config.sortOrder.name // ASC or DESC
-
-        // Handle nulls in user-defined sort column (e.g., sort null browsers last regardless of ASC/DESC)
+        val userSortOrder = config.sortOrder.name
         val userSortExpression = when (config.sortBy) {
-            UriRecordSortField.CHOSEN_BROWSER -> "CASE WHEN $userSortByColumn IS NULL THEN 1 ELSE 0 END, $userSortByColumn" // Sort nulls last
-            // Add other specific sort logic if needed
+            UriRecordSortField.CHOSEN_BROWSER -> "CASE WHEN $userSortByColumn IS NULL THEN 1 ELSE 0 END, $userSortByColumn"
             else -> userSortByColumn
         }
         orderByClauses.add("$userSortExpression $userSortOrder")
@@ -244,7 +224,7 @@ class UriRecordQueryBuilder @Inject constructor() {
         val whereStatement = if (conditions.isNotEmpty()) {
             " WHERE ${conditions.joinToString(" AND ")}"
         } else {
-            "" // No conditions, return empty WHERE clause
+            ""
         }
 
         return Pair(whereStatement, queryArgs)
@@ -259,11 +239,10 @@ class UriRecordQueryBuilder @Inject constructor() {
     ) {
         searchTerm?.trim()?.takeIf { it.isNotEmpty() }?.let { trimmedSearchTerm ->
             val likePattern = "%$trimmedSearchTerm%"
-            // Search across relevant text fields. COALESCE handles null browser nicely.
             conditions.add("(${Columns.URI_STRING} LIKE ? OR ${Columns.HOST} LIKE ? OR COALESCE(${Columns.CHOSEN_BROWSER}, '') LIKE ?)")
-            queryArgs.add(likePattern) // Arg for URI_STRING
-            queryArgs.add(likePattern) // Arg for HOST
-            queryArgs.add(likePattern) // Arg for CHOSEN_BROWSER
+            queryArgs.add(likePattern)
+            queryArgs.add(likePattern)
+            queryArgs.add(likePattern)
         }
     }
 
@@ -275,7 +254,6 @@ class UriRecordQueryBuilder @Inject constructor() {
         sources?.takeIf { it.isNotEmpty() }?.let { validSources ->
             val placeholders = validSources.joinToString { "?" }
             conditions.add("${Columns.URI_SOURCE} IN ($placeholders)")
-            // Add the integer values of the enums
             queryArgs.addAll(validSources.map { it.value })
         }
     }
@@ -288,7 +266,6 @@ class UriRecordQueryBuilder @Inject constructor() {
         actions?.takeIf { it.isNotEmpty() }?.let { validActions ->
             val placeholders = validActions.joinToString { "?" }
             conditions.add("${Columns.INTERACTION_ACTION} IN ($placeholders)")
-            // Add the integer values of the enums
             queryArgs.addAll(validActions.map { it.value })
         }
     }
@@ -306,14 +283,13 @@ class UriRecordQueryBuilder @Inject constructor() {
             if (nonNullBrowsers.isNotEmpty()) {
                 val placeholders = nonNullBrowsers.joinToString { "?" }
                 browserConditions.add("${Columns.CHOSEN_BROWSER} IN ($placeholders)")
-                queryArgs.addAll(nonNullBrowsers) // Add String arguments
+                queryArgs.addAll(nonNullBrowsers)
             }
             if (containsNullFilter) {
                 browserConditions.add("${Columns.CHOSEN_BROWSER} IS NULL")
             }
 
             if (browserConditions.isNotEmpty()) {
-                // Combine multiple browser conditions with OR
                 conditions.add("(${browserConditions.joinToString(" OR ")})")
             }
         }
@@ -327,7 +303,7 @@ class UriRecordQueryBuilder @Inject constructor() {
         hosts?.takeIf { it.isNotEmpty() }?.let { validHosts ->
             val placeholders = validHosts.joinToString { "?" }
             conditions.add("${Columns.HOST} IN ($placeholders)")
-            queryArgs.addAll(validHosts) // Add String arguments
+            queryArgs.addAll(validHosts)
         }
     }
 
@@ -337,15 +313,13 @@ class UriRecordQueryBuilder @Inject constructor() {
         queryArgs: MutableList<Any>
     ) {
         dateRange?.let { (startTime, endTime) ->
-            // Convert Instants to epoch milliseconds for SQLite comparison
             val startMillis = startTime.toEpochMilliseconds()
             val endMillis = endTime.toEpochMilliseconds()
 
-            // Basic validation: Ensure start is not after end
             if (startMillis <= endMillis) {
                 conditions.add("${Columns.TIMESTAMP} BETWEEN ? AND ?")
-                queryArgs.add(startMillis) // Add Long argument
-                queryArgs.add(endMillis)   // Add Long argument
+                queryArgs.add(startMillis)
+                queryArgs.add(endMillis)
             } else {
                 Timber.tag(TAG).w("Invalid date range provided: startTime=%s, endTime=%s. Ignoring filter.", startTime, endTime)
             }
@@ -358,9 +332,8 @@ class UriRecordQueryBuilder @Inject constructor() {
         queryArgs: MutableList<Any>
     ) {
         advancedFilters.forEach { advFilter ->
-            // The filter itself should have already validated placeholder count vs args size
             conditions.add("(${advFilter.customSqlCondition})")
-            queryArgs.addAll(advFilter.args) // Add arguments of Any type
+            queryArgs.addAll(advFilter.args)
         }
     }
 }
