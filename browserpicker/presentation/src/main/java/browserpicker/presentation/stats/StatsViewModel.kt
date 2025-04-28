@@ -17,7 +17,7 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class StatsViewModel @Inject constructor(
+open class StatsViewModel @Inject constructor(
     private val getBrowserStatsUseCase: GetBrowserStatsUseCase,
     private val clearBrowserStatsUseCase: ClearBrowserStatsUseCase
 ) : ViewModel() {
@@ -32,7 +32,7 @@ class StatsViewModel @Inject constructor(
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000), replay = 1)
 
     private val _uiState = MutableStateFlow(StatsScreenState())
-    val uiState: StateFlow<StatsScreenState> = _uiState.asStateFlow()
+    open val uiState: StateFlow<StatsScreenState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {

@@ -13,6 +13,7 @@ import browserpicker.presentation.folders.FoldersScreen
 import browserpicker.presentation.history.HistoryScreen
 import browserpicker.presentation.picker.BrowserAppInfo
 import browserpicker.presentation.rules.RulesScreen
+import browserpicker.presentation.stats.StatsScreen
 
 @Composable
 fun AppNavigation(
@@ -76,9 +77,9 @@ private fun NavGraphBuilder.addFoldersDestination(navController: NavHostControll
 
 private fun NavGraphBuilder.addStatsDestination(navController: NavHostController) {
     composable<Stats> {
-//        StatsScreen(
-//            viewModel = hiltViewModel()
-//        )
+        StatsScreen(
+            viewModel = hiltViewModel()
+        )
     }
 }
 
