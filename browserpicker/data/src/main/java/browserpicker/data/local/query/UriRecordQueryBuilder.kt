@@ -1,91 +1,15 @@
 package browserpicker.data.local.query
 
-import androidx.room.ColumnInfo
-import androidx.sqlite.db.SimpleSQLiteQuery
-import androidx.sqlite.db.SupportSQLiteQuery
-import browserpicker.domain.model.query.UriRecordGroupField
-import browserpicker.domain.model.query.UriRecordSortField
+import androidx.sqlite.db.*
+import kotlinx.datetime.Instant
+import timber.log.Timber
+import javax.inject.*
+import browserpicker.data.local.query.model.UriRecordQueryConfig
+import browserpicker.data.local.query.model.UriRecordAdvancedFilter
 import browserpicker.domain.model.InteractionAction
 import browserpicker.domain.model.UriSource
-import kotlinx.datetime.Instant
-import kotlinx.serialization.Serializable
-import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
-import androidx.compose.runtime.Immutable
-import browserpicker.domain.model.query.SortOrder
-import kotlinx.datetime.LocalDate
-
-@Immutable
-data class UriRecordQueryConfig(
-    val searchQuery: String? = null,
-    val filterByUriSource: Set<UriSource>? = null,
-    val filterByInteractionAction: Set<InteractionAction>? = null,
-    val filterByChosenBrowser: Set<String?>? = null,
-    val filterByHost: Set<String>? = null,
-    val filterByDateRange: Pair<Instant, Instant>? = null,
-    val sortBy: UriRecordSortField = UriRecordSortField.TIMESTAMP,
-    val sortOrder: SortOrder = SortOrder.DESC,
-    val groupBy: UriRecordGroupField = UriRecordGroupField.NONE,
-    val groupSortOrder: SortOrder = SortOrder.ASC,
-    val advancedFilters: List<UriRecordAdvancedFilter> = emptyList()
-) {
-    companion object {
-        val DEFAULT = UriRecordQueryConfig()
-    }
-}
-
-@Immutable
-data class UriRecordAdvancedFilter(
-    val customSqlCondition: String,
-    val args: List<Any>
-) {
-    init {
-        val placeholderCount = customSqlCondition.count { it == '?' }
-        require(placeholderCount == args.size) {
-            "Number of placeholders '?' ($placeholderCount) in customSqlCondition must match the number of args (${args.size}). " +
-                    "SQL: '$customSqlCondition', Args: $args"
-        }
-    }
-}
-
-@Immutable
-sealed interface GroupKey {
-    @Immutable @JvmInline value class Date(val value: LocalDate) : GroupKey
-    @Immutable @JvmInline value class InteractionActionKey(val value: InteractionAction) : GroupKey
-    @Immutable @JvmInline value class UriSourceKey(val value: UriSource) : GroupKey
-    @Immutable @JvmInline value class HostKey(val value: String) : GroupKey
-    @Immutable @JvmInline value class ChosenBrowserKey(val value: String) : GroupKey
-
-    companion object {
-        const val NULL_BROWSER_GROUP_VALUE = "browser_picker_null_browser"
-        const val NULL_BROWSER_DISPLAY_NAME = "Unknown Browser"
-    }
-}
-
-fun groupKeyToStableString(key: GroupKey): String = when (key) {
-    is GroupKey.Date -> "DATE_${key.value}"
-    is GroupKey.InteractionActionKey -> "ACTION_${key.value.name}"
-    is GroupKey.UriSourceKey -> "SOURCE_${key.value.name}"
-    is GroupKey.HostKey -> "HOST_${key.value}"
-    is GroupKey.ChosenBrowserKey -> "BROWSER_${key.value}"
-}
-
-@Serializable
-data class GroupCount(
-    @ColumnInfo(name = "groupValue")
-    val groupValue: String?,
-    @ColumnInfo(name = "count")
-    val count: Int
-)
-
-@Serializable
-data class DateCount(
-    @ColumnInfo(name = "dateString")
-    val dateString: String?,
-    @ColumnInfo(name = "count")
-    val count: Int
-)
+import browserpicker.domain.model.query.UriRecordGroupField
+import browserpicker.domain.model.query.UriRecordSortField
 
 @Singleton
 class UriRecordQueryBuilder @Inject constructor() {
@@ -107,6 +31,10 @@ class UriRecordQueryBuilder @Inject constructor() {
 
         internal object Expressions {
             val DATE_GROUP = "STRFTIME('%Y-%m-%d', ${Columns.TIMESTAMP} / 1000, 'unixepoch', 'localtime')"
+        }
+
+        internal object GroupingConstants {
+            const val NULL_BROWSER_GROUP_VALUE = "browser_picker_null_browser"
         }
 
         private val SELECT_COLUMNS_SQL = """
@@ -198,7 +126,7 @@ class UriRecordQueryBuilder @Inject constructor() {
             val (whereStatement, queryArgs) = buildWhereClause(config)
 
             val effectiveGroupingColumn = if (groupingField == UriRecordGroupField.CHOSEN_BROWSER) {
-                "COALESCE($groupingColumnOrExpr, '${GroupKey.NULL_BROWSER_GROUP_VALUE}')"
+                "COALESCE($groupingColumnOrExpr, '${GroupingConstants.NULL_BROWSER_GROUP_VALUE}')"
             } else {
                 groupingColumnOrExpr
             }
@@ -254,10 +182,10 @@ class UriRecordQueryBuilder @Inject constructor() {
             val groupSortExpression = when (groupField) {
                 UriRecordGroupField.CHOSEN_BROWSER -> {
                     "CASE WHEN $groupingExpression IS NULL THEN 1 ELSE 0 END ${groupSortOrder.name}, " +
-                            "COALESCE($groupingExpression, '${GroupKey.NULL_BROWSER_GROUP_VALUE}') ${groupSortOrder.name}"
+                            "COALESCE($groupingExpression, '${GroupingConstants.NULL_BROWSER_GROUP_VALUE}') ${groupSortOrder.name}"
                 }
                 UriRecordGroupField.DATE -> "$groupingExpression ${groupSortOrder.name}"
-                else -> "$groupingExpression ${groupSortOrder.name}" // Corrected line
+                else -> "$groupingExpression ${groupSortOrder.name}"
             }
             orderByClauses.add(groupSortExpression)
         }
@@ -407,4 +335,3 @@ class UriRecordQueryBuilder @Inject constructor() {
         }
     }
 }
-
