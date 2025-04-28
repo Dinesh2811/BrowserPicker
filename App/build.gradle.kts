@@ -86,7 +86,7 @@ android {
 dependencies {
     implementation(project(mapOf("path" to ":theme")))
     implementation(project(mapOf("path" to ":browserpicker:core")))
-    implementation(project(mapOf("path" to ":browserpicker:core")))
+    implementation(project(mapOf("path" to ":browserpicker:data")))
     implementation(project(mapOf("path" to ":browserpicker:domain")))
     implementation(project(mapOf("path" to ":browserpicker:presentation")))
 //    implementation(project(mapOf("path" to ":openWith")))

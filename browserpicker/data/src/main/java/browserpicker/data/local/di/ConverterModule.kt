@@ -11,21 +11,21 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-@Module
-@InstallIn(SingletonComponent::class)
-object BrowserPickerConverterModule {
-    @Provides @Singleton
-    fun provideInstantConverter(): InstantConverter = InstantConverter()
-
-    @Provides @Singleton
-    fun provideUriSourceConverter() = InstantConverter()
-
-    @Provides @Singleton
-    fun provideInteractionActionConverter() = InstantConverter()
-
-    @Provides @Singleton
-    fun provideUriStatusConverter() = InstantConverter()
-
-    @Provides @Singleton
-    fun provideFolderTypeConverter() = InstantConverter()
-}
+//@Module
+//@InstallIn(SingletonComponent::class)
+//object BrowserPickerConverterModule {
+//    @Provides @Singleton
+//    fun provideInstantConverter(): InstantConverter = InstantConverter()
+//
+//    @Provides @Singleton
+//    fun provideUriSourceConverter() = InstantConverter()
+//
+//    @Provides @Singleton
+//    fun provideInteractionActionConverter() = InstantConverter()
+//
+//    @Provides @Singleton
+//    fun provideUriStatusConverter() = InstantConverter()
+//
+//    @Provides @Singleton
+//    fun provideFolderTypeConverter() = InstantConverter()
+//}
