@@ -6,6 +6,7 @@ import browserpicker.domain.model.BrowserUsageStat
 import browserpicker.domain.repository.BrowserStatsRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
@@ -26,15 +27,15 @@ class BrowserStatsRepositoryImpl @Inject constructor(
 
 
     override fun getBrowserStat(packageName: String): Flow<BrowserUsageStat?> {
-        return dataSource.getBrowserStat(packageName)
+        return dataSource.getBrowserStat(packageName).flowOn(ioDispatcher)
     }
 
     override fun getAllBrowserStats(): Flow<List<BrowserUsageStat>> {
-        return dataSource.getAllBrowserStats()
+        return dataSource.getAllBrowserStats().flowOn(ioDispatcher)
     }
 
     override fun getAllBrowserStatsSortedByLastUsed(): Flow<List<BrowserUsageStat>> {
-        return dataSource.getAllBrowserStatsSortedByLastUsed()
+        return dataSource.getAllBrowserStatsSortedByLastUsed().flowOn(ioDispatcher)
     }
 
     override suspend fun deleteBrowserStat(packageName: String): Result<Unit> = runCatching {

@@ -13,6 +13,7 @@ import browserpicker.domain.repository.FolderRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
@@ -34,19 +35,19 @@ class FolderRepositoryImpl @Inject constructor(
     }
 
     override fun getFolder(folderId: Long): Flow<Folder?> {
-        return folderDataSource.getFolder(folderId)
+        return folderDataSource.getFolder(folderId).flowOn(ioDispatcher)
     }
 
     override fun getChildFolders(parentFolderId: Long): Flow<List<Folder>> {
-        return folderDataSource.getChildFolders(parentFolderId)
+        return folderDataSource.getChildFolders(parentFolderId).flowOn(ioDispatcher)
     }
 
     override fun getRootFoldersByType(type: FolderType): Flow<List<Folder>> {
-        return folderDataSource.getRootFoldersByType(type)
+        return folderDataSource.getRootFoldersByType(type).flowOn(ioDispatcher)
     }
 
     override fun getAllFoldersByType(type: FolderType): Flow<List<Folder>> {
-        return folderDataSource.getAllFoldersByType(type)
+        return folderDataSource.getAllFoldersByType(type).flowOn(ioDispatcher)
     }
 
     override suspend fun findFolderByNameAndParent(name: String, parentFolderId: Long?, type: FolderType): Folder? {
@@ -54,7 +55,6 @@ class FolderRepositoryImpl @Inject constructor(
             folderDataSource.findFolderByNameAndParent(name, parentFolderId, type)
         }
     }
-
 
     override suspend fun createFolder(
         name: String,
@@ -111,6 +111,15 @@ class FolderRepositoryImpl @Inject constructor(
         }
     }.onFailure { Timber.e(it, "Failed to create folder: Name='$name', Parent='$parentFolderId', Type='$type'") }
 
+    private suspend fun isDescendant(folderId: Long, potentialAncestorId: Long): Boolean {
+        var currentParentId = folderDataSource.getFolder(folderId).firstOrNull()?.parentFolderId
+        while (currentParentId != null) {
+            if (currentParentId == potentialAncestorId) return true
+            currentParentId = folderDataSource.getFolder(currentParentId).firstOrNull()?.parentFolderId
+        }
+        return false
+    }
+
     override suspend fun updateFolder(folder: Folder): Result<Unit> = runCatching {
         val trimmedName = folder.name.trim()
         if (trimmedName.isEmpty()) {
@@ -137,6 +146,9 @@ class FolderRepositoryImpl @Inject constructor(
                         throw IllegalArgumentException("Cannot move a folder into itself.")
                     }
 
+                    if (isDescendant(parentFolderId, folder.id)) {
+                        throw IllegalArgumentException("Cannot move a folder into its own descendant.")
+                    }
                     val newParent = folderDataSource.getFolder(parentFolderId).firstOrNull()
                         ?: throw IllegalArgumentException("New parent folder with ID $parentFolderId not found.")
                     if (newParent.type != folder.type) {

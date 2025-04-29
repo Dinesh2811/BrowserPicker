@@ -12,11 +12,11 @@ import javax.inject.*
 class UriHistoryRepositoryImpl @Inject constructor(
     private val dataSource: UriHistoryLocalDataSource,
     private val instantProvider: InstantProvider,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher, // Inject IO dispatcher
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ): UriHistoryRepository {
-
-    // Mapper function from Domain Query to Data Query Config
     private fun mapQueryToConfig(query: UriHistoryQuery): UriRecordQueryConfig {
+        // NOTE: Advanced filters from the domain layer are not currently supported.
+        // If needed, map them here from the domain query to the data config.
         return UriRecordQueryConfig(
             searchQuery = query.searchQuery,
             filterByUriSource = query.filterByUriSource,
@@ -28,7 +28,7 @@ class UriHistoryRepositoryImpl @Inject constructor(
             sortOrder = query.sortOrder,
             groupBy = query.groupBy,
             groupSortOrder = query.groupSortOrder,
-            advancedFilters = emptyList() // Advanced filters managed here if needed
+            advancedFilters = emptyList()
         )
     }
 
@@ -37,33 +37,32 @@ class UriHistoryRepositoryImpl @Inject constructor(
         pagingConfig: PagingConfig,
     ): Flow<PagingData<UriRecord>> {
         val dataQueryConfig = mapQueryToConfig(query)
-        // DataSource now handles Pager creation and mapping
         return dataSource.getPagedUriRecords(dataQueryConfig, pagingConfig)
-        // No need for withContext here as Pager handles its own scheduling
+            .catch { Timber.e(it, "Error in getPagedUriRecords") }
+            .flowOn(ioDispatcher)
     }
 
     override fun getTotalUriRecordCount(query: UriHistoryQuery): Flow<Int> {
         val dataQueryConfig = mapQueryToConfig(query)
         return dataSource.getTotalUriRecordCount(dataQueryConfig)
-        // Flow execution context depends on Room's query executor
+            .catch { Timber.e(it, "Error in getTotalUriRecordCount") }
+            .flowOn(ioDispatcher)
     }
 
-    // Map Data GroupCount to Domain GroupCount
     override fun getGroupCounts(query: UriHistoryQuery): Flow<List<DomainGroupCount>> {
         val dataQueryConfig = mapQueryToConfig(query)
         return dataSource.getGroupCounts(dataQueryConfig).map { list ->
             list.map { DomainGroupCount(it.groupValue, it.count) }
-        }
-        // Flow execution context depends on Room's query executor
+        }.catch { Timber.e(it, "Error in getGroupCounts") }
+            .flowOn(ioDispatcher)
     }
 
-    // Map Data DateCount to Domain DateCount
     override fun getDateCounts(query: UriHistoryQuery): Flow<List<DomainDateCount>> {
         val dataQueryConfig = mapQueryToConfig(query)
         return dataSource.getDateCounts(dataQueryConfig).map { list ->
             list.map { DomainDateCount(it.date, it.count) }
-        }
-        // Flow execution context depends on Room's query executor
+        }.catch { Timber.e(it, "Error in getDateCounts") }
+            .flowOn(ioDispatcher)
     }
 
 
@@ -91,12 +90,13 @@ class UriHistoryRepositoryImpl @Inject constructor(
         Timber.e(e, "Failed to add URI record: uriString='$uriString', host='$host', source='$source', action='$action'")
     }
 
-    override suspend fun getUriRecord(id: Long): UriRecord? {
-        // Reading can often skip withContext if DataSource/DAO handles it,
-        // but explicit is safer for non-Flow suspend functions.
-        return withContext(ioDispatcher) {
+    override suspend fun getUriRecord(id: Long): UriRecord? = runCatching {
+        withContext(ioDispatcher) {
             dataSource.getUriRecord(id)
         }
+    }.getOrElse {
+        Timber.e(it, "Failed to get URI record with id: %d", id)
+        null
     }
 
     override suspend fun deleteUriRecord(id: Long): Boolean {
@@ -116,13 +116,16 @@ class UriHistoryRepositoryImpl @Inject constructor(
         }
     }.onFailure { Timber.e(it, "Failed to delete all URI records") }
 
-
     override fun getDistinctHosts(): Flow<List<String>> {
-        return dataSource.getDistinctHosts() // Handled by DataSource/Room
+        return dataSource.getDistinctHosts()
+            .catch { Timber.e(it, "Error in getDistinctHosts") }
+            .flowOn(ioDispatcher)
     }
 
     override fun getDistinctChosenBrowsers(): Flow<List<String?>> {
-        return dataSource.getDistinctChosenBrowsers() // Handled by DataSource/Room
+        return dataSource.getDistinctChosenBrowsers()
+            .catch { Timber.e(it, "Error in getDistinctChosenBrowsers") }
+            .flowOn(ioDispatcher)
     }
 }
 
@@ -136,7 +139,7 @@ class HostRuleRepositoryImpl @Inject constructor(
 ): HostRuleRepository {
 
     override fun getHostRuleByHost(host: String): Flow<HostRule?> {
-        return hostRuleDataSource.getHostRuleByHost(host)
+        return hostRuleDataSource.getHostRuleByHost(host).flowOn(ioDispatcher)
     }
 
     override suspend fun getHostRuleById(id: Long): HostRule? {
@@ -146,23 +149,23 @@ class HostRuleRepositoryImpl @Inject constructor(
     }
 
     override fun getAllHostRules(): Flow<List<HostRule>> {
-        return hostRuleDataSource.getAllHostRules()
+        return hostRuleDataSource.getAllHostRules().flowOn(ioDispatcher)
     }
 
     override fun getHostRulesByStatus(status: UriStatus): Flow<List<HostRule>> {
-        return hostRuleDataSource.getHostRulesByStatus(status)
+        return hostRuleDataSource.getHostRulesByStatus(status).flowOn(ioDispatcher)
     }
 
     override fun getHostRulesByFolder(folderId: Long): Flow<List<HostRule>> {
-        return hostRuleDataSource.getHostRulesByFolder(folderId)
+        return hostRuleDataSource.getHostRulesByFolder(folderId).flowOn(ioDispatcher)
     }
 
     override fun getRootHostRulesByStatus(status: UriStatus): Flow<List<HostRule>> {
-        return hostRuleDataSource.getRootHostRulesByStatus(status)
+        return hostRuleDataSource.getRootHostRulesByStatus(status).flowOn(ioDispatcher)
     }
 
     override fun getDistinctRuleHosts(): Flow<List<String>> {
-        return hostRuleDataSource.getDistinctRuleHosts()
+        return hostRuleDataSource.getDistinctRuleHosts().flowOn(ioDispatcher)
     }
 
     @Transaction
@@ -230,7 +233,7 @@ class HostRuleRepositoryImpl @Inject constructor(
 
             hostRuleDataSource.upsertHostRule(ruleToSave)
         }.onFailure { e ->
-            Timber.e(e, "Failed to save host rule: host='$host', status='$status', folderId='$folderId', preferredBrowser='$preferredBrowser'")
+            Timber.e(e, "Failed to save host rule: host='%s', status='%s', folderId='%s', preferredBrowser='%s'", host, status, folderId, preferredBrowser)
         }
     }
 
@@ -276,19 +279,19 @@ class FolderRepositoryImpl @Inject constructor(
     }
 
     override fun getFolder(folderId: Long): Flow<Folder?> {
-        return folderDataSource.getFolder(folderId)
+        return folderDataSource.getFolder(folderId).flowOn(ioDispatcher)
     }
 
     override fun getChildFolders(parentFolderId: Long): Flow<List<Folder>> {
-        return folderDataSource.getChildFolders(parentFolderId)
+        return folderDataSource.getChildFolders(parentFolderId).flowOn(ioDispatcher)
     }
 
     override fun getRootFoldersByType(type: FolderType): Flow<List<Folder>> {
-        return folderDataSource.getRootFoldersByType(type)
+        return folderDataSource.getRootFoldersByType(type).flowOn(ioDispatcher)
     }
 
     override fun getAllFoldersByType(type: FolderType): Flow<List<Folder>> {
-        return folderDataSource.getAllFoldersByType(type)
+        return folderDataSource.getAllFoldersByType(type).flowOn(ioDispatcher)
     }
 
     override suspend fun findFolderByNameAndParent(name: String, parentFolderId: Long?, type: FolderType): Folder? {
@@ -296,7 +299,6 @@ class FolderRepositoryImpl @Inject constructor(
             folderDataSource.findFolderByNameAndParent(name, parentFolderId, type)
         }
     }
-
 
     override suspend fun createFolder(
         name: String,
@@ -351,8 +353,15 @@ class FolderRepositoryImpl @Inject constructor(
             )
             folderDataSource.createFolder(newFolder)
         }
-    }.onFailure { e ->
-        Timber.e(e, "Failed to create folder: name='$name', parentFolderId='$parentFolderId', type='$type'")
+    }.onFailure { Timber.e(it, "Failed to create folder: Name='$name', Parent='$parentFolderId', Type='$type'") }
+
+    private suspend fun isDescendant(folderId: Long, potentialAncestorId: Long): Boolean {
+        var currentParentId = folderDataSource.getFolder(folderId).firstOrNull()?.parentFolderId
+        while (currentParentId != null) {
+            if (currentParentId == potentialAncestorId) return true
+            currentParentId = folderDataSource.getFolder(currentParentId).firstOrNull()?.parentFolderId
+        }
+        return false
     }
 
     override suspend fun updateFolder(folder: Folder): Result<Unit> = runCatching {
@@ -381,6 +390,9 @@ class FolderRepositoryImpl @Inject constructor(
                         throw IllegalArgumentException("Cannot move a folder into itself.")
                     }
 
+                    if (isDescendant(parentFolderId, folder.id)) {
+                        throw IllegalArgumentException("Cannot move a folder into its own descendant.")
+                    }
                     val newParent = folderDataSource.getFolder(parentFolderId).firstOrNull()
                         ?: throw IllegalArgumentException("New parent folder with ID $parentFolderId not found.")
                     if (newParent.type != folder.type) {
@@ -414,7 +426,6 @@ class FolderRepositoryImpl @Inject constructor(
         Timber.e(e, "Failed to update folder: ID='${folder.id}', name='${folder.name}', parentFolderId='${folder.parentFolderId}', type='${folder.type}'")
     }
 
-
     @Transaction
     override suspend fun deleteFolder(folderId: Long): Result<Unit> = browserPickerDatabase.withTransaction {
         runCatching {
@@ -447,21 +458,19 @@ class BrowserStatsRepositoryImpl @Inject constructor(
         withContext(ioDispatcher) {
             dataSource.recordBrowserUsage(packageName)
         }
-    }.onFailure { e ->
-        Timber.e(e, "Failed to record browser usage: packageName='$packageName'")
-    }
+    }.onFailure { Timber.e(it, "Failed to record browser usage for: $packageName") }
 
 
     override fun getBrowserStat(packageName: String): Flow<BrowserUsageStat?> {
-        return dataSource.getBrowserStat(packageName)
+        return dataSource.getBrowserStat(packageName).flowOn(ioDispatcher)
     }
 
     override fun getAllBrowserStats(): Flow<List<BrowserUsageStat>> {
-        return dataSource.getAllBrowserStats()
+        return dataSource.getAllBrowserStats().flowOn(ioDispatcher)
     }
 
     override fun getAllBrowserStatsSortedByLastUsed(): Flow<List<BrowserUsageStat>> {
-        return dataSource.getAllBrowserStatsSortedByLastUsed()
+        return dataSource.getAllBrowserStatsSortedByLastUsed().flowOn(ioDispatcher)
     }
 
     override suspend fun deleteBrowserStat(packageName: String): Result<Unit> = runCatching {
@@ -470,9 +479,7 @@ class BrowserStatsRepositoryImpl @Inject constructor(
             val deleted = dataSource.deleteBrowserStat(packageName)
             if (!deleted) Timber.w("Browser stat for '$packageName' not found or delete failed.")
         }
-    }.onFailure { e ->
-        Timber.e(e, "Failed to delete browser stat: packageName='$packageName'")
-    }
+    }.onFailure { Timber.e(it, "Failed to delete browser stat for: $packageName") }
 
 
     override suspend fun deleteAllStats(): Result<Unit> = runCatching {

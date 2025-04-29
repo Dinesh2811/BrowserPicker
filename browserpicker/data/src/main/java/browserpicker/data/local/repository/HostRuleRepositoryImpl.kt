@@ -14,6 +14,7 @@ import browserpicker.domain.repository.HostRuleRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
@@ -29,7 +30,7 @@ class HostRuleRepositoryImpl @Inject constructor(
 ): HostRuleRepository {
 
     override fun getHostRuleByHost(host: String): Flow<HostRule?> {
-        return hostRuleDataSource.getHostRuleByHost(host)
+        return hostRuleDataSource.getHostRuleByHost(host).flowOn(ioDispatcher)
     }
 
     override suspend fun getHostRuleById(id: Long): HostRule? {
@@ -39,23 +40,23 @@ class HostRuleRepositoryImpl @Inject constructor(
     }
 
     override fun getAllHostRules(): Flow<List<HostRule>> {
-        return hostRuleDataSource.getAllHostRules()
+        return hostRuleDataSource.getAllHostRules().flowOn(ioDispatcher)
     }
 
     override fun getHostRulesByStatus(status: UriStatus): Flow<List<HostRule>> {
-        return hostRuleDataSource.getHostRulesByStatus(status)
+        return hostRuleDataSource.getHostRulesByStatus(status).flowOn(ioDispatcher)
     }
 
     override fun getHostRulesByFolder(folderId: Long): Flow<List<HostRule>> {
-        return hostRuleDataSource.getHostRulesByFolder(folderId)
+        return hostRuleDataSource.getHostRulesByFolder(folderId).flowOn(ioDispatcher)
     }
 
     override fun getRootHostRulesByStatus(status: UriStatus): Flow<List<HostRule>> {
-        return hostRuleDataSource.getRootHostRulesByStatus(status)
+        return hostRuleDataSource.getRootHostRulesByStatus(status).flowOn(ioDispatcher)
     }
 
     override fun getDistinctRuleHosts(): Flow<List<String>> {
-        return hostRuleDataSource.getDistinctRuleHosts()
+        return hostRuleDataSource.getDistinctRuleHosts().flowOn(ioDispatcher)
     }
 
     @Transaction
@@ -123,7 +124,7 @@ class HostRuleRepositoryImpl @Inject constructor(
 
             hostRuleDataSource.upsertHostRule(ruleToSave)
         }.onFailure { e ->
-            Timber.e(e, "Failed to save host rule: host='$host', status='$status', folderId='$folderId', preferredBrowser='$preferredBrowser'")
+            Timber.e(e, "Failed to save host rule: host='%s', status='%s', folderId='%s', preferredBrowser='%s'", host, status, folderId, preferredBrowser)
         }
     }
 
