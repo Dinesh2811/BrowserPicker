@@ -11,14 +11,8 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class UtilModule { // New module for utilities
+abstract class UtilModule {
 
-    @Binds
-    @Singleton
+    @Binds @Singleton
     abstract fun bindUriParser(impl: AndroidUriParser): UriParser
-
-    // ... potentially add other utility bindings here later ...
 }
-
-// Make sure DataSourceModule, DatabaseModule, QueryModule, RepositoryModule, UseCaseModule
-// are all installed in appropriate components (SingletonComponent, ViewModelComponent).
