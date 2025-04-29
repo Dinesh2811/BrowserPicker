@@ -21,13 +21,9 @@ import kotlin.time.Duration.Companion.seconds
 @Singleton
 class MockDataGenerator @Inject constructor(
     private val mockBrowserPickerDatabaseDao: MockBrowserPickerDatabaseDao,
-
     private val instantProvider: InstantProvider,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
-
-    // --- Realistic Data Pools ---
-
     private val schemes = listOf("https", "http")
     private val commonHosts = listOf(
         "google.com", "youtube.com", "facebook.com", "amazon.com", "wikipedia.org",

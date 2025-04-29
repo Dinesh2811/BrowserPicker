@@ -1,8 +1,5 @@
 package com.dinesh.browserpicker.mock
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -20,27 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import dagger.hilt.android.AndroidEntryPoint
 import androidx.compose.animation.*
-
-@AndroidEntryPoint
-class DebugActivity : ComponentActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setContent {
-            val debugViewModel: DebugViewModel = hiltViewModel()
-
-            DebugScreen(
-                debugViewModel = debugViewModel,
-                onGenerateMockData = { debugViewModel.generateMockData() },
-                onClearMockData = { debugViewModel.clearMockData() },
-                onClearMessage = { debugViewModel.clearMessage() }
-            )
-        }
-    }
-}
 
 @Composable
 fun DebugScreen(
