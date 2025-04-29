@@ -53,8 +53,8 @@ data class GroupCount(
 
 @Serializable
 data class DateCount(
-    @ColumnInfo(name = "dateString")
-    val dateString: String?,
+    @ColumnInfo(name = "date")
+    val date: Instant?,
     @ColumnInfo(name = "count")
     val count: Int
 )

@@ -74,7 +74,7 @@ class UriHistoryRepositoryImpl @Inject constructor(
     override fun getDateCounts(query: UriHistoryQuery): Flow<List<DomainDateCount>> {
         val dataQueryConfig = mapQueryToConfig(query)
         return dataSource.getDateCounts(dataQueryConfig).map { list ->
-            list.map { DomainDateCount(it.dateString, it.count) }
+            list.map { DomainDateCount(it.date, it.count) }
         }
         // Flow execution context depends on Room's query executor
     }

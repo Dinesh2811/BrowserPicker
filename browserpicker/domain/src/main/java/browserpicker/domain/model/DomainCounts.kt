@@ -1,5 +1,7 @@
 package browserpicker.domain.model
 
-data class DomainGroupCount(val groupValue: String?, val count: Int)
+import kotlinx.datetime.Instant
 
-data class DomainDateCount(val dateString: String?, val count: Int)
+data class DomainGroupCount(val groupValue: String?, val count: Int)
+data class DomainDateCount(val date: Instant?, val count: Int)
+

@@ -56,7 +56,7 @@ enum class FolderType(val value: Int) {
     BLOCK(2);
 
     companion object {
-        @Throws(IllegalStateException::class)
+        @Throws(IllegalArgumentException::class)
         fun fromValue(value: Int) = entries.find { it.value == value }?: throw IllegalArgumentException("Unknown FolderType value: $value")
         fun fromValueOrNull(value: Int) = entries.find { it.value == value }
         fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
