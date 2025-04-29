@@ -1,5 +1,6 @@
 package browserpicker.playground.browserpicker.data
 
+import browserpicker.playground.browserpicker.domain.*
 import androidx.room.*
 import kotlinx.datetime.Instant
 
@@ -40,10 +41,10 @@ data class UriRecordEntity(
     val timestamp: Instant,
 
     @ColumnInfo(name = "uri_source", typeAffinity = ColumnInfo.INTEGER)
-    val uriSource: UriSource,
+    val uriSource: Int, /** [UriSource] */
 
     @ColumnInfo(name = "interaction_action", typeAffinity = ColumnInfo.INTEGER)
-    val interactionAction: InteractionAction,
+    val interactionAction: Int, /** [InteractionAction] */
 
     @ColumnInfo(name = "chosen_browser_package")
     val chosenBrowserPackage: String? = null,
@@ -89,7 +90,7 @@ data class HostRuleEntity(
     val host: String,
 
     @ColumnInfo(name = "uri_status", typeAffinity = ColumnInfo.INTEGER)
-    val uriStatus: UriStatus,
+    val uriStatus: Int, /** [UriStatus] */
 
     @ColumnInfo(name = "folder_id")
     val folderId: Long? = null,
@@ -138,7 +139,7 @@ data class FolderEntity(
     val name: String,
 
     @ColumnInfo(name = "folder_type", typeAffinity = ColumnInfo.INTEGER)
-    val folderType: FolderType,
+    val folderType: Int, /** [FolderType] */
 
     @ColumnInfo(name = "created_at")
     val createdAt: Instant,
