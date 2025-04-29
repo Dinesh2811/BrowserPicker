@@ -18,10 +18,8 @@ data class UriHistoryQuery(
     val sortOrder: SortOrder = SortOrder.DESC,
     val groupBy: UriRecordGroupField = UriRecordGroupField.NONE,
     val groupSortOrder: SortOrder = SortOrder.ASC,
-    // Keep advanced filters simple for domain - pass raw SQL+args if absolutely needed,
-    // or define more structured domain-specific advanced filters later.
-    // For now, let's omit direct SQL from the domain query object.
-    // Advanced filtering logic can be encapsulated within specific use cases or repository methods if required.
+    // Use domain-specific advanced filters instead of raw SQL structure
+    val advancedFilters: List<UriRecordAdvancedFilterDomain> = emptyList()
 ) {
     companion object {
         val DEFAULT = UriHistoryQuery()

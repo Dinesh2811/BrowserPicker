@@ -5,6 +5,7 @@ import androidx.room.ColumnInfo
 import browserpicker.domain.model.InteractionAction
 import browserpicker.domain.model.UriSource
 import browserpicker.domain.model.query.SortOrder
+import browserpicker.domain.model.query.UriRecordAdvancedFilterDomain
 import browserpicker.domain.model.query.UriRecordGroupField
 import browserpicker.domain.model.query.UriRecordSortField
 import kotlinx.datetime.Instant
@@ -22,7 +23,8 @@ data class UriRecordQueryConfig(
     val sortOrder: SortOrder = SortOrder.DESC,
     val groupBy: UriRecordGroupField = UriRecordGroupField.NONE,
     val groupSortOrder: SortOrder = SortOrder.ASC,
-    val advancedFilters: List<UriRecordAdvancedFilter> = emptyList()
+//    val advancedFilters: List<UriRecordAdvancedFilter> = emptyList(),
+    val advancedFilters: List<UriRecordAdvancedFilterDomain> = emptyList(),
 ) {
     companion object {
         val DEFAULT = UriRecordQueryConfig()

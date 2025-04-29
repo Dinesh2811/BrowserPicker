@@ -69,6 +69,14 @@ object Converters {
     @JvmStatic
     fun intToUriStatusNN(value: Int): UriStatus = UriStatus.fromValue(value) // Defaults to UNKNOWN
 
+    @TypeConverter
+    @JvmStatic
+    fun folderTypeToInt(folderType: FolderType?): Int? = folderType?.value
+
+    @TypeConverter
+    @JvmStatic
+    fun intToFolderType(value: Int?): FolderType? = value?.let { FolderType.fromValueOrNull(it) }
+
     // Non-null variant needed as Folder type cannot be null
     @TypeConverter
     @JvmStatic

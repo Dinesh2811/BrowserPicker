@@ -4,16 +4,22 @@ import browserpicker.data.local.entity.*
 import browserpicker.domain.model.*
 
 object UriRecordMapper {
-    fun toDomainModel(entity: UriRecordEntity): UriRecord = UriRecord(
-        id = entity.id,
-        uriString = entity.uriString,
-        host = entity.host,
-        timestamp = entity.timestamp,
-        uriSource = UriSource.fromValue(entity.uriSource),
-        interactionAction = InteractionAction.fromValue(entity.interactionAction),
-        chosenBrowserPackage = entity.chosenBrowserPackage,
-        associatedHostRuleId = entity.associatedHostRuleId
-    )
+    fun toDomainModel(entity: UriRecordEntity): UriRecord {
+        val domainUriSource = UriSource.fromValueOrNull(entity.uriSource)
+            ?: throw MappingException("Invalid UriSource value '${entity.uriSource}' found in database for UriRecord ID ${entity.id}")
+        val domainInteractionAction = InteractionAction.fromValue(entity.interactionAction) // Defaults to UNKNOWN
+
+        return UriRecord(
+            id = entity.id,
+            uriString = entity.uriString,
+            host = entity.host,
+            timestamp = entity.timestamp,
+            uriSource = domainUriSource, // Now uses safe mapping
+            interactionAction = domainInteractionAction, // Already safe (defaults)
+            chosenBrowserPackage = entity.chosenBrowserPackage,
+            associatedHostRuleId = entity.associatedHostRuleId
+        )
+    }
 
     fun toEntity(model: UriRecord): UriRecordEntity = UriRecordEntity(
         id = model.id,
@@ -56,14 +62,19 @@ object HostRuleMapper {
 }
 
 object FolderMapper  {
-    fun toDomainModel(entity: FolderEntity): Folder = Folder(
-        id = entity.id,
-        parentFolderId = entity.parentFolderId,
-        name = entity.name,
-        type = FolderType.fromValue(entity.folderType),
-        createdAt = entity.createdAt,
-        updatedAt = entity.updatedAt
-    )
+    fun toDomainModel(entity: FolderEntity): Folder {
+        val domainFolderType = FolderType.fromValueOrNull(entity.folderType)
+            ?: throw MappingException("Invalid FolderType value '${entity.folderType}' found in database for Folder ID ${entity.id}")
+
+        return Folder(
+            id = entity.id,
+            parentFolderId = entity.parentFolderId,
+            name = entity.name,
+            type = domainFolderType, // Now uses safe mapping
+            createdAt = entity.createdAt,
+            updatedAt = entity.updatedAt
+        )
+    }
 
     fun toEntity(model: Folder): FolderEntity = FolderEntity(
         id = model.id,
@@ -92,3 +103,5 @@ object BrowserUsageStatMapper  {
 
     fun toDomainModels(entities: List<BrowserUsageStatEntity>): List<BrowserUsageStat> = entities.map { toDomainModel(it) }
 }
+
+class MappingException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
