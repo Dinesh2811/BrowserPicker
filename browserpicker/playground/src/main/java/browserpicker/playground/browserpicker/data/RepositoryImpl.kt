@@ -84,11 +84,12 @@ class UriHistoryRepositoryImpl @Inject constructor(
                 interactionAction = action,
                 chosenBrowserPackage = chosenBrowser,
                 associatedHostRuleId = associatedHostRuleId
-                // id is auto-generated
             )
             dataSource.insertUriRecord(record)
         }
-    }.onFailure { Timber.e(it, "Failed to add URI record") }
+    }.onFailure { e ->
+        Timber.e(e, "Failed to add URI record: uriString='$uriString', host='$host', source='$source', action='$action'")
+    }
 
     override suspend fun getUriRecord(id: Long): UriRecord? {
         // Reading can often skip withContext if DataSource/DAO handles it,
@@ -179,6 +180,9 @@ class HostRuleRepositoryImpl @Inject constructor(
             if (status == UriStatus.UNKNOWN) {
                 throw IllegalArgumentException("Cannot save rule with UNKNOWN status.")
             }
+            if (preferredBrowser != null && preferredBrowser.isBlank()) {
+                throw IllegalArgumentException("Preferred browser package cannot be blank.")
+            }
 
             val now = instantProvider.now()
             val currentRule = hostRuleDataSource.getHostRuleByHost(host).firstOrNull()
@@ -225,7 +229,9 @@ class HostRuleRepositoryImpl @Inject constructor(
             )
 
             hostRuleDataSource.upsertHostRule(ruleToSave)
-        }.onFailure { Timber.e(it, "Failed to save host rule for host: $host inside transaction") }
+        }.onFailure { e ->
+            Timber.e(e, "Failed to save host rule: host='$host', status='$status', folderId='$folderId', preferredBrowser='$preferredBrowser'")
+        }
     }
 
     override suspend fun deleteHostRuleById(id: Long): Result<Unit> = runCatching {
@@ -345,7 +351,9 @@ class FolderRepositoryImpl @Inject constructor(
             )
             folderDataSource.createFolder(newFolder)
         }
-    }.onFailure { Timber.e(it, "Failed to create folder: Name='$name', Parent='$parentFolderId', Type='$type'") }
+    }.onFailure { e ->
+        Timber.e(e, "Failed to create folder: name='$name', parentFolderId='$parentFolderId', type='$type'")
+    }
 
     override suspend fun updateFolder(folder: Folder): Result<Unit> = runCatching {
         val trimmedName = folder.name.trim()
@@ -402,7 +410,9 @@ class FolderRepositoryImpl @Inject constructor(
                 throw IllegalStateException("Failed to update folder with ID ${folder.id} in data source.")
             }
         }
-    }.onFailure { Timber.e(it, "Failed to update folder: ID='${folder.id}'") }
+    }.onFailure { e ->
+        Timber.e(e, "Failed to update folder: ID='${folder.id}', name='${folder.name}', parentFolderId='${folder.parentFolderId}', type='${folder.type}'")
+    }
 
 
     @Transaction
@@ -437,7 +447,9 @@ class BrowserStatsRepositoryImpl @Inject constructor(
         withContext(ioDispatcher) {
             dataSource.recordBrowserUsage(packageName)
         }
-    }.onFailure { Timber.e(it, "Failed to record browser usage for: $packageName") }
+    }.onFailure { e ->
+        Timber.e(e, "Failed to record browser usage: packageName='$packageName'")
+    }
 
 
     override fun getBrowserStat(packageName: String): Flow<BrowserUsageStat?> {
@@ -458,7 +470,9 @@ class BrowserStatsRepositoryImpl @Inject constructor(
             val deleted = dataSource.deleteBrowserStat(packageName)
             if (!deleted) Timber.w("Browser stat for '$packageName' not found or delete failed.")
         }
-    }.onFailure { Timber.e(it, "Failed to delete browser stat for: $packageName") }
+    }.onFailure { e ->
+        Timber.e(e, "Failed to delete browser stat: packageName='$packageName'")
+    }
 
 
     override suspend fun deleteAllStats(): Result<Unit> = runCatching {

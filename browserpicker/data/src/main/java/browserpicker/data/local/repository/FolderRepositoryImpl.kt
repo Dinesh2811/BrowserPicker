@@ -166,8 +166,9 @@ class FolderRepositoryImpl @Inject constructor(
                 throw IllegalStateException("Failed to update folder with ID ${folder.id} in data source.")
             }
         }
-    }.onFailure { Timber.e(it, "Failed to update folder: ID='${folder.id}'") }
-
+    }.onFailure { e ->
+        Timber.e(e, "Failed to update folder: ID='${folder.id}', name='${folder.name}', parentFolderId='${folder.parentFolderId}', type='${folder.type}'")
+    }
 
     @Transaction
     override suspend fun deleteFolder(folderId: Long): Result<Unit> = browserPickerDatabase.withTransaction {

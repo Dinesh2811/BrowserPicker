@@ -73,6 +73,9 @@ class HostRuleRepositoryImpl @Inject constructor(
             if (status == UriStatus.UNKNOWN) {
                 throw IllegalArgumentException("Cannot save rule with UNKNOWN status.")
             }
+            if (preferredBrowser != null && preferredBrowser.isBlank()) {
+                throw IllegalArgumentException("Preferred browser package cannot be blank.")
+            }
 
             val now = instantProvider.now()
             val currentRule = hostRuleDataSource.getHostRuleByHost(host).firstOrNull()
@@ -119,7 +122,9 @@ class HostRuleRepositoryImpl @Inject constructor(
             )
 
             hostRuleDataSource.upsertHostRule(ruleToSave)
-        }.onFailure { Timber.e(it, "Failed to save host rule for host: $host inside transaction") }
+        }.onFailure { e ->
+            Timber.e(e, "Failed to save host rule: host='$host', status='$status', folderId='$folderId', preferredBrowser='$preferredBrowser'")
+        }
     }
 
     override suspend fun deleteHostRuleById(id: Long): Result<Unit> = runCatching {

@@ -101,7 +101,9 @@ class UriHistoryRepositoryImpl @Inject constructor(
             )
             dataSource.insertUriRecord(record)
         }
-    }.onFailure { Timber.e(it, "Failed to add URI record") }
+    }.onFailure { e ->
+        Timber.e(e, "Failed to add URI record: uriString='$uriString', host='$host', source='$source', action='$action'")
+    }
 
     override suspend fun getUriRecord(id: Long): UriRecord? {
         // Reading can often skip withContext if DataSource/DAO handles it,

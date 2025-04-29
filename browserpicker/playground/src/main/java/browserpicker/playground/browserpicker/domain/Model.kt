@@ -114,7 +114,7 @@ data class HostRule(
     init {
         require(host.isNotBlank()) { "host must not be blank" }
         require(uriStatus != UriStatus.UNKNOWN) { "uriStatus must not be UNKNOWN" }
-        if (uriStatus == UriStatus.NONE) require(folderId == null && preferredBrowserPackage == null) { "NONE status may not have folder or preference" }
+        if (uriStatus == UriStatus.NONE) require(folderId == null && preferredBrowserPackage == null && !isPreferenceEnabled) { "NONE status may not have folder, preference, or enabled preference" }
         if (uriStatus == UriStatus.BLOCKED) require(preferredBrowserPackage == null && !isPreferenceEnabled) { "BLOCKED status must not have preference" }
     }
 }
