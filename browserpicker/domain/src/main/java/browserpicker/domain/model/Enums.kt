@@ -9,8 +9,11 @@ enum class UriSource(val value: Int) {
     MANUAL(3);
 
     companion object {
-        fun fromValue(value: Int) = entries.find { it.value == value }?: throw IllegalArgumentException("Unknown UriSource value: $value")
+        @Throws(IllegalArgumentException::class)
+        fun fromValue(value: Int): UriSource = entries.find { it.value == value }
+            ?: throw IllegalArgumentException("Invalid UriSource value: $value. Valid values are: ${entries.joinToString { "${it.name}(${it.value})" }}")
         fun fromValueOrNull(value: Int): UriSource? = entries.find { it.value == value }
+        fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
     }
 }
 
@@ -27,6 +30,8 @@ enum class InteractionAction(val value: Int) {
     companion object {
         fun fromValue(value: Int) = entries.find { it.value == value }?: UNKNOWN
         fun fromValueOrNull(value: Int): InteractionAction? = entries.find { it.value == value }
+        fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
+        fun InteractionAction.isOpenAction(): Boolean = this == OPENED_ONCE || this == OPENED_BY_PREFERENCE
     }
 }
 
@@ -40,6 +45,8 @@ enum class UriStatus(val value: Int) {
     companion object {
         fun fromValue(value: Int) = entries.find { it.value == value }?: UNKNOWN
         fun fromValueOrNull(value: Int): UriStatus? = entries.find { it.value == value }
+        fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
+        fun UriStatus.isActive(): Boolean = this != UNKNOWN && this != NONE
     }
 }
 
@@ -49,7 +56,13 @@ enum class FolderType(val value: Int) {
     BLOCK(2);
 
     companion object {
+        @Throws(IllegalStateException::class)
         fun fromValue(value: Int) = entries.find { it.value == value }?: throw IllegalArgumentException("Unknown FolderType value: $value")
         fun fromValueOrNull(value: Int) = entries.find { it.value == value }
+        fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
+        fun FolderType.toUriStatus(): UriStatus = when (this) {
+            BOOKMARK -> UriStatus.BOOKMARKED
+            BLOCK -> UriStatus.BLOCKED
+        }
     }
 }
