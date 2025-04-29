@@ -6,6 +6,7 @@ import androidx.room.TypeConverters
 import browserpicker.data.local.dao.BrowserUsageStatDao
 import browserpicker.data.local.dao.FolderDao
 import browserpicker.data.local.dao.HostRuleDao
+import browserpicker.data.local.dao.MockBrowserPickerDatabaseDao
 import browserpicker.data.local.dao.UriRecordDao
 import browserpicker.data.local.entity.BrowserUsageStatEntity
 import browserpicker.data.local.entity.FolderEntity
@@ -29,4 +30,5 @@ abstract class BrowserPickerDatabase : RoomDatabase() {
     abstract fun hostRuleDao(): HostRuleDao
     abstract fun folderDao(): FolderDao
     abstract fun browserUsageStatDao(): BrowserUsageStatDao
+    abstract fun mockBrowserPickerDatabaseDao(): MockBrowserPickerDatabaseDao
 }

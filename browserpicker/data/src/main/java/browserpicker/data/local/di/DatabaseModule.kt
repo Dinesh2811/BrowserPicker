@@ -53,4 +53,10 @@ object BrowserPickerDatabaseModule {
     fun provideBrowserUsageStatDao(database: BrowserPickerDatabase): BrowserUsageStatDao {
         return database.browserUsageStatDao()
     }
+
+    @Provides
+    @Singleton
+    fun provideMockBrowserPickerDatabaseDao(database: BrowserPickerDatabase): MockBrowserPickerDatabaseDao {
+        return database.mockBrowserPickerDatabaseDao()
+    }
 }
