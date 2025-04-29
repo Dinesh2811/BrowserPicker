@@ -1,4 +1,4 @@
-package browserpicker.playground.browserpicker.data
+package browserpicker.data.local.repository
 
 import androidx.paging.*
 import androidx.room.*
