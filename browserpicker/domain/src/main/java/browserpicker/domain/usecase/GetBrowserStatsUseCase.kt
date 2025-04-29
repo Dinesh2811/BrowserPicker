@@ -5,7 +5,6 @@ import browserpicker.domain.model.query.BrowserStatSortField
 import browserpicker.domain.repository.BrowserStatsRepository
 import browserpicker.domain.service.DomainError
 import browserpicker.domain.service.toDomainError
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import timber.log.Timber
@@ -16,8 +15,8 @@ interface GetBrowserStatsUseCase {
 }
 
 class GetBrowserStatsUseCaseImpl @Inject constructor(
-    private val repository: BrowserStatsRepository
-) : GetBrowserStatsUseCase {
+    private val repository: BrowserStatsRepository,
+): GetBrowserStatsUseCase {
     override fun invoke(sortBy: BrowserStatSortField): Flow<List<BrowserUsageStat>> {
         Timber.d("Getting browser stats sorted by: $sortBy")
         return (
@@ -39,16 +38,16 @@ class GetBrowserStatsUseCaseImpl @Inject constructor(
 interface ClearBrowserStatsUseCase {
     suspend operator fun invoke(
         onSuccess: () -> Unit = {},
-        onError: (DomainError) -> Unit = {}
+        onError: (DomainError) -> Unit = {},
     )
 }
 
 class ClearBrowserStatsUseCaseImpl @Inject constructor(
-    private val repository: BrowserStatsRepository
-) : ClearBrowserStatsUseCase {
+    private val repository: BrowserStatsRepository,
+): ClearBrowserStatsUseCase {
     override suspend fun invoke(
         onSuccess: () -> Unit,
-        onError: (DomainError) -> Unit
+        onError: (DomainError) -> Unit,
     ) {
         Timber.d("Clearing all browser stats...")
         repository.deleteAllStats().fold(

@@ -29,7 +29,7 @@ interface UriParser {
 class AndroidUriParser @Inject constructor(): UriParser {
     override fun parseAndValidateWebUri(uriString: String): Result<ParsedUri?> {
         if (uriString.isBlank()) {
-//            return Result.failure(DomainError.Validation("URI string is empty."))
+            return Result.success(null)
         }
 
         return try {
