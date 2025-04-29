@@ -17,24 +17,10 @@ data class UriRecordQueryConfig(
     val sortOrder: SortOrder = SortOrder.DESC,
     val groupBy: UriRecordGroupField = UriRecordGroupField.NONE,
     val groupSortOrder: SortOrder = SortOrder.ASC,
-    val advancedFilters: List<UriRecordAdvancedFilter> = emptyList()
+    val advancedFilters: List<UriRecordAdvancedFilterDomain> = emptyList(),
 ) {
     companion object {
         val DEFAULT = UriRecordQueryConfig()
-    }
-}
-
-@Immutable
-data class UriRecordAdvancedFilter(
-    val customSqlCondition: String,
-    val args: List<Any>
-) {
-    init {
-        val placeholderCount = customSqlCondition.count { it == '?' }
-        require(placeholderCount == args.size) {
-            "Number of placeholders '?' ($placeholderCount) in customSqlCondition must match the number of args (${args.size}). " +
-                    "SQL: '$customSqlCondition', Args: $args"
-        }
     }
 }
 

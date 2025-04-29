@@ -181,14 +181,28 @@ data class UriHistoryQuery(
     val sortOrder: SortOrder = SortOrder.DESC,
     val groupBy: UriRecordGroupField = UriRecordGroupField.NONE,
     val groupSortOrder: SortOrder = SortOrder.ASC,
-    // Keep advanced filters simple for domain - pass raw SQL+args if absolutely needed,
-    // or define more structured domain-specific advanced filters later.
-    // For now, let's omit direct SQL from the domain query object.
-    // Advanced filtering logic can be encapsulated within specific use cases or repository methods if required.
+    val advancedFilters: List<UriRecordAdvancedFilterDomain> = emptyList()
 ) {
     companion object {
         val DEFAULT = UriHistoryQuery()
     }
+}
+
+@Immutable
+sealed interface UriRecordAdvancedFilterDomain {
+    /** Filter records based on whether they have an associated HostRule. */
+    @Immutable
+    data class HasAssociatedRule(val hasRule: Boolean) : UriRecordAdvancedFilterDomain
+
+    /** Filter records based on their UriStatus (derived from associated HostRule). */
+    // Note: This requires a JOIN in the data layer query builder.
+    @Immutable
+    data class HasUriStatus(val status: UriStatus) : UriRecordAdvancedFilterDomain
+
+    // Add other domain-specific advanced filter types here as needed.
+    // Examples:
+    // data class IsInFolder(val folderId: Long) : UriRecordAdvancedFilterDomain
+    // data class HasPreferenceEnabled(val isEnabled: Boolean) : UriRecordAdvancedFilterDomain
 }
 
 @Immutable
