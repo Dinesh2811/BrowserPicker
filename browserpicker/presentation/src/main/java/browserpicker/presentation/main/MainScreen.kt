@@ -43,7 +43,8 @@ fun MainScreen(
 
     val sheetState = rememberStandardBottomSheetState(
         skipHiddenState = false,
-        initialValue = if (mainState.pickerContext != null) SheetValue.Expanded else SheetValue.Hidden
+//        initialValue = if (mainState.pickerContext != null) SheetValue.Expanded else SheetValue.Hidden
+        initialValue = SheetValue.Expanded
     )
 
     LaunchedEffect(mainState.pickerContext) {

@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!--    <uses-permission-->
+    <!--        android:name="android.permission.QUERY_ALL_PACKAGES"-->
+    <!--        tools:ignore="QueryAllPackagesPermission" />-->
+    <!--    <uses-permission-->
+    <!--        android:name="android.permission.PACKAGE_USAGE_STATS"-->
+    <!--        tools:ignore="ProtectedPermissions" />-->
+
+    <!--    <queries>-->
+    <!--        <intent>-->
+    <!--            <action android:name="android.intent.action.VIEW" />-->
+    <!--            <data android:scheme="http" />-->
+    <!--        </intent>-->
+    <!--        <intent>-->
+    <!--            <action android:name="android.intent.action.VIEW" />-->
+    <!--            <data android:scheme="https" />-->
+    <!--        </intent>-->
+    <!--        <intent>-->
+    <!--            <action android:name="*" />-->
+    <!--        </intent>-->
+    <!--    </queries>-->
+
     <application
         android:name=".MyApp"
         android:allowBackup="true"
@@ -9,16 +31,102 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.BrowserPicker">
+
+        <!--        android:noHistory="true"-->
+        <!--        android:excludeFromRecents="true"-->
+        <!--        android:launchMode="singleTask"-->
         <activity
-            android:name=".BrowserPickerActivity"
+            android:name="com.dinesh.browserpicker.BrowserPickerActivity"
             android:exported="true"
+            android:enabled="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.BrowserPicker">
+            android:theme="@style/Theme.BrowserPicker"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Basic URL Schemes -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+            </intent-filter>
+
+            <!-- MIME Types for YouTube Redirects -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="text/html" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="application/xhtml+xml" />
+            </intent-filter>
+
+            <!-- MIME Types for YouTube Redirects -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:mimeType="text/html" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="application/xhtml+xml" />
+            </intent-filter>
+
+            <!-- File Links -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/pdf" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+            <!-- Catch-All Wildcard -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="*" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/pdf" />
+                <data android:scheme="http" android:host="*" android:port="8080" />
+                <data android:scheme="http" android:host="*" android:pathPattern="/.*\?.*" />
+                <data android:scheme="*" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="application/xml" />
+                <data android:mimeType="text/xml" />
+            </intent-filter>
+
+            <!-- Custom Schemes -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="myapp" />
+                <!--                <data android:scheme="com.dinesh.openwith"/>-->
+                <!--                <data android:scheme="a08"/>-->
+                <data android:host="example" />
+                <data android:pathPrefix="/action" />
+            </intent-filter>
+
         </activity>
     </application>
 
