@@ -2,6 +2,7 @@ package browserpicker.domain.model
 
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import androidx.core.net.toUri
 
 @Serializable
 data class UriRecord(
@@ -16,7 +17,18 @@ data class UriRecord(
 ) {
     init {
         require(uriString.isNotBlank()) { "uriString must not be blank" }
+        require(isValidUri(uriString)) { "uriString must be a valid URI" }
         require(host.isNotBlank()) { "host must not be blank" }
+    }
+
+    companion object {
+        fun isValidUri(uri: String): Boolean {
+            return try {
+                uri.toUri().isAbsolute
+            } catch (e: Exception) {
+                false
+            }
+        }
     }
 }
 
@@ -29,7 +41,7 @@ data class HostRule(
     val preferredBrowserPackage: String? = null,
     val isPreferenceEnabled: Boolean = true,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
 ) {
     init {
         require(host.isNotBlank()) { "host must not be blank" }
@@ -46,7 +58,7 @@ data class Folder(
     val name: String,
     val type: FolderType,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
 ) {
     init {
         require(name.isNotBlank()) { "folder name must not be blank" }
@@ -64,7 +76,7 @@ data class Folder(
 data class BrowserUsageStat(
     val browserPackageName: String,
     val usageCount: Long,
-    val lastUsedTimestamp: Instant
+    val lastUsedTimestamp: Instant,
 ) {
     init {
         require(browserPackageName.isNotBlank()) { "browserPackageName must not be blank" }

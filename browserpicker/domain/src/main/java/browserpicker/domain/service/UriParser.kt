@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+import browserpicker.domain.model.UriRecord
 
 @Immutable
 @Serializable
@@ -22,27 +23,31 @@ data class ParsedUri(
 )
 
 interface UriParser {
-    fun parseAndValidateWebUri(uriString: String): Result<ParsedUri?>
+    fun parseAndValidateWebUri(uriString: String, supportedSchemes: List<String> = listOf("http", "https")): Result<ParsedUri?>
 }
 
 @Singleton
 class AndroidUriParser @Inject constructor(): UriParser {
-    override fun parseAndValidateWebUri(uriString: String): Result<ParsedUri?> {
+    override fun parseAndValidateWebUri(uriString: String, supportedSchemes: List<String>): Result<ParsedUri?> {
         if (uriString.isBlank()) {
             return Result.success(null)
+        }
+
+        if (!UriRecord.isValidUri(uriString)) {
+            return Result.failure(Exception("Invalid URI format."))
         }
 
         return try {
             val uri = uriString.toUri()
 
             val scheme = uri.scheme
-            if (scheme == null || (scheme != "http" && scheme != "https")) {
-                return Result.failure(exception = Exception("Invalid scheme. Only 'http' and 'https' are supported."))
+            if (scheme == null || scheme !in supportedSchemes) {
+                return Result.failure(Exception("Invalid scheme. Only $supportedSchemes are supported."))
             }
 
             val host = uri.host
             if (host.isNullOrBlank()) {
-                return Result.failure(exception = Exception("Host is missing or blank."))
+                return Result.failure(Exception("Host is missing or blank."))
             }
 
             Result.success(
