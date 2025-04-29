@@ -1,25 +1,22 @@
 package browserpicker.data.local.di
 
-import android.content.Context
-import androidx.room.Room
-import browserpicker.core.di.InstantProvider
-import browserpicker.core.di.SystemClockInstantProvider
-import browserpicker.data.local.datasource.*
-import browserpicker.data.local.db.*
-import browserpicker.data.local.query.UriRecordQueryBuilder
+import browserpicker.data.local.datasource.BrowserStatsLocalDataSource
+import browserpicker.data.local.datasource.BrowserStatsLocalDataSourceImpl
+import browserpicker.data.local.datasource.FolderLocalDataSource
+import browserpicker.data.local.datasource.FolderLocalDataSourceImpl
+import browserpicker.data.local.datasource.HostRuleLocalDataSource
+import browserpicker.data.local.datasource.HostRuleLocalDataSourceImpl
+import browserpicker.data.local.datasource.UriHistoryLocalDataSource
+import browserpicker.data.local.datasource.UriHistoryLocalDataSourceImpl
 import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class BrowserPickerDataSourceModule {
-
-    // Bind implementations to their interfaces
     @Binds
     @Singleton
     abstract fun bindUriHistoryLocalDataSource(impl: UriHistoryLocalDataSourceImpl): UriHistoryLocalDataSource

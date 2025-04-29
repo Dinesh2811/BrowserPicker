@@ -1,14 +1,12 @@
 package browserpicker.data.local.entity
 
-import androidx.annotation.Keep
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.Stable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import browserpicker.domain.model.*
+import browserpicker.domain.model.InteractionAction
+import browserpicker.domain.model.UriSource
 import kotlinx.datetime.Instant
 
 @Entity(

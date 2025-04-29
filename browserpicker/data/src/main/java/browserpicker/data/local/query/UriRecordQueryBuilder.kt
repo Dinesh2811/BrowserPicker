@@ -30,7 +30,7 @@ class UriRecordQueryBuilder @Inject constructor() {
         }
 
         internal object Expressions {
-            val DATE_GROUP = "STRFTIME('%Y-%m-%d', ${Columns.TIMESTAMP} / 1000, 'unixepoch', 'localtime')"
+            const val DATE_GROUP = "STRFTIME('%Y-%m-%d', ${Columns.TIMESTAMP} / 1000, 'unixepoch', 'localtime')"
         }
 
         internal object GroupingConstants {
@@ -195,7 +195,7 @@ class UriRecordQueryBuilder @Inject constructor() {
         val userSortExpression = when (config.sortBy) {
             UriRecordSortField.CHOSEN_BROWSER -> {
                 "CASE WHEN $userSortByColumn IS NULL THEN 1 ELSE 0 END ${userSortOrder}, " +
-                        "$userSortByColumn ${userSortOrder}"
+                        "$userSortByColumn $userSortOrder"
             }
             else -> "$userSortByColumn $userSortOrder"
         }

@@ -394,7 +394,7 @@ class FolderRepositoryImpl @Inject constructor(
                     }
 
                     val newParent = folderDataSource.getFolder(parentFolderId).firstOrNull()
-                        ?: throw IllegalArgumentException("New parent folder with ID ${parentFolderId} not found.")
+                        ?: throw IllegalArgumentException("New parent folder with ID $parentFolderId not found.")
                     if (newParent.type != folder.type) {
                         throw IllegalArgumentException("New parent folder type (${newParent.type}) must match folder type (${folder.type}).")
                     }

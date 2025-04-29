@@ -1,7 +1,5 @@
 package browserpicker.data.local.entity
 
-import androidx.annotation.Keep
-import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index

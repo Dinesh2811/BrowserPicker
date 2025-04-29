@@ -1,17 +1,17 @@
 package browserpicker.data.local.di
 
-import browserpicker.data.local.dao.BrowserUsageStatDao
-import browserpicker.data.local.dao.FolderDao
-import browserpicker.data.local.dao.HostRuleDao
-import browserpicker.data.local.dao.UriRecordDao
-import browserpicker.data.local.repository.*
-import browserpicker.domain.repository.*
+import browserpicker.data.local.repository.BrowserStatsRepositoryImpl
+import browserpicker.data.local.repository.FolderRepositoryImpl
+import browserpicker.data.local.repository.HostRuleRepositoryImpl
+import browserpicker.data.local.repository.UriHistoryRepositoryImpl
+import browserpicker.domain.repository.BrowserStatsRepository
+import browserpicker.domain.repository.FolderRepository
+import browserpicker.domain.repository.HostRuleRepository
+import browserpicker.domain.repository.UriHistoryRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import kotlinx.datetime.Clock
-import javax.inject.Inject
 import javax.inject.Singleton
 
 @Module

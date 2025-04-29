@@ -13,5 +13,4 @@ object QueryModule {
     @Provides
     @Singleton
     fun provideUriRecordQueryBuilder(): UriRecordQueryBuilder = UriRecordQueryBuilder()
-
 }
