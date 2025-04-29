@@ -46,10 +46,10 @@ data class UriRecordEntity(
     val timestamp: Instant,
 
     @ColumnInfo(name = "uri_source", typeAffinity = ColumnInfo.INTEGER)
-    val uriSource: UriSource,
+    val uriSource: Int, /** [UriSource] */
 
     @ColumnInfo(name = "interaction_action", typeAffinity = ColumnInfo.INTEGER)
-    val interactionAction: InteractionAction,
+    val interactionAction: Int, /** [InteractionAction] */
 
     @ColumnInfo(name = "chosen_browser_package")
     val chosenBrowserPackage: String? = null,

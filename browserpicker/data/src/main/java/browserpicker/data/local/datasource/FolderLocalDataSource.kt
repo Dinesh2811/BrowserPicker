@@ -37,7 +37,7 @@ class FolderLocalDataSourceImpl @Inject constructor(
             id = Folder.DEFAULT_BOOKMARK_ROOT_FOLDER_ID,
             parentFolderId = null,
             name = Folder.DEFAULT_BOOKMARK_ROOT_FOLDER_NAME,
-            folderType = FolderType.BOOKMARK,
+            folderType = FolderType.BOOKMARK.value,
             createdAt = now,
             updatedAt = now
         )
@@ -45,7 +45,7 @@ class FolderLocalDataSourceImpl @Inject constructor(
             id = Folder.DEFAULT_BLOCKED_ROOT_FOLDER_ID,
             parentFolderId = null,
             name = Folder.DEFAULT_BLOCKED_ROOT_FOLDER_NAME,
-            folderType = FolderType.BLOCK,
+            folderType = FolderType.BLOCK.value,
             createdAt = now,
             updatedAt = now
         )

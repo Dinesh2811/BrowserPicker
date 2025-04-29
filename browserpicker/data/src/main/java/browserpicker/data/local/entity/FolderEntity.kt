@@ -39,7 +39,7 @@ data class FolderEntity(
     val name: String,
 
     @ColumnInfo(name = "folder_type", typeAffinity = ColumnInfo.INTEGER)
-    val folderType: FolderType,
+    val folderType: Int, /** [FolderType] */
 
     @ColumnInfo(name = "created_at")
     val createdAt: Instant,

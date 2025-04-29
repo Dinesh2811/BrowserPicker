@@ -65,7 +65,7 @@ class MockDataGenerator @Inject constructor(
     )
 
     // --- State Tracking ---
-    private val generatedFolderIds = mutableMapOf<Long, FolderType>() // ID -> Type
+    private val generatedFolderIds = mutableMapOf<Long, Int>() // ID -> Type
     private val generatedHostRuleIds = mutableMapOf<String, Long>() // Host -> ID
     private val hostRuleDetails = mutableMapOf<Long, HostRuleEntity>() // Rule ID -> Full Rule
 
@@ -133,7 +133,7 @@ class MockDataGenerator @Inject constructor(
             id = Folder.DEFAULT_BOOKMARK_ROOT_FOLDER_ID,
             name = Folder.DEFAULT_BOOKMARK_ROOT_FOLDER_NAME,
             parentFolderId = null,
-            folderType = FolderType.BOOKMARK,
+            folderType = FolderType.BOOKMARK.value,
             createdAt = now.minus(30.days), // Make defaults older
             updatedAt = now.minus(29.days)
         )
@@ -141,7 +141,7 @@ class MockDataGenerator @Inject constructor(
             id = Folder.DEFAULT_BLOCKED_ROOT_FOLDER_ID,
             name = Folder.DEFAULT_BLOCKED_ROOT_FOLDER_NAME,
             parentFolderId = null,
-            folderType = FolderType.BLOCK,
+            folderType = FolderType.BLOCK.value,
             createdAt = now.minus(30.days),
             updatedAt = now.minus(29.days)
         )
@@ -163,7 +163,7 @@ class MockDataGenerator @Inject constructor(
 
             // ~30% chance of being nested, if suitable parents exist
             if (Random.nextFloat() < 0.3) {
-                val potentialParents = generatedFolderIds.filter { it.value == type }.keys.toList()
+                val potentialParents = generatedFolderIds.filter { it.value == type.value }.keys.toList()
                 if (potentialParents.isNotEmpty()) {
                     parentId = potentialParents.random()
                     // Simple level tracking (doesn't prevent deep nesting but helps)
@@ -191,7 +191,7 @@ class MockDataGenerator @Inject constructor(
                     // ID auto-generated
                     name = uniqueName,
                     parentFolderId = parentId,
-                    folderType = type,
+                    folderType = type.value,
                     createdAt = createdAt,
                     updatedAt = updatedAt
                 )
@@ -232,7 +232,7 @@ class MockDataGenerator @Inject constructor(
                     status = UriStatus.BLOCKED
                     preferredBrowser = null // Enforced
                     isEnabled = false       // Enforced
-                    val potentialFolders = generatedFolderIds.filter { it.value == FolderType.BLOCK }.keys.toList()
+                    val potentialFolders = generatedFolderIds.filter { it.value == FolderType.BLOCK.value }.keys.toList()
                     // ~50% chance of assigning to a specific block folder
                     if (potentialFolders.isNotEmpty() && Random.nextFloat() < 0.5) {
                         folderId = potentialFolders.random()
@@ -243,7 +243,7 @@ class MockDataGenerator @Inject constructor(
                 // ~35% Bookmarked
                 random < 0.50 -> {
                     status = UriStatus.BOOKMARKED
-                    val potentialFolders = generatedFolderIds.filter { it.value == FolderType.BOOKMARK }.keys.toList()
+                    val potentialFolders = generatedFolderIds.filter { it.value == FolderType.BOOKMARK.value }.keys.toList()
                     // ~60% chance of assigning to a specific bookmark folder
                     if (potentialFolders.isNotEmpty() && Random.nextFloat() < 0.6) {
                         folderId = potentialFolders.random()
@@ -286,7 +286,7 @@ class MockDataGenerator @Inject constructor(
 
             val rule = HostRuleEntity(
                 host = host,
-                uriStatus = status,
+                uriStatus = status.value,
                 folderId = folderId,
                 preferredBrowserPackage = preferredBrowser,
                 isPreferenceEnabled = isEnabled,
@@ -333,7 +333,7 @@ class MockDataGenerator @Inject constructor(
             if (rule != null) {
                 when {
                     // Rule is Blocked
-                    rule.uriStatus == UriStatus.BLOCKED -> {
+                    rule.uriStatus == UriStatus.BLOCKED.value -> {
                         action = InteractionAction.BLOCKED_URI_ENFORCED
                         chosenBrowser = null
                     }
@@ -365,8 +365,8 @@ class MockDataGenerator @Inject constructor(
                     uriString = uriString,
                     host = host,
                     timestamp = currentTime,
-                    uriSource = source,
-                    interactionAction = action,
+                    uriSource = source.value,
+                    interactionAction = action.value,
                     chosenBrowserPackage = chosenBrowser,
                     associatedHostRuleId = ruleId
                 )

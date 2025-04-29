@@ -9,8 +9,8 @@ object UriRecordMapper {
         uriString = entity.uriString,
         host = entity.host,
         timestamp = entity.timestamp,
-        uriSource = entity.uriSource,
-        interactionAction = entity.interactionAction,
+        uriSource = UriSource.fromValue(entity.uriSource),
+        interactionAction = InteractionAction.fromValue(entity.interactionAction),
         chosenBrowserPackage = entity.chosenBrowserPackage,
         associatedHostRuleId = entity.associatedHostRuleId
     )
@@ -20,8 +20,8 @@ object UriRecordMapper {
         uriString = model.uriString,
         host = model.host,
         timestamp = model.timestamp,
-        uriSource = model.uriSource,
-        interactionAction = model.interactionAction,
+        uriSource = model.uriSource.value,
+        interactionAction = model.interactionAction.value,
         chosenBrowserPackage = model.chosenBrowserPackage,
         associatedHostRuleId = model.associatedHostRuleId
     )
@@ -33,7 +33,7 @@ object HostRuleMapper {
     fun toDomainModel(entity: HostRuleEntity): HostRule = HostRule(
         id = entity.id,
         host = entity.host,
-        uriStatus = entity.uriStatus,
+        uriStatus = UriStatus.fromValue(entity.uriStatus),
         folderId = entity.folderId,
         preferredBrowserPackage = entity.preferredBrowserPackage,
         isPreferenceEnabled = entity.isPreferenceEnabled,
@@ -44,7 +44,7 @@ object HostRuleMapper {
     fun toEntity(model: HostRule): HostRuleEntity = HostRuleEntity(
         id = model.id,
         host = model.host,
-        uriStatus = model.uriStatus,
+        uriStatus = model.uriStatus.value,
         folderId = model.folderId,
         preferredBrowserPackage = model.preferredBrowserPackage,
         isPreferenceEnabled = model.isPreferenceEnabled,
@@ -60,7 +60,7 @@ object FolderMapper  {
         id = entity.id,
         parentFolderId = entity.parentFolderId,
         name = entity.name,
-        type = entity.folderType,
+        type = FolderType.fromValue(entity.folderType),
         createdAt = entity.createdAt,
         updatedAt = entity.updatedAt
     )
@@ -69,7 +69,7 @@ object FolderMapper  {
         id = model.id,
         parentFolderId = model.parentFolderId,
         name = model.name,
-        folderType = model.type,
+        folderType = model.type.value,
         createdAt = model.createdAt,
         updatedAt = model.updatedAt
     )

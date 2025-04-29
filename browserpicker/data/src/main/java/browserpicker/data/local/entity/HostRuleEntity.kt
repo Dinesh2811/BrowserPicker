@@ -45,7 +45,7 @@ data class HostRuleEntity(
     val host: String,
 
     @ColumnInfo(name = "uri_status", typeAffinity = ColumnInfo.INTEGER)
-    val uriStatus: UriStatus,
+    val uriStatus: Int, /** [UriStatus] */
 
     @ColumnInfo(name = "folder_id")
     val folderId: Long? = null,
