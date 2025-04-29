@@ -9,7 +9,11 @@ import browserpicker.domain.model.UriRecord
 import browserpicker.domain.model.UriSource
 import browserpicker.domain.model.query.*
 import browserpicker.domain.service.DomainError
-import browserpicker.domain.usecase.*
+import browserpicker.domain.usecase.history.ClearUriHistoryUseCase
+import browserpicker.domain.usecase.history.DeleteUriRecordUseCase
+import browserpicker.domain.usecase.history.GetHistoryFilterOptionsUseCase
+import browserpicker.domain.usecase.history.GetHistoryOverviewUseCase
+import browserpicker.domain.usecase.history.GetPagedUriHistoryUseCase
 import browserpicker.presentation.common.LoadingStatus
 import browserpicker.presentation.common.MessageType
 import browserpicker.presentation.common.UserMessage

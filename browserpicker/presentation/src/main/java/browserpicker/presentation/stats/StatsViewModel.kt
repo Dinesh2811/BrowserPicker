@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import browserpicker.domain.model.BrowserUsageStat
 import browserpicker.domain.model.query.BrowserStatSortField
 import browserpicker.domain.service.DomainError
-import browserpicker.domain.usecase.ClearBrowserStatsUseCase
-import browserpicker.domain.usecase.GetBrowserStatsUseCase
+import browserpicker.domain.usecase.stats.ClearBrowserStatsUseCase
+import browserpicker.domain.usecase.stats.GetBrowserStatsUseCase
 import browserpicker.presentation.common.MessageType
 import browserpicker.presentation.common.UserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel

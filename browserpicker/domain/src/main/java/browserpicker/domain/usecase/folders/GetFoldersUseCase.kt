@@ -1,10 +1,9 @@
-package browserpicker.domain.usecase
+package browserpicker.domain.usecase.folders
 
 import browserpicker.domain.model.*
 import browserpicker.domain.repository.FolderRepository
 import browserpicker.domain.service.DomainError
 import browserpicker.domain.service.toDomainError
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 import javax.inject.Inject

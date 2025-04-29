@@ -1,4 +1,4 @@
-package browserpicker.domain.usecase
+package browserpicker.domain.usecase.rules
 
 import browserpicker.core.di.IoDispatcher
 import browserpicker.domain.model.*
@@ -7,7 +7,6 @@ import browserpicker.domain.service.DomainError
 import browserpicker.domain.service.toDomainError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
 

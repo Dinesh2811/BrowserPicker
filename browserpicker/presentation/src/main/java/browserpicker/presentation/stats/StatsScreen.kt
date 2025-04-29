@@ -1,7 +1,6 @@
 package browserpicker.presentation.stats
 
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,10 +20,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import browserpicker.domain.model.BrowserUsageStat // Import Domain model
 import browserpicker.domain.model.query.BrowserStatSortField
 import browserpicker.domain.service.DomainError
-import browserpicker.domain.usecase.ClearBrowserStatsUseCase
-import browserpicker.domain.usecase.GetBrowserStatsUseCase
-import browserpicker.presentation.common.LoadingStatus
-import browserpicker.presentation.common.MessageType
+import browserpicker.domain.usecase.stats.ClearBrowserStatsUseCase
+import browserpicker.domain.usecase.stats.GetBrowserStatsUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

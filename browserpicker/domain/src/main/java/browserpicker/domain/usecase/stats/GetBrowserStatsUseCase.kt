@@ -1,4 +1,4 @@
-package browserpicker.domain.usecase
+package browserpicker.domain.usecase.stats
 
 import browserpicker.domain.model.BrowserUsageStat
 import browserpicker.domain.model.query.BrowserStatSortField

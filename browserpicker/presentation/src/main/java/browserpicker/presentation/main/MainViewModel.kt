@@ -2,14 +2,15 @@ package browserpicker.presentation.main
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
-import androidx.compose.material3.SheetValue
-import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import browserpicker.domain.model.*
 import browserpicker.domain.service.DomainError
-import browserpicker.domain.usecase.*
+import browserpicker.domain.usecase.folders.GetFoldersUseCase
+import browserpicker.domain.usecase.history.RecordUriInteractionUseCase
+import browserpicker.domain.usecase.rules.GetHostRuleUseCase
+import browserpicker.domain.usecase.rules.SaveHostRuleUseCase
 import browserpicker.presentation.common.MessageType
 import browserpicker.presentation.common.UserMessage
 import browserpicker.presentation.picker.BrowserAppInfo

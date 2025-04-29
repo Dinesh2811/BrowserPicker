@@ -6,7 +6,11 @@ import androidx.lifecycle.viewModelScope
 import browserpicker.core.di.IoDispatcher
 import browserpicker.domain.model.*
 import browserpicker.domain.service.DomainError
-import browserpicker.domain.usecase.*
+import browserpicker.domain.usecase.folders.GetFoldersUseCase
+import browserpicker.domain.usecase.history.RecordUriInteractionUseCase
+import browserpicker.domain.usecase.rules.DeleteHostRuleUseCase
+import browserpicker.domain.usecase.rules.GetHostRuleUseCase
+import browserpicker.domain.usecase.rules.SaveHostRuleUseCase
 import browserpicker.presentation.common.MessageType
 import browserpicker.presentation.common.UserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel

@@ -3,7 +3,8 @@ package browserpicker.presentation.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import browserpicker.domain.service.DomainError
-import browserpicker.domain.usecase.*
+import browserpicker.domain.usecase.history.ClearUriHistoryUseCase
+import browserpicker.domain.usecase.stats.ClearBrowserStatsUseCase
 import browserpicker.presentation.common.MessageType
 import browserpicker.presentation.common.UserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel

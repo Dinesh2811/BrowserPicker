@@ -1,8 +1,7 @@
-package browserpicker.domain.usecase
+package browserpicker.domain.usecase.history
 
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import android.net.Uri // Acceptable in domain for parsing standard URI structure
 import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
 import browserpicker.domain.model.*
@@ -19,7 +18,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
-import androidx.core.net.toUri
 import browserpicker.domain.service.UriParser
 
 // --- Use Case for handling the initial intercepted URI ---

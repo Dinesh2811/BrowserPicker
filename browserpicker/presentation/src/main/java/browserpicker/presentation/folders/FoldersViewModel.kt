@@ -4,7 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import browserpicker.domain.model.*
 import browserpicker.domain.service.DomainError
-import browserpicker.domain.usecase.*
+import browserpicker.domain.usecase.folders.CreateFolderUseCase
+import browserpicker.domain.usecase.folders.DeleteFolderUseCase
+import browserpicker.domain.usecase.folders.GetFoldersUseCase
+import browserpicker.domain.usecase.folders.UpdateFolderUseCase
 import browserpicker.presentation.common.MessageType
 import browserpicker.presentation.common.UserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel

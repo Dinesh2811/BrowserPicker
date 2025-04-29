@@ -1,4 +1,4 @@
-package browserpicker.domain.usecase
+package browserpicker.domain.usecase.initialization
 
 import browserpicker.domain.repository.FolderRepository
 import kotlinx.coroutines.CoroutineDispatcher
