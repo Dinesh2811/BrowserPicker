@@ -27,7 +27,7 @@ interface GetHistoryOverviewUseCase {
 @OptIn(ExperimentalCoroutinesApi::class)
 class GetHistoryOverviewUseCaseImpl @Inject constructor(
     private val repository: UriHistoryRepository,
-) : GetHistoryOverviewUseCase {
+): GetHistoryOverviewUseCase {
     override fun invoke(query: UriHistoryQuery): Flow<HistoryOverview> {
         Timber.d("Getting history overview with query: $query")
         // Combine multiple flows into one overview object
