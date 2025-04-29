@@ -91,7 +91,8 @@ data class UriRecord(
     companion object {
         fun isValidUri(uri: String): Boolean {
             return try {
-                uri.toUri().isAbsolute
+                val parsedUri = uri.toUri()
+                parsedUri.isAbsolute && (parsedUri.scheme == "http" || parsedUri.scheme == "https")
             } catch (e: Exception) {
                 false
             }
