@@ -28,12 +28,6 @@ data class UriHistoryQuery(
     }
 }
 
-// We might need Result wrappers later for complex operations, e.g.:
-// sealed interface RepositoryResult<out T> {
-//     data class Success<T>(val data: T) : RepositoryResult<T>
-//     data class Error(val exception: Throwable) : RepositoryResult<Nothing> // Or specific error types
-// }
-
 @Immutable
 enum class SortOrder { ASC, DESC }
 
