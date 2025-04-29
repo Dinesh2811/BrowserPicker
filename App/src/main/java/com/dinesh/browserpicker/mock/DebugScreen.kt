@@ -31,12 +31,8 @@ class DebugActivity : ComponentActivity() {
         setContent {
             val debugViewModel: DebugViewModel = hiltViewModel()
 
-            val isLoading by debugViewModel.isLoading.collectAsState()
-            val message by debugViewModel.message.collectAsState()
-
             DebugScreen(
-                isLoading = isLoading,
-                message = message,
+                debugViewModel = debugViewModel,
                 onGenerateMockData = { debugViewModel.generateMockData() },
                 onClearMockData = { debugViewModel.clearMockData() },
                 onClearMessage = { debugViewModel.clearMessage() }
@@ -47,12 +43,14 @@ class DebugActivity : ComponentActivity() {
 
 @Composable
 fun DebugScreen(
-    isLoading: Boolean,
-    message: String?,
-    onGenerateMockData: () -> Unit,
-    onClearMockData: () -> Unit,
-    onClearMessage: () -> Unit
+    debugViewModel: DebugViewModel = hiltViewModel(),
+    onGenerateMockData: () -> Unit = { debugViewModel.generateMockData() },
+    onClearMockData: () -> Unit = { debugViewModel.clearMockData() },
+    onClearMessage: () -> Unit = { debugViewModel.clearMessage() },
 ) {
+    val isLoading by debugViewModel.isLoading.collectAsState()
+    val message by debugViewModel.message.collectAsState()
+
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.Center,
