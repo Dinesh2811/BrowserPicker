@@ -22,7 +22,8 @@ import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import browserpicker.domain.model.UriRecord // Import domain model
 import browserpicker.domain.model.query.*
-import browserpicker.domain.repository.DomainGroupCount
+import browserpicker.domain.model.DomainDateCount
+import browserpicker.domain.model.DomainGroupCount
 import browserpicker.domain.model.* // Import all needed domain models
 import browserpicker.presentation.common.* // Import common UI types
 import kotlinx.coroutines.launch

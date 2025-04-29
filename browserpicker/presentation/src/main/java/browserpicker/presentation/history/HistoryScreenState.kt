@@ -6,8 +6,8 @@ import browserpicker.domain.model.UriRecord
 import browserpicker.domain.model.query.FilterOptions
 import browserpicker.domain.model.query.UriHistoryQuery
 import browserpicker.domain.model.query.UriRecordGroupField
-import browserpicker.domain.repository.DomainDateCount
-import browserpicker.domain.repository.DomainGroupCount
+import browserpicker.domain.model.DomainDateCount
+import browserpicker.domain.model.DomainGroupCount
 import browserpicker.presentation.common.LoadingStatus
 import browserpicker.presentation.common.UserMessage
 import kotlinx.coroutines.flow.Flow

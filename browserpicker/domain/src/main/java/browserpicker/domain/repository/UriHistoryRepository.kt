@@ -2,14 +2,13 @@ package browserpicker.domain.repository
 
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import browserpicker.domain.model.DomainDateCount
+import browserpicker.domain.model.DomainGroupCount
 import browserpicker.domain.model.InteractionAction
 import browserpicker.domain.model.UriRecord
 import browserpicker.domain.model.UriSource
 import browserpicker.domain.model.query.UriHistoryQuery
 import kotlinx.coroutines.flow.Flow
-
-data class DomainGroupCount(val groupValue: String?, val count: Int)
-data class DomainDateCount(val dateString: String?, val count: Int)
 
 interface UriHistoryRepository {
     fun getPagedUriRecords(query: UriHistoryQuery, pagingConfig: PagingConfig): Flow<PagingData<UriRecord>>
