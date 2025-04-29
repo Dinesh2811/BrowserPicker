@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.compose.animation.*
 
 @AndroidEntryPoint
 class DebugActivity : ComponentActivity() {
@@ -48,30 +49,37 @@ fun DebugScreen(
     onClearMockData: () -> Unit = { debugViewModel.clearMockData() },
     onClearMessage: () -> Unit = { debugViewModel.clearMessage() },
 ) {
-    val isLoading by debugViewModel.isLoading.collectAsState()
-    val message by debugViewModel.message.collectAsState()
-
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    val isDatabaseEmpty by debugViewModel.isDatabaseEmpty.collectAsState()
+    AnimatedVisibility(
+        visible = isDatabaseEmpty,
+        enter = fadeIn() + slideInVertically(initialOffsetY = { fullHeight -> fullHeight / 2 }),
+        exit = fadeOut() + slideOutVertically(targetOffsetY = { fullHeight -> fullHeight / 2 })
     ) {
-        Text(message ?: "No messages", style = MaterialTheme.typography.bodyLarge)
+        val isLoading by debugViewModel.isLoading.collectAsState()
+        val message by debugViewModel.message.collectAsState()
 
-        if (!isLoading) {
-            Button(onClick = onGenerateMockData) {
-                Text("Generate Mock Data")
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(message ?: "No messages", style = MaterialTheme.typography.bodyLarge)
+
+            if (!isLoading) {
+                Button(onClick = onGenerateMockData) {
+                    Text("Generate Mock Data")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = onClearMockData) {
+                    Text("Clear Mock Data")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = onClearMessage) {
+                    Text("Clear Message")
+                }
+            } else {
+                CircularProgressIndicator()
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = onClearMockData) {
-                Text("Clear Mock Data")
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = onClearMessage) {
-                Text("Clear Message")
-            }
-        } else {
-            CircularProgressIndicator()
         }
     }
 }
