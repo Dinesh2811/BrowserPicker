@@ -414,7 +414,6 @@ class FolderRepositoryImpl @Inject constructor(
     override suspend fun findFolderByNameAndParent(name: String, parentFolderId: Long?, type: FolderType): Folder? {
         return runCatching {
             withContext(ioDispatcher) {
-                // Use trimmed name for lookup
                 folderDataSource.findFolderByNameAndParent(name.trim(), parentFolderId, type)
             }
         }.onFailure { e ->
@@ -496,7 +495,6 @@ class FolderRepositoryImpl @Inject constructor(
             }
 
             withContext(ioDispatcher) {
-                // Get current state *within* the transaction context
                 // Note: Consider adding suspend getFolderByIdSuspend(id) to DataSource
                 val currentFolder = folderDataSource.getFolder(folder.id).firstOrNull()
                     ?: throw IllegalArgumentException("Folder with ID ${folder.id} not found for update.")
@@ -538,7 +536,7 @@ class FolderRepositoryImpl @Inject constructor(
                 val folderToUpdate = currentFolder.copy(
                     name = trimmedName,
                     parentFolderId = folder.parentFolderId,
-                    updatedAt = instantProvider.now() // Update timestamp
+                    updatedAt = instantProvider.now()
                 )
 
                 val updated = folderDataSource.updateFolder(folderToUpdate)
