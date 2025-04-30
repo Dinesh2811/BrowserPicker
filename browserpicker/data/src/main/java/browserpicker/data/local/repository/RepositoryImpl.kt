@@ -12,6 +12,7 @@ import browserpicker.data.local.query.model.*
 import browserpicker.domain.model.*
 import browserpicker.domain.model.query.*
 import browserpicker.domain.repository.*
+import browserpicker.domain.service.UriParser
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -22,6 +23,7 @@ import javax.inject.Singleton
 @Singleton
 class UriHistoryRepositoryImpl @Inject constructor(
     private val dataSource: UriHistoryLocalDataSource,
+    private val uriParser: UriParser,
     private val instantProvider: InstantProvider,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ): UriHistoryRepository {
@@ -107,9 +109,9 @@ class UriHistoryRepositoryImpl @Inject constructor(
         chosenBrowser: String?,
         associatedHostRuleId: Long?,
     ): Result<Long> = runCatching {
-        require(uriString.isNotBlank()) { "URI string cannot be blank." }
-        require(UriRecord.isValidUri(uriString)) { "Invalid URI string format." }
+        uriParser.parseAndValidateWebUri(uriString).getOrThrow()
         require(host.isNotBlank()) { "Host cannot be blank." }
+
         if (chosenBrowser != null) {
             require(chosenBrowser.isNotBlank()) { "Chosen browser package name cannot be blank if provided." }
         }

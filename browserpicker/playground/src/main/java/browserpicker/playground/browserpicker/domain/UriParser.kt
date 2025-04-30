@@ -27,26 +27,16 @@ interface UriParser {
 @Singleton
 class AndroidUriParser @Inject constructor(): UriParser {
     override fun parseAndValidateWebUri(uriString: String, supportedSchemes: List<String>): Result<ParsedUri?> {
-        if (uriString.isBlank()) {
-            return Result.success(null)
-        }
+        if (uriString.isBlank()) return Result.success(null)
 
         return try {
             val uri = uriString.toUri()
-
-            // Perform core web URI validation
-            if (!uri.isAbsolute) {
-                return Result.failure(IllegalArgumentException("URI must be absolute."))
-            }
-
             val scheme = uri.scheme
-            if (scheme == null || scheme !in supportedSchemes) {
-                return Result.failure(IllegalArgumentException("Invalid or unsupported scheme '$scheme'. Only $supportedSchemes are supported."))
-            }
-
             val host = uri.host
-            if (host.isNullOrBlank()) {
-                return Result.failure(IllegalArgumentException("Host cannot be missing or blank."))
+            when {
+                host.isNullOrEmpty() -> return Result.failure(IllegalArgumentException("Host cannot be missing or blank."))
+                !uri.isAbsolute -> return Result.failure(IllegalArgumentException("URI must be absolute."))
+                scheme == null || scheme !in supportedSchemes -> return Result.failure(IllegalArgumentException("Invalid or unsupported scheme '$scheme'. Only $supportedSchemes are supported."))
             }
 
             Result.success(

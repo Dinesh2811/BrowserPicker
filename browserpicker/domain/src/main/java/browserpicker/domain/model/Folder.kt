@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import androidx.core.net.toUri
+import browserpicker.domain.service.UriParser
 
 @Immutable @Serializable
 data class UriRecord(
@@ -18,7 +19,7 @@ data class UriRecord(
 ) {
     init {
         require(uriString.isNotBlank()) { "uriString must not be blank" }
-        require(isValidUri(uriString)) { "uriString must be a valid URI" }
+//        require(isValidUri(uriString)) { "uriString must be a valid URI" }
         require(host.isNotBlank()) { "host must not be blank" }
     }
 
