@@ -5,7 +5,7 @@ import androidx.core.net.toUri
 import kotlinx.datetime.*
 import kotlinx.serialization.Serializable
 
-@Serializable
+@Immutable @Serializable
 enum class UriSource(val value: Int) {
     INTENT(1),
     CLIPBOARD(2),
@@ -20,7 +20,7 @@ enum class UriSource(val value: Int) {
     }
 }
 
-@Serializable
+@Immutable @Serializable
 enum class InteractionAction(val value: Int) {
     UNKNOWN(-1),
     DISMISSED(1),                       // Picker dismissed without action
@@ -38,7 +38,7 @@ enum class InteractionAction(val value: Int) {
     }
 }
 
-@Serializable
+@Immutable @Serializable
 enum class UriStatus(val value: Int) {
     UNKNOWN(-1),
     NONE(0),
@@ -53,7 +53,7 @@ enum class UriStatus(val value: Int) {
     }
 }
 
-@Serializable
+@Immutable @Serializable
 enum class FolderType(val value: Int) {
     BOOKMARK(1),
     BLOCK(2);
@@ -70,8 +70,7 @@ enum class FolderType(val value: Int) {
     }
 }
 
-
-@Serializable
+@Immutable @Serializable
 data class UriRecord(
     val id: Long = 0,
     val uriString: String,
@@ -100,7 +99,7 @@ data class UriRecord(
     }
 }
 
-@Serializable
+@Immutable @Serializable
 data class HostRule(
     val id: Long = 0,
     val host: String,
@@ -119,7 +118,7 @@ data class HostRule(
     }
 }
 
-@Serializable
+@Immutable @Serializable
 data class Folder(
     val id: Long = 0,
     val parentFolderId: Long? = null,
@@ -140,7 +139,7 @@ data class Folder(
     }
 }
 
-@Serializable
+@Immutable @Serializable
 data class BrowserUsageStat(
     val browserPackageName: String,
     val usageCount: Long,
@@ -245,6 +244,8 @@ fun groupKeyToStableString(key: GroupKey): String = when (key) {
     is GroupKey.ChosenBrowserKey -> "BROWSER_${key.value}"
 }
 
+@Immutable
 data class DomainGroupCount(val groupValue: String?, val count: Int)
+@Immutable
 data class DomainDateCount(val date: Instant?, val count: Int)
 

@@ -1,10 +1,11 @@
 package browserpicker.domain.model
 
+import androidx.compose.runtime.Immutable
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import androidx.core.net.toUri
 
-@Serializable
+@Immutable @Serializable
 data class UriRecord(
     val id: Long = 0,
     val uriString: String,
@@ -33,7 +34,7 @@ data class UriRecord(
     }
 }
 
-@Serializable
+@Immutable @Serializable
 data class HostRule(
     val id: Long = 0,
     val host: String,
@@ -52,7 +53,7 @@ data class HostRule(
     }
 }
 
-@Serializable
+@Immutable @Serializable
 data class Folder(
     val id: Long = 0,
     val parentFolderId: Long? = null,
@@ -73,7 +74,7 @@ data class Folder(
     }
 }
 
-@Serializable
+@Immutable @Serializable
 data class BrowserUsageStat(
     val browserPackageName: String,
     val usageCount: Long,

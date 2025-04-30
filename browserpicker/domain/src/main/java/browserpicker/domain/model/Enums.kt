@@ -1,8 +1,9 @@
 package browserpicker.domain.model
 
+import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 
-@Serializable
+@Immutable @Serializable
 enum class UriSource(val value: Int) {
     INTENT(1),
     CLIPBOARD(2),
@@ -17,7 +18,7 @@ enum class UriSource(val value: Int) {
     }
 }
 
-@Serializable
+@Immutable @Serializable
 enum class InteractionAction(val value: Int) {
     UNKNOWN(-1),
     DISMISSED(1),                       // Picker dismissed without action
@@ -35,7 +36,7 @@ enum class InteractionAction(val value: Int) {
     }
 }
 
-@Serializable
+@Immutable @Serializable
 enum class UriStatus(val value: Int) {
     UNKNOWN(-1),
     NONE(0),
@@ -50,7 +51,7 @@ enum class UriStatus(val value: Int) {
     }
 }
 
-@Serializable
+@Immutable @Serializable
 enum class FolderType(val value: Int) {
     BOOKMARK(1),
     BLOCK(2);

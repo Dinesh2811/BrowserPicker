@@ -1,13 +1,11 @@
-package browserpicker.domain.service
+package browserpicker.playground.browserpicker.domain
 
 import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import androidx.core.net.toUri
 import kotlinx.serialization.Serializable
 import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
-import browserpicker.domain.model.UriRecord
+import javax.inject.*
 
 @Immutable
 @Serializable
