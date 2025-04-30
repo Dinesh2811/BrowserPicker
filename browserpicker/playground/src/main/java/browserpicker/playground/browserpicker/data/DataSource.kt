@@ -36,6 +36,7 @@ interface FolderLocalDataSource {
     suspend fun createFolder(folder: Folder): Long
     suspend fun updateFolder(folder: Folder): Boolean
     suspend fun deleteFolder(folderId: Long): Boolean
+    suspend fun getFolderByIdSuspend(folderId: Long): Folder?
     fun getFolder(folderId: Long): Flow<Folder?>
     fun getChildFolders(parentFolderId: Long): Flow<List<Folder>>
     fun getRootFoldersByType(type: FolderType): Flow<List<Folder>>

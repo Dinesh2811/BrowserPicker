@@ -284,7 +284,7 @@ class HostRuleRepositoryImpl @Inject constructor(
             }
 
             if (effectiveFolderId != null && (status == UriStatus.BOOKMARKED || status == UriStatus.BLOCKED)) {
-                val folder = folderDataSource.getFolder(effectiveFolderId).firstOrNull()
+                val folder = folderDataSource.getFolderByIdSuspend(effectiveFolderId)
                 if (folder == null) {
                     throw IllegalArgumentException("Folder with ID $effectiveFolderId does not exist.")
                 }
@@ -442,8 +442,7 @@ class FolderRepositoryImpl @Inject constructor(
 
         withContext(ioDispatcher) {
             if (parentFolderId != null) {
-                // Note: Consider adding suspend getFolderByIdSuspend(id) to DataSource
-                val parentFolder = folderDataSource.getFolder(parentFolderId).firstOrNull()
+                val parentFolder = folderDataSource.getFolderByIdSuspend(parentFolderId)
                     ?: throw IllegalArgumentException("Parent folder with ID $parentFolderId not found.")
                 if (parentFolder.type != type) {
                     throw IllegalArgumentException("Parent folder type (${parentFolder.type}) must match new folder type ($type).")
@@ -474,8 +473,7 @@ class FolderRepositoryImpl @Inject constructor(
         if (folderId == null) return false
         if (folderId == targetAncestorId) return true
 
-        // Note: Consider adding suspend getFolderByIdSuspend(id) to DataSource
-        val parentId = folderDataSource.getFolder(folderId).firstOrNull()?.parentFolderId
+        val parentId = folderDataSource.getFolderByIdSuspend(folderId)?.parentFolderId
         return isDescendantRecursive(parentId, targetAncestorId)
     }
 
@@ -495,8 +493,7 @@ class FolderRepositoryImpl @Inject constructor(
             }
 
             withContext(ioDispatcher) {
-                // Note: Consider adding suspend getFolderByIdSuspend(id) to DataSource
-                val currentFolder = folderDataSource.getFolder(folder.id).firstOrNull()
+                val currentFolder = folderDataSource.getFolderByIdSuspend(folder.id)
                     ?: throw IllegalArgumentException("Folder with ID ${folder.id} not found for update.")
 
                 // Type cannot be changed
@@ -515,8 +512,7 @@ class FolderRepositoryImpl @Inject constructor(
                             throw IllegalArgumentException("Cannot move folder ID ${folder.id} into its own descendant (potential new parent ID $newParentId). Circular reference detected.")
                         }
                         // Check new parent existence and type
-                        // Note: Consider adding suspend getFolderByIdSuspend(id) to DataSource
-                        val newParent = folderDataSource.getFolder(newParentId).firstOrNull()
+                        val newParent = folderDataSource.getFolderByIdSuspend(newParentId)
                             ?: throw IllegalArgumentException("New parent folder with ID $newParentId not found.")
                         if (newParent.type != folder.type) {
                             throw IllegalArgumentException("New parent folder type (${newParent.type}) must match folder type (${folder.type}).")

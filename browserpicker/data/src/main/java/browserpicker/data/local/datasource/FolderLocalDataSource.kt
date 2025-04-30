@@ -6,8 +6,11 @@ import browserpicker.data.local.entity.FolderEntity
 import browserpicker.data.local.mapper.FolderMapper
 import browserpicker.domain.model.Folder
 import browserpicker.domain.model.FolderType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,6 +19,7 @@ interface FolderLocalDataSource {
     suspend fun createFolder(folder: Folder): Long
     suspend fun updateFolder(folder: Folder): Boolean
     suspend fun deleteFolder(folderId: Long): Boolean
+    suspend fun getFolderByIdSuspend(folderId: Long): Folder?
     fun getFolder(folderId: Long): Flow<Folder?>
     fun getChildFolders(parentFolderId: Long): Flow<List<Folder>>
     fun getRootFoldersByType(type: FolderType): Flow<List<Folder>>
@@ -28,7 +32,7 @@ interface FolderLocalDataSource {
 @Singleton
 class FolderLocalDataSourceImpl @Inject constructor(
     private val folderDao: FolderDao,
-    private val instantProvider: InstantProvider, // Inject InstantProvider
+    private val instantProvider: InstantProvider,
 ): FolderLocalDataSource {
 
     override suspend fun ensureDefaultFoldersExist() {
@@ -79,6 +83,10 @@ class FolderLocalDataSourceImpl @Inject constructor(
         // moving children/rules before calling this if necessary.
         // The FK constraint `onDelete = SET_NULL` handles DB integrity.
         return folderDao.deleteFolderById(folderId) > 0
+    }
+
+    override suspend fun getFolderByIdSuspend(folderId: Long): Folder? = withContext(Dispatchers.IO) {
+        folderDao.getFolderById(folderId).firstOrNull()?.let { FolderMapper.toDomainModel(it) }
     }
 
     override fun getFolder(folderId: Long): Flow<Folder?> {
