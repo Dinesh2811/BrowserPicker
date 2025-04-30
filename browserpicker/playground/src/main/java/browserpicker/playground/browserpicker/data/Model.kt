@@ -2,6 +2,7 @@ package browserpicker.playground.browserpicker.data
 
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
+import androidx.room.TypeConverter
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
@@ -39,3 +40,15 @@ data class DateCount(
     @ColumnInfo(name = "count")
     val count: Int
 )
+
+object Converters {
+    @TypeConverter
+    @JvmStatic
+    fun instantToLong(instant: Instant?): Long? = instant?.toEpochMilliseconds()
+
+    @TypeConverter
+    @JvmStatic
+    fun longToInstant(value: Long?): Instant? = value?.let {
+        runCatching { Instant.fromEpochMilliseconds(it) }.getOrNull()
+    }
+}
