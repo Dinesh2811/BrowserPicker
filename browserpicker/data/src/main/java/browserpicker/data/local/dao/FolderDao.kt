@@ -8,6 +8,7 @@ import androidx.room.Update
 import androidx.room.Upsert
 import browserpicker.data.local.entity.FolderEntity
 import kotlinx.coroutines.flow.Flow
+import browserpicker.domain.model.*
 
 @Dao
 interface FolderDao {
@@ -26,15 +27,15 @@ interface FolderDao {
 
     // Get root folders (parentFolderId is NULL) of a specific type
     @Query("SELECT * FROM folders WHERE parent_folder_id IS NULL AND folder_type = :folderType ORDER BY name ASC")
-    fun getRootFoldersByType(folderType: browserpicker.domain.model.FolderType): Flow<List<FolderEntity>>
+    fun getRootFoldersByType(folderType: FolderType): Flow<List<FolderEntity>>
 
     // Get all folders of a specific type
     @Query("SELECT * FROM folders WHERE folder_type = :folderType ORDER BY name ASC")
-    fun getAllFoldersByType(folderType: browserpicker.domain.model.FolderType): Flow<List<FolderEntity>>
+    fun getAllFoldersByType(folderType: FolderType): Flow<List<FolderEntity>>
 
     // Check for uniqueness constraint: name + parent + type
     @Query("SELECT * FROM folders WHERE name = :name AND parent_folder_id = :parentFolderId AND folder_type = :folderType LIMIT 1")
-    suspend fun findFolderByNameAndParent(name: String, parentFolderId: Long?, folderType: browserpicker.domain.model.FolderType): FolderEntity?
+    suspend fun findFolderByNameAndParent(name: String, parentFolderId: Long?, folderType: FolderType): FolderEntity?
 
     @Query("SELECT EXISTS(SELECT 1 FROM folders WHERE parent_folder_id = :folderId LIMIT 1)")
     suspend fun hasChildFolders(folderId: Long): Boolean

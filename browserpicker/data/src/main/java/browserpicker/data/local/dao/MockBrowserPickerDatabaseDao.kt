@@ -20,9 +20,6 @@ interface MockBrowserPickerDatabaseDao {
     suspend fun deleteAllUriRecords()
 
     // --- FolderDao ---
-//    @Insert(onConflict = OnConflictStrategy.IGNORE)
-//    suspend fun insertFoldersReturnIds(folders: List<FolderEntity>): List<Long>
-
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertFoldersIgnoreConflict(folders: List<FolderEntity>): List<Long>
 

@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
 import browserpicker.data.local.entity.HostRuleEntity
+import browserpicker.domain.model.*
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -21,14 +22,14 @@ interface HostRuleDao {
     fun getAllHostRules(): Flow<List<HostRuleEntity>>
 
     @Query("SELECT * FROM host_rules WHERE uri_status = :status ORDER BY host ASC")
-    fun getHostRulesByStatus(status: browserpicker.domain.model.UriStatus): Flow<List<HostRuleEntity>>
+    fun getHostRulesByStatus(status: UriStatus): Flow<List<HostRuleEntity>>
 
     @Query("SELECT * FROM host_rules WHERE folder_id = :folderId ORDER BY host ASC")
     fun getHostRulesByFolderId(folderId: Long): Flow<List<HostRuleEntity>>
 
     // For root bookmarked/blocked rules (folderId is null)
     @Query("SELECT * FROM host_rules WHERE folder_id IS NULL AND uri_status = :status ORDER BY host ASC")
-    fun getRootHostRulesByStatus(status: browserpicker.domain.model.UriStatus): Flow<List<HostRuleEntity>>
+    fun getRootHostRulesByStatus(status: UriStatus): Flow<List<HostRuleEntity>>
 
     // Note: More complex updates (like ensuring folder type matches status) should happen
     // in the Repository/Use Case layer before calling upsert.
