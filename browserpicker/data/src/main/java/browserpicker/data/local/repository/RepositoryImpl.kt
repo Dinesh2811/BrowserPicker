@@ -43,10 +43,7 @@ class UriHistoryRepositoryImpl @Inject constructor(
         )
     }
 
-    override fun getPagedUriRecords(
-        query: UriHistoryQuery,
-        pagingConfig: PagingConfig,
-    ): Flow<PagingData<UriRecord>> {
+    override fun getPagedUriRecords(query: UriHistoryQuery, pagingConfig: PagingConfig): Flow<PagingData<UriRecord>> {
         return try {
             val dataQueryConfig = mapQueryToConfig(query)
             dataSource.getPagedUriRecords(dataQueryConfig, pagingConfig).flowOn(ioDispatcher)
@@ -111,7 +108,6 @@ class UriHistoryRepositoryImpl @Inject constructor(
     ): Result<Long> = runCatching {
         uriParser.parseAndValidateWebUri(uriString).getOrThrow()
         require(host.isNotBlank()) { "Host cannot be blank." }
-
         if (chosenBrowser != null) {
             require(chosenBrowser.isNotBlank()) { "Chosen browser package name cannot be blank if provided." }
         }
@@ -484,71 +480,75 @@ class FolderRepositoryImpl @Inject constructor(
         return isDescendantRecursive(parentId, targetAncestorId)
     }
 
-    override suspend fun updateFolder(folder: Folder): Result<Unit> = runCatching {
-        val trimmedName = folder.name.trim()
-        if (trimmedName.isEmpty()) {
-            throw IllegalArgumentException("Folder name cannot be empty.")
-        }
-        if (folder.id == Folder.DEFAULT_BOOKMARK_ROOT_FOLDER_ID || folder.id == Folder.DEFAULT_BLOCKED_ROOT_FOLDER_ID) {
-            throw IllegalArgumentException("Cannot modify the default root folders.")
-        }
-        // Prevent renaming a folder to a reserved root name if it's at the root
-        if (folder.parentFolderId == null && isReservedRootName(trimmedName)) {
-            throw IllegalArgumentException("Cannot rename a root folder to the reserved name '$trimmedName'.")
-        }
-
-        withContext(ioDispatcher) {
-            // Get current state *within* the potential transaction context (though update isn't transactional yet)
-            // Note: Consider adding suspend getFolderByIdSuspend(id) to DataSource
-            val currentFolder = folderDataSource.getFolder(folder.id).firstOrNull()
-                ?: throw IllegalArgumentException("Folder with ID ${folder.id} not found for update.")
-
-            // Type cannot be changed
-            if (currentFolder.type != folder.type) {
-                throw IllegalArgumentException("Cannot change the type of an existing folder (from ${currentFolder.type} to ${folder.type}).")
+    override suspend fun updateFolder(folder: Folder): Result<Unit> = browserPickerDatabase.withTransaction {
+        runCatching {
+            Timber.tag("FolderRepo").d("Attempting to update folder: id='%d', name='%s', parentId='%s'", folder.id, folder.name, folder.parentFolderId)
+            val trimmedName = folder.name.trim()
+            if (trimmedName.isEmpty()) {
+                throw IllegalArgumentException("Folder name cannot be empty.")
+            }
+            if (folder.id == Folder.DEFAULT_BOOKMARK_ROOT_FOLDER_ID || folder.id == Folder.DEFAULT_BLOCKED_ROOT_FOLDER_ID) {
+                throw IllegalArgumentException("Cannot modify the default root folders.")
+            }
+            // Prevent renaming a folder to a reserved root name if it's at the root
+            if (folder.parentFolderId == null && isReservedRootName(trimmedName)) {
+                throw IllegalArgumentException("Cannot rename a root folder to the reserved name '$trimmedName'.")
             }
 
-            // Validate potential parent change (circular reference check)
-            if (currentFolder.parentFolderId != folder.parentFolderId) {
-                folder.parentFolderId?.let { newParentId ->
-                    if (newParentId == folder.id) {
-                        throw IllegalArgumentException("Cannot move a folder into itself.")
-                    }
-                    if (isDescendantRecursive(newParentId, folder.id)) {
-                        throw IllegalArgumentException("Cannot move folder ID ${folder.id} into its own descendant (potential new parent ID $newParentId). Circular reference detected.")
-                    }
-                    // Check new parent existence and type
-                    // Note: Consider adding suspend getFolderByIdSuspend(id) to DataSource
-                    val newParent = folderDataSource.getFolder(newParentId).firstOrNull()
-                        ?: throw IllegalArgumentException("New parent folder with ID $newParentId not found.")
-                    if (newParent.type != folder.type) {
-                        throw IllegalArgumentException("New parent folder type (${newParent.type}) must match folder type (${folder.type}).")
+            withContext(ioDispatcher) {
+                // Get current state *within* the transaction context
+                // Note: Consider adding suspend getFolderByIdSuspend(id) to DataSource
+                val currentFolder = folderDataSource.getFolder(folder.id).firstOrNull()
+                    ?: throw IllegalArgumentException("Folder with ID ${folder.id} not found for update.")
+
+                // Type cannot be changed
+                if (currentFolder.type != folder.type) {
+                    throw IllegalArgumentException("Cannot change the type of an existing folder (from ${currentFolder.type} to ${folder.type}).")
+                }
+
+                // Validate potential parent change (circular reference check)
+                if (currentFolder.parentFolderId != folder.parentFolderId) {
+                    folder.parentFolderId?.let { newParentId ->
+                        if (newParentId == folder.id) {
+                            throw IllegalArgumentException("Cannot move a folder into itself.")
+                        }
+                        // This recursive check also needs to happen within the transaction context
+                        if (isDescendantRecursive(newParentId, folder.id)) {
+                            throw IllegalArgumentException("Cannot move folder ID ${folder.id} into its own descendant (potential new parent ID $newParentId). Circular reference detected.")
+                        }
+                        // Check new parent existence and type
+                        // Note: Consider adding suspend getFolderByIdSuspend(id) to DataSource
+                        val newParent = folderDataSource.getFolder(newParentId).firstOrNull()
+                            ?: throw IllegalArgumentException("New parent folder with ID $newParentId not found.")
+                        if (newParent.type != folder.type) {
+                            throw IllegalArgumentException("New parent folder type (${newParent.type}) must match folder type (${folder.type}).")
+                        }
                     }
                 }
-            }
 
-            // Check uniqueness in the *new* location if name or parent changed
-            if (currentFolder.name != trimmedName || currentFolder.parentFolderId != folder.parentFolderId) {
-                val conflictingFolder = folderDataSource.findFolderByNameAndParent(trimmedName, folder.parentFolderId, folder.type)
-                if (conflictingFolder != null && conflictingFolder.id != folder.id) {
-                    throw IllegalStateException("A folder named '$trimmedName' already exists in the target location with the same type (ID: ${conflictingFolder.id}).")
+                // Check uniqueness in the *new* location if name or parent changed
+                if (currentFolder.name != trimmedName || currentFolder.parentFolderId != folder.parentFolderId) {
+                    val conflictingFolder = folderDataSource.findFolderByNameAndParent(trimmedName, folder.parentFolderId, folder.type)
+                    if (conflictingFolder != null && conflictingFolder.id != folder.id) {
+                        throw IllegalStateException("A folder named '$trimmedName' already exists in the target location with the same type (ID: ${conflictingFolder.id}).")
+                    }
+                }
+
+                // Prepare updated folder entity (only update allowed fields)
+                val folderToUpdate = currentFolder.copy(
+                    name = trimmedName,
+                    parentFolderId = folder.parentFolderId,
+                    updatedAt = instantProvider.now() // Update timestamp
+                )
+
+                val updated = folderDataSource.updateFolder(folderToUpdate)
+                if (!updated) {
+                    throw IllegalStateException("Failed to update folder with ID ${folder.id} in data source (record might not exist anymore or update failed).")
                 }
             }
-
-            // Prepare updated folder entity (only update allowed fields)
-            val folderToUpdate = currentFolder.copy(
-                name = trimmedName,
-                parentFolderId = folder.parentFolderId,
-                updatedAt = instantProvider.now() // Update timestamp
-            )
-
-            val updated = folderDataSource.updateFolder(folderToUpdate)
-            if (!updated) {
-                throw IllegalStateException("Failed to update folder with ID ${folder.id} in data source (record might not exist anymore or update failed).")
-            }
+        }.onFailure { e ->
+            Timber.e(e, "[Repository] Failed to update folder: ID='${folder.id}', name='${folder.name}', parentFolderId='${folder.parentFolderId}', type='${folder.type}'")
         }
-    }.onFailure { e ->
-        Timber.e(e, "[Repository] Failed to update folder: ID='${folder.id}', name='${folder.name}', parentFolderId='${folder.parentFolderId}', type='${folder.type}'")
     }
 
     override suspend fun deleteFolder(folderId: Long): Result<Unit> = browserPickerDatabase.withTransaction {

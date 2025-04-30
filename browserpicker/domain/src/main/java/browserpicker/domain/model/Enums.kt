@@ -48,6 +48,12 @@ enum class UriStatus(val value: Int) {
         fun fromValueOrNull(value: Int): UriStatus? = entries.find { it.value == value }
         fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
         fun UriStatus.isActive(): Boolean = this != UNKNOWN && this != NONE
+
+        fun UriStatus.toFolderType(): FolderType? = when (this) {
+            UriStatus.BOOKMARKED -> FolderType.BOOKMARK
+            UriStatus.BLOCKED -> FolderType.BLOCK
+            else -> null
+        }
     }
 }
 

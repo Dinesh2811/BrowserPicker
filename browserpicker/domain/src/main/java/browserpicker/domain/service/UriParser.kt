@@ -9,9 +9,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import browserpicker.domain.model.UriRecord
 
-@Immutable
-@Serializable
-@Keep
+@Immutable @Serializable @Keep
 data class ParsedUri(
     val originalString: String,
     val scheme: String,
@@ -23,12 +21,17 @@ data class ParsedUri(
 )
 
 interface UriParser {
-    fun parseAndValidateWebUri(uriString: String, supportedSchemes: List<String> = listOf("http", "https")): Result<ParsedUri?>
+    fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String> = DEFAULT_SUPPORTED_SCHEMES): Result<ParsedUri?>
+
+    companion object {
+        val DEFAULT_SUPPORTED_SCHEMES: Set<String> = setOf("http", "https")
+    }
 }
 
 @Singleton
-class AndroidUriParser @Inject constructor(): UriParser {
-    override fun parseAndValidateWebUri(uriString: String, supportedSchemes: List<String>): Result<ParsedUri?> {
+class AndroidUriParser @Inject constructor() : UriParser {
+    override fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String>): Result<ParsedUri?> {
+        require(supportedSchemes.isNotEmpty()) { "At least one supported scheme must be provided." }
         if (uriString.isBlank()) return Result.success(null)
 
         return try {
@@ -36,22 +39,21 @@ class AndroidUriParser @Inject constructor(): UriParser {
             val scheme = uri.scheme
             val host = uri.host
             when {
-                host.isNullOrEmpty() -> return Result.failure(IllegalArgumentException("Host cannot be missing or blank."))
-                !uri.isAbsolute -> return Result.failure(IllegalArgumentException("URI must be absolute."))
-                scheme == null || scheme !in supportedSchemes -> return Result.failure(IllegalArgumentException("Invalid or unsupported scheme '$scheme'. Only $supportedSchemes are supported."))
-            }
-
-            Result.success(
-                ParsedUri(
-                    originalString = uriString,
-                    scheme = scheme,
-                    host = host,
-                    path = uri.path,
-                    query = uri.query,
-                    fragment = uri.fragment,
-                    port = uri.port
+                host.isNullOrEmpty() -> Result.failure(IllegalArgumentException("Host cannot be missing or blank in URI: $uriString"))
+                !uri.isAbsolute -> Result.failure(IllegalArgumentException("URI must be absolute: $uriString"))
+                scheme == null || scheme !in supportedSchemes -> Result.failure(IllegalArgumentException("Invalid or unsupported scheme '$scheme' in URI: $uriString. Only $supportedSchemes are supported."))
+                else -> Result.success(
+                    ParsedUri(
+                        originalString = uriString,
+                        scheme = scheme,
+                        host = host,
+                        path = uri.path,
+                        query = uri.query,
+                        fragment = uri.fragment,
+                        port = uri.port
+                    )
                 )
-            )
+            }
         } catch (e: Exception) {
             Timber.e(e, "Failed to parse URI: $uriString")
             Result.failure(e)

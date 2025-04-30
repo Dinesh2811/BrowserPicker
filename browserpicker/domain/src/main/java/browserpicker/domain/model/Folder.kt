@@ -19,19 +19,7 @@ data class UriRecord(
 ) {
     init {
         require(uriString.isNotBlank()) { "uriString must not be blank" }
-//        require(isValidUri(uriString)) { "uriString must be a valid URI" }
         require(host.isNotBlank()) { "host must not be blank" }
-    }
-
-    companion object {
-        fun isValidUri(uri: String): Boolean {
-            return try {
-                val parsedUri = uri.toUri()
-                parsedUri.isAbsolute && (parsedUri.scheme == "http" || parsedUri.scheme == "https")
-            } catch (e: Exception) {
-                false
-            }
-        }
     }
 }
 
