@@ -22,7 +22,7 @@ import javax.inject.Singleton
 @Singleton
 class UriHistoryRepositoryImpl @Inject constructor(
     private val dataSource: UriHistoryLocalDataSource,
-    private val uriParser: UriParser,
+    private val uriParser: UriParser, // Use it if needed to check for valid web URI
     private val instantProvider: InstantProvider,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ): UriHistoryRepository {
@@ -175,6 +175,7 @@ class UriHistoryRepositoryImpl @Inject constructor(
 class HostRuleRepositoryImpl @Inject constructor(
     private val hostRuleDataSource: HostRuleLocalDataSource,
     private val folderDataSource: FolderLocalDataSource,
+    private val uriParser: UriParser, // Use it if needed to check for valid web URI
     private val instantProvider: InstantProvider,
     private val browserPickerDatabase: BrowserPickerDatabase,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
@@ -354,6 +355,7 @@ class HostRuleRepositoryImpl @Inject constructor(
 class FolderRepositoryImpl @Inject constructor(
     private val folderDataSource: FolderLocalDataSource,
     private val hostRuleDataSource: HostRuleLocalDataSource,
+    private val uriParser: UriParser, // Use it if needed to check for valid web URI
     private val instantProvider: InstantProvider,
     private val browserPickerDatabase: BrowserPickerDatabase,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
@@ -571,6 +573,7 @@ class FolderRepositoryImpl @Inject constructor(
 @Singleton
 class BrowserStatsRepositoryImpl @Inject constructor(
     private val dataSource: BrowserStatsLocalDataSource,
+    private val uriParser: UriParser, // Use it if needed to check for valid web URI
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ): BrowserStatsRepository {
 
