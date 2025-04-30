@@ -1,21 +1,20 @@
 package browserpicker.core.results
 
-import browserpicker.core.utils.logDebug
-import browserpicker.core.utils.logError
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import timber.log.Timber
 
 sealed interface MyResult<out T, out E : AppError> {
-    data class Success<out T>(val data: T) : MyResult<T, Nothing> {
+    data class Success<out T>(val data: T, val message: String? = null) : MyResult<T, Nothing> {
         init {
-            logDebug("Result.Success: $data")
+            Timber.d("MyResult.Success: $data")
         }
     }
 
     data class Error<out E : AppError>(val error: E) : MyResult<Nothing, E> {
         init {
-            logError("Result.Error: ${error.message}", error.cause)
+            Timber.e(error.cause, "MyResult.Error: ${error.message}")
         }
     }
 
@@ -44,21 +43,21 @@ sealed interface MyResult<out T, out E : AppError> {
 }
 
 fun <T> Flow<T>.asResult(
-    errorMapper: (Throwable) -> AppError = { AppError.UnknownError("Flow collection failed", it) }
+    errorMapper: (Throwable) -> AppError = { AppError.Error("Flow collection failed", it) },
 ): Flow<MyResult<T, AppError>> {
     return this
         .map<T, MyResult<T, AppError>> { MyResult.Success(it) }
         .catch { throwable ->
-            logError("Flow<T>.asResult caught an exception", throwable)
+            Timber.e(throwable.cause, "Flow<T>.asResult caught an exception: ${throwable.message}")
             emit(MyResult.Error(errorMapper(throwable)))
         }
 }
 
 fun <T, E : AppError> Flow<MyResult<T, E>>.safeCatch(
-    errorMapper: (Throwable) -> E
+    errorMapper: (Throwable) -> E,
 ): Flow<MyResult<T, E>> {
     return this.catch { throwable ->
-        logError("Flow<Result<T, E>>.safeCatch caught an exception", throwable)
+        Timber.e(throwable.cause, "Flow<MyResult<T, E>>.safeCatch caught an exception: ${throwable.message}")
         emit(MyResult.Error(errorMapper(throwable)))
     }
 }
