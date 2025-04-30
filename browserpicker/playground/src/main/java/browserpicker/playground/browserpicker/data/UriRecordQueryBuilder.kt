@@ -83,14 +83,14 @@ class UriRecordQueryBuilder @Inject constructor() {
     }
 
     fun buildTotalCountQuery(config: UriRecordQueryConfig): SupportSQLiteQuery {
-        // TODO: Cpde already implemented
+        // TODO: Code already implemented
     }
 
     fun buildDateCountQuery(config: UriRecordQueryConfig): SupportSQLiteQuery {
-        // TODO: Cpde already implemented
+        // TODO: Code already implemented
     }
 
     fun buildGroupCountQuery(config: UriRecordQueryConfig): SupportSQLiteQuery {
-        // TODO: Cpde already implemented
+        // TODO: Code already implemented
     }
 }
