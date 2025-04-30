@@ -79,18 +79,18 @@ class UriRecordQueryBuilder @Inject constructor() {
     }
 
     fun buildPagedQuery(config: UriRecordQueryConfig): SupportSQLiteQuery {
-        // TODO: Code already implemented
+        // Code already implemented
     }
 
     fun buildTotalCountQuery(config: UriRecordQueryConfig): SupportSQLiteQuery {
-        // TODO: Code already implemented
+        // Code already implemented
     }
 
     fun buildDateCountQuery(config: UriRecordQueryConfig): SupportSQLiteQuery {
-        // TODO: Code already implemented
+        // Code already implemented
     }
 
     fun buildGroupCountQuery(config: UriRecordQueryConfig): SupportSQLiteQuery {
-        // TODO: Code already implemented
+        // Code already implemented
     }
 }
