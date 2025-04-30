@@ -5,9 +5,9 @@ import browserpicker.domain.model.*
 
 object UriRecordMapper {
     fun toDomainModel(entity: UriRecordEntity): UriRecord {
-        val domainUriSource = UriSource.fromValueOrNull(entity.uriSource)
-            ?: throw MappingException("Invalid UriSource value '${entity.uriSource}' found in database for UriRecord ID ${entity.id}")
-        val domainInteractionAction = InteractionAction.fromValue(entity.interactionAction) // Defaults to UNKNOWN
+        val domainUriSource = UriSource.fromValue(entity.uriSource)
+            //  ?: throw MappingException("Invalid UriSource value '${entity.uriSource}' found in database for UriRecord ID ${entity.id}")
+        val domainInteractionAction = InteractionAction.fromValue(entity.interactionAction)
 
         return UriRecord(
             id = entity.id,
@@ -63,14 +63,14 @@ object HostRuleMapper {
 
 object FolderMapper  {
     fun toDomainModel(entity: FolderEntity): Folder {
-        val domainFolderType = FolderType.fromValueOrNull(entity.folderType)
-            ?: throw MappingException("Invalid FolderType value '${entity.folderType}' found in database for Folder ID ${entity.id}")
+        val domainFolderType = FolderType.fromValue(entity.folderType)
+            //  ?: throw MappingException("Invalid FolderType value '${entity.folderType}' found in database for Folder ID ${entity.id}")
 
         return Folder(
             id = entity.id,
             parentFolderId = entity.parentFolderId,
             name = entity.name,
-            type = domainFolderType, // Now uses safe mapping
+            type = domainFolderType,
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt
         )

@@ -5,14 +5,13 @@ import kotlinx.serialization.Serializable
 
 @Immutable @Serializable
 enum class UriSource(val value: Int) {
+    UNKNOWN(-1),
     INTENT(1),
     CLIPBOARD(2),
     MANUAL(3);
 
     companion object {
-        @Throws(IllegalArgumentException::class)
-        fun fromValue(value: Int): UriSource = entries.find { it.value == value }
-            ?: throw IllegalArgumentException("Invalid UriSource value: $value. Valid values are: ${entries.joinToString { "${it.name}(${it.value})" }}")
+        fun fromValue(value: Int): UriSource = entries.find { it.value == value }?: UNKNOWN
         fun fromValueOrNull(value: Int): UriSource? = entries.find { it.value == value }
         fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
     }
@@ -48,28 +47,30 @@ enum class UriStatus(val value: Int) {
         fun fromValueOrNull(value: Int): UriStatus? = entries.find { it.value == value }
         fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
         fun UriStatus.isActive(): Boolean = this != UNKNOWN && this != NONE
-
-        fun UriStatus.toFolderType(): FolderType? = when (this) {
-            UriStatus.BOOKMARKED -> FolderType.BOOKMARK
-            UriStatus.BLOCKED -> FolderType.BLOCK
-            else -> null
-        }
     }
 }
 
 @Immutable @Serializable
 enum class FolderType(val value: Int) {
+    UNKNOWN(-1),
     BOOKMARK(1),
     BLOCK(2);
 
     companion object {
-        @Throws(IllegalArgumentException::class)
-        fun fromValue(value: Int) = entries.find { it.value == value }?: throw IllegalArgumentException("Unknown FolderType value: $value")
-        fun fromValueOrNull(value: Int) = entries.find { it.value == value }
+        fun fromValue(value: Int) = entries.find { it.value == value }?: UNKNOWN
+        fun fromValueOrNull(value: Int): FolderType? = entries.find { it.value == value }
         fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
-        fun FolderType.toUriStatus(): UriStatus = when (this) {
-            BOOKMARK -> UriStatus.BOOKMARKED
-            BLOCK -> UriStatus.BLOCKED
-        }
     }
+}
+
+fun UriStatus.toFolderType(): FolderType? = when (this) {
+    UriStatus.BOOKMARKED -> FolderType.BOOKMARK
+    UriStatus.BLOCKED -> FolderType.BLOCK
+    else -> null
+}
+
+fun FolderType.toUriStatus(): UriStatus = when (this) {
+    FolderType.BOOKMARK -> UriStatus.BOOKMARKED
+    FolderType.BLOCK -> UriStatus.BLOCKED
+    FolderType.UNKNOWN -> UriStatus.NONE
 }
