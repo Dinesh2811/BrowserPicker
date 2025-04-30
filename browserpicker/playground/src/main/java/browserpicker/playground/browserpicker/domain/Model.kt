@@ -7,14 +7,13 @@ import kotlinx.serialization.Serializable
 
 @Immutable @Serializable
 enum class UriSource(val value: Int) {
+    UNKNOWN(-1),
     INTENT(1),
     CLIPBOARD(2),
     MANUAL(3);
 
     companion object {
-        @Throws(IllegalArgumentException::class)
-        fun fromValue(value: Int): UriSource = entries.find { it.value == value }
-            ?: throw IllegalArgumentException("Invalid UriSource value: $value. Valid values are: ${entries.joinToString { "${it.name}(${it.value})" }}")
+        fun fromValue(value: Int): UriSource = entries.find { it.value == value }?: UNKNOWN
         fun fromValueOrNull(value: Int): UriSource? = entries.find { it.value == value }
         fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
     }
@@ -55,19 +54,27 @@ enum class UriStatus(val value: Int) {
 
 @Immutable @Serializable
 enum class FolderType(val value: Int) {
+    UNKNOWN(-1),
     BOOKMARK(1),
     BLOCK(2);
 
     companion object {
-        @Throws(IllegalArgumentException::class)
-        fun fromValue(value: Int) = entries.find { it.value == value }?: throw IllegalArgumentException("Unknown FolderType value: $value")
-        fun fromValueOrNull(value: Int) = entries.find { it.value == value }
+        fun fromValue(value: Int) = entries.find { it.value == value }?: UNKNOWN
+        fun fromValueOrNull(value: Int): FolderType? = entries.find { it.value == value }
         fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
-        fun FolderType.toUriStatus(): UriStatus = when (this) {
-            BOOKMARK -> UriStatus.BOOKMARKED
-            BLOCK -> UriStatus.BLOCKED
-        }
     }
+}
+
+fun UriStatus.toFolderType(): FolderType? = when (this) {
+    UriStatus.BOOKMARKED -> FolderType.BOOKMARK
+    UriStatus.BLOCKED -> FolderType.BLOCK
+    else -> null
+}
+
+fun FolderType.toUriStatus(): UriStatus = when (this) {
+    FolderType.BOOKMARK -> UriStatus.BOOKMARKED
+    FolderType.BLOCK -> UriStatus.BLOCKED
+    FolderType.UNKNOWN -> UriStatus.NONE
 }
 
 @Immutable @Serializable
@@ -83,19 +90,7 @@ data class UriRecord(
 ) {
     init {
         require(uriString.isNotBlank()) { "uriString must not be blank" }
-        require(isValidUri(uriString)) { "uriString must be a valid URI" }
         require(host.isNotBlank()) { "host must not be blank" }
-    }
-
-    companion object {
-        fun isValidUri(uri: String): Boolean {
-            return try {
-                val parsedUri = uri.toUri()
-                parsedUri.isAbsolute && (parsedUri.scheme == "http" || parsedUri.scheme == "https")
-            } catch (e: Exception) {
-                false
-            }
-        }
     }
 }
 
@@ -151,22 +146,12 @@ data class BrowserUsageStat(
     }
 }
 
-enum class BrowserStatSortField {
-    USAGE_COUNT, LAST_USED_TIMESTAMP
-}
+@Immutable
+data class DomainGroupCount(val groupValue: String?, val count: Int)
+@Immutable
+data class DomainDateCount(val date: Instant?, val count: Int)
 
-data class FilterOptions(
-    val distinctHistoryHosts: List<String> = emptyList(),
-    val distinctRuleHosts: List<String> = emptyList(),
-    val distinctChosenBrowsers: List<String?> = emptyList(),
-)
 
-sealed interface HandleUriResult {
-    data object Blocked: HandleUriResult
-    data class OpenDirectly(val browserPackageName: String, val hostRuleId: Long?): HandleUriResult
-    data class ShowPicker(val uriString: String, val host: String, val hostRuleId: Long?): HandleUriResult
-    data class InvalidUri(val reason: String): HandleUriResult
-}
 
 @Immutable
 data class UriHistoryQuery(
@@ -180,28 +165,12 @@ data class UriHistoryQuery(
     val sortOrder: SortOrder = SortOrder.DESC,
     val groupBy: UriRecordGroupField = UriRecordGroupField.NONE,
     val groupSortOrder: SortOrder = SortOrder.ASC,
+    // Use domain-specific advanced filters instead of raw SQL structure
     val advancedFilters: List<UriRecordAdvancedFilterDomain> = emptyList()
 ) {
     companion object {
         val DEFAULT = UriHistoryQuery()
     }
-}
-
-@Immutable
-sealed interface UriRecordAdvancedFilterDomain {
-    /** Filter records based on whether they have an associated HostRule. */
-    @Immutable
-    data class HasAssociatedRule(val hasRule: Boolean) : UriRecordAdvancedFilterDomain
-
-    /** Filter records based on their UriStatus (derived from associated HostRule). */
-    // Note: This requires a JOIN in the data layer query builder.
-    @Immutable
-    data class HasUriStatus(val status: UriStatus) : UriRecordAdvancedFilterDomain
-
-    // Add other domain-specific advanced filter types here as needed.
-    // Examples:
-    // data class IsInFolder(val folderId: Long) : UriRecordAdvancedFilterDomain
-    // data class HasPreferenceEnabled(val isEnabled: Boolean) : UriRecordAdvancedFilterDomain
 }
 
 @Immutable
@@ -245,7 +214,42 @@ fun groupKeyToStableString(key: GroupKey): String = when (key) {
 }
 
 @Immutable
-data class DomainGroupCount(val groupValue: String?, val count: Int)
-@Immutable
-data class DomainDateCount(val date: Instant?, val count: Int)
+enum class BrowserStatSortField {
+    USAGE_COUNT, LAST_USED_TIMESTAMP
+}
 
+@Immutable
+data class FilterOptions(
+    val distinctHistoryHosts: List<String> = emptyList(),
+    val distinctRuleHosts: List<String> = emptyList(),
+    val distinctChosenBrowsers: List<String?> = emptyList(),
+)
+
+@Immutable
+sealed interface HandleUriResult {
+    @Immutable
+    data object Blocked: HandleUriResult
+    @Immutable
+    data class OpenDirectly(val browserPackageName: String, val hostRuleId: Long?): HandleUriResult
+    @Immutable
+    data class ShowPicker(val uriString: String, val host: String, val hostRuleId: Long?): HandleUriResult
+    @Immutable
+    data class InvalidUri(val reason: String): HandleUriResult
+}
+
+@Immutable
+sealed interface UriRecordAdvancedFilterDomain {
+    /** Filter records based on whether they have an associated HostRule. */
+    @Immutable
+    data class HasAssociatedRule(val hasRule: Boolean) : UriRecordAdvancedFilterDomain
+
+    /** Filter records based on their UriStatus (derived from associated HostRule). */
+    // Note: This requires a JOIN in the data layer query builder.
+    @Immutable
+    data class HasUriStatus(val status: UriStatus) : UriRecordAdvancedFilterDomain
+
+    // Add other domain-specific advanced filter types here as needed.
+    // Examples:
+    // data class IsInFolder(val folderId: Long) : UriRecordAdvancedFilterDomain
+    // data class HasPreferenceEnabled(val isEnabled: Boolean) : UriRecordAdvancedFilterDomain
+}
