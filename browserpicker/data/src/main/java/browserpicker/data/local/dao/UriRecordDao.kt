@@ -9,8 +9,8 @@ import androidx.room.RawQuery
 import androidx.room.Upsert
 import androidx.sqlite.db.SupportSQLiteQuery
 import browserpicker.data.local.entity.UriRecordEntity
-import browserpicker.data.local.query.model.DateCount
-import browserpicker.data.local.query.model.GroupCount
+import browserpicker.domain.model.DateCount
+import browserpicker.domain.model.GroupCount
 import kotlinx.coroutines.flow.Flow
 
 @Dao

@@ -6,8 +6,8 @@ import browserpicker.domain.model.UriRecord
 import browserpicker.domain.model.query.FilterOptions
 import browserpicker.domain.model.query.UriHistoryQuery
 import browserpicker.domain.model.query.UriRecordGroupField
-import browserpicker.domain.model.DomainDateCount
-import browserpicker.domain.model.DomainGroupCount
+import browserpicker.domain.model.DateCount
+import browserpicker.domain.model.GroupCount
 import browserpicker.presentation.common.LoadingStatus
 import browserpicker.presentation.common.UserMessage
 import kotlinx.coroutines.flow.Flow
@@ -27,8 +27,8 @@ data class HistoryScreenState(
 data class HistoryOverviewState(
     val loadingStatus: LoadingStatus = LoadingStatus.IDLE,
     val totalCount: Long = 0L,
-    val groupCounts: List<DomainGroupCount> = emptyList(),
-    val dateCounts: List<DomainDateCount> = emptyList(),
+    val groupCounts: List<GroupCount> = emptyList(),
+    val dateCounts: List<DateCount> = emptyList(),
     // Add calculated insights here later if needed
     val activeGrouping: UriRecordGroupField = UriRecordGroupField.NONE
 )

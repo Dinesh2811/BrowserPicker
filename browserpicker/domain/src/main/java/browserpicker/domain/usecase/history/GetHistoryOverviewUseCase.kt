@@ -1,8 +1,8 @@
 package browserpicker.domain.usecase.history
 
 import androidx.annotation.Keep
-import browserpicker.domain.model.DomainDateCount
-import browserpicker.domain.model.DomainGroupCount
+import browserpicker.domain.model.DateCount
+import browserpicker.domain.model.GroupCount
 import browserpicker.domain.model.query.UriHistoryQuery
 import browserpicker.domain.repository.UriHistoryRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -16,8 +16,8 @@ import javax.inject.Inject
 @Keep
 data class HistoryOverview(
     val totalCount: Long,
-    val groupCounts: List<DomainGroupCount>,
-    val dateCounts: List<DomainDateCount>,
+    val groupCounts: List<GroupCount>,
+    val dateCounts: List<DateCount>,
 )
 
 interface GetHistoryOverviewUseCase {

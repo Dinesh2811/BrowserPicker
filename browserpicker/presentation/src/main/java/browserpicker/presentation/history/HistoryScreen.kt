@@ -11,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -22,13 +21,10 @@ import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import browserpicker.domain.model.UriRecord // Import domain model
 import browserpicker.domain.model.query.*
-import browserpicker.domain.model.DomainDateCount
-import browserpicker.domain.model.DomainGroupCount
+import browserpicker.domain.model.GroupCount
 import browserpicker.domain.model.* // Import all needed domain models
 import browserpicker.presentation.common.* // Import common UI types
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
-import java.time.LocalDate // Using java.time for display purposes if dateString is YYYY-MM-DD
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter") // Padding applied to content Column
 @OptIn(ExperimentalMaterial3Api::class)
@@ -627,7 +623,7 @@ fun ChoiceChip(
 fun HistoryGroupSheet(
     currentGroupField: UriRecordGroupField,
     currentGroupSortOrder: SortOrder,
-    groupCounts: List<DomainGroupCount>, // Display counts here
+    groupCounts: List<GroupCount>, // Display counts here
     onApplyGroup: (field: UriRecordGroupField, order: SortOrder) -> Unit,
     onDismiss: () -> Unit
 ) {

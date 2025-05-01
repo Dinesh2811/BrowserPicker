@@ -44,19 +44,3 @@ data class UriRecordAdvancedFilter(
         }
     }
 }
-
-@Serializable
-data class GroupCount(
-    @ColumnInfo(name = "groupValue")
-    val groupValue: String?,
-    @ColumnInfo(name = "count")
-    val count: Int
-)
-
-@Serializable
-data class DateCount(
-    @ColumnInfo(name = "date")
-    val date: Instant?,
-    @ColumnInfo(name = "count")
-    val count: Int
-)

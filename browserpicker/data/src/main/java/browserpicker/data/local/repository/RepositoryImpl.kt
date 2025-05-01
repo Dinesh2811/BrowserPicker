@@ -68,33 +68,33 @@ class UriHistoryRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getGroupCounts(query: UriHistoryQuery): Flow<List<DomainGroupCount>> {
+    override fun getGroupCounts(query: UriHistoryQuery): Flow<List<GroupCount>> {
         return try {
             val dataQueryConfig = mapQueryToConfig(query)
             dataSource.getGroupCounts(dataQueryConfig).map { dataGroupCounts ->
-                dataGroupCounts.map { DomainGroupCount(it.groupValue, it.count) }
+                dataGroupCounts.map { GroupCount(it.groupValue, it.count) }
             }.catch { e ->
                 Timber.e(e, "[Repository] Error fetching group counts for query: %s", query)
                 emit(emptyList())
             }.flowOn(ioDispatcher)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to create GroupCounts Flow for query: %s", query)
-            flowOf(emptyList<DomainGroupCount>())
+            flowOf(emptyList<GroupCount>())
         }
     }
 
-    override fun getDateCounts(query: UriHistoryQuery): Flow<List<DomainDateCount>> {
+    override fun getDateCounts(query: UriHistoryQuery): Flow<List<DateCount>> {
         return try {
             val dataQueryConfig = mapQueryToConfig(query)
             dataSource.getDateCounts(dataQueryConfig).map { dataDateCounts ->
-                dataDateCounts.map { DomainDateCount(it.date, it.count) }
+                dataDateCounts.map { DateCount(it.date, it.count) }
             }.catch { e ->
                 Timber.e(e, "[Repository] Error fetching date counts for query: %s", query)
                 emit(emptyList())
             }.flowOn(ioDispatcher)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to create DateCounts Flow for query: %s", query)
-            flowOf(emptyList<DomainDateCount>())
+            flowOf(emptyList<DateCount>())
         }
     }
 

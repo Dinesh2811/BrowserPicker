@@ -8,9 +8,8 @@ import browserpicker.data.local.dao.UriRecordDao
 import browserpicker.data.local.entity.UriRecordEntity
 import browserpicker.data.local.mapper.UriRecordMapper
 import browserpicker.data.local.query.UriRecordQueryBuilder
-import browserpicker.data.local.query.model.DateCount
-import browserpicker.data.local.query.model.GroupCount
 import browserpicker.data.local.query.model.UriRecordQueryConfig
+import browserpicker.domain.model.*
 import browserpicker.domain.model.UriRecord
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
