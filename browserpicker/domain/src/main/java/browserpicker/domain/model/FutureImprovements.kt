@@ -414,3 +414,39 @@ enum class FilterOperator {
 
 
  */
+
+/*
+
+@Immutable
+data class UriRecordAdvancedFilterDomain(
+    val field: UriRecordFilterFieldDomain,
+    val operator: FilterOperatorDomain,
+    val value: String
+)
+
+@Immutable
+enum class UriRecordFilterFieldDomain {
+    URI_STRING,
+    HOST,
+    CHOSEN_BROWSER,
+    INTERACTION_ACTION,
+    URI_SOURCE,
+    TIMESTAMP
+}
+
+@Immutable
+enum class FilterOperatorDomain {
+    EQUALS,
+    NOT_EQUALS,
+    CONTAINS,
+    STARTS_WITH,
+    ENDS_WITH,
+    GREATER_THAN,
+    LESS_THAN,
+    GREATER_THAN_OR_EQUALS,
+    LESS_THAN_OR_EQUALS,
+    IS_NULL,
+    IS_NOT_NULL
+}
+
+ */

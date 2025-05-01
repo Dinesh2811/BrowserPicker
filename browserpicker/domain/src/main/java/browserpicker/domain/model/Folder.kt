@@ -20,6 +20,11 @@ data class UriRecord(
     init {
         require(uriString.isNotBlank()) { "uriString must not be blank" }
         require(host.isNotBlank()) { "host must not be blank" }
+        require(uriSource != UriSource.UNKNOWN) { "uriSource must be a valid type" }
+        require(interactionAction != InteractionAction.UNKNOWN) { "interactionAction must be a valid type" }
+        if (chosenBrowserPackage != null) {
+            require(chosenBrowserPackage.isNotBlank()) { "chosenBrowserPackage must not be blank if provided" }
+        }
     }
 }
 
@@ -39,6 +44,9 @@ data class HostRule(
         require(uriStatus != UriStatus.UNKNOWN) { "uriStatus must not be UNKNOWN" }
         if (uriStatus == UriStatus.NONE) require(folderId == null && preferredBrowserPackage == null && !isPreferenceEnabled) { "NONE status may not have folder, preference, or enabled preference" }
         if (uriStatus == UriStatus.BLOCKED) require(preferredBrowserPackage == null && !isPreferenceEnabled) { "BLOCKED status must not have preference" }
+        if (preferredBrowserPackage != null) {
+            require(preferredBrowserPackage.isNotBlank()) { "preferredBrowserPackage must not be blank if provided" }
+        }
     }
 }
 
@@ -54,6 +62,7 @@ data class Folder(
     init {
         require(name.isNotBlank()) { "folder name must not be blank" }
         require(createdAt <= updatedAt) { "createdAt must not be after updatedAt" }
+        require(type != FolderType.UNKNOWN) { "folder type must not be UNKNOWN" }
     }
     companion object {
         const val DEFAULT_BOOKMARK_ROOT_FOLDER_ID = 1L

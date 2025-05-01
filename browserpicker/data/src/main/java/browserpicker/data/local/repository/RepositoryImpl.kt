@@ -4,6 +4,7 @@ import androidx.paging.*
 import androidx.room.*
 import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
+import browserpicker.core.results.MyResult
 import browserpicker.core.results.UriValidationError
 import kotlinx.coroutines.flow.*
 import timber.log.Timber
@@ -108,27 +109,37 @@ class UriHistoryRepositoryImpl @Inject constructor(
         chosenBrowser: String?,
         associatedHostRuleId: Long?,
     ): Result<Long> = runCatching {
-        uriParser.parseAndValidateWebUri(uriString).getOrThrow()
-        require(host.isNotBlank()) { "Host cannot be blank." }
-        if (chosenBrowser != null) {
-            require(chosenBrowser.isNotBlank()) { "Chosen browser package name cannot be blank if provided." }
-        }
-
         withContext(ioDispatcher) {
+            when {
+                uriString.isBlank() -> throw IllegalArgumentException("URI string cannot be blank or empty")
+                host.isBlank() -> throw IllegalArgumentException("Host cannot be blank or empty")
+                source == UriSource.UNKNOWN -> throw IllegalArgumentException("URI Source cannot be UNKNOWN; use a valid source type")
+                action == InteractionAction.UNKNOWN -> throw IllegalArgumentException("Interaction Action cannot be UNKNOWN; use a valid action type")
+            }
+            if (chosenBrowser != null) {
+                require(chosenBrowser.isNotBlank()) { "Chosen browser package name cannot be blank if provided." }
+            }
+            uriParser.parseAndValidateWebUri(uriString).getOrThrow()
+
             val record = UriRecord(
-                id = 0,
                 uriString = uriString,
                 host = host,
-                timestamp = instantProvider.now(),
                 uriSource = source,
                 interactionAction = action,
                 chosenBrowserPackage = chosenBrowser,
+                timestamp = instantProvider.now(),
                 associatedHostRuleId = associatedHostRuleId
             )
-            dataSource.insertUriRecord(record)
+
+            val id = dataSource.insertUriRecord(record)
+            if (id <= 0) {
+                throw IllegalStateException("Failed to insert URI record: received invalid ID $id")
+            }
+
+            id
         }
     }.onFailure { e ->
-        Timber.e(e, "[Repository] Failed to add URI record: uriString='$uriString', host='$host', source='$source', action='$action'")
+        Timber.e(e, "[Repository] Failed to add URI record: $uriString, host=$host, source=$source, action=$action, browser=$chosenBrowser")
     }
 
     override suspend fun getUriRecord(id: Long): UriRecord? = runCatching {

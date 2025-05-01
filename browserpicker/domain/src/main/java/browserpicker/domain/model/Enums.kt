@@ -13,7 +13,7 @@ enum class UriSource(val value: Int) {
     companion object {
         fun fromValue(value: Int): UriSource = entries.find { it.value == value }?: UNKNOWN
         fun fromValueOrNull(value: Int): UriSource? = entries.find { it.value == value }
-        fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
+        fun isValidValue(value: Int): Boolean = fromValueOrNull(value) != null
     }
 }
 
@@ -30,7 +30,7 @@ enum class InteractionAction(val value: Int) {
     companion object {
         fun fromValue(value: Int) = entries.find { it.value == value }?: UNKNOWN
         fun fromValueOrNull(value: Int): InteractionAction? = entries.find { it.value == value }
-        fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
+        fun isValidValue(value: Int): Boolean = fromValueOrNull(value) != null
         fun InteractionAction.isOpenAction(): Boolean = this == OPENED_ONCE || this == OPENED_BY_PREFERENCE
     }
 }
@@ -45,7 +45,7 @@ enum class UriStatus(val value: Int) {
     companion object {
         fun fromValue(value: Int) = entries.find { it.value == value }?: UNKNOWN
         fun fromValueOrNull(value: Int): UriStatus? = entries.find { it.value == value }
-        fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
+        fun isValidValue(value: Int): Boolean = fromValueOrNull(value) != null
         fun UriStatus.isActive(): Boolean = this != UNKNOWN && this != NONE
     }
 }
@@ -59,7 +59,7 @@ enum class FolderType(val value: Int) {
     companion object {
         fun fromValue(value: Int) = entries.find { it.value == value }?: UNKNOWN
         fun fromValueOrNull(value: Int): FolderType? = entries.find { it.value == value }
-        fun isValidValue(value: Int): Boolean = entries.associateBy { it.value }.containsKey(value)
+        fun isValidValue(value: Int): Boolean = fromValueOrNull(value) != null
     }
 }
 
