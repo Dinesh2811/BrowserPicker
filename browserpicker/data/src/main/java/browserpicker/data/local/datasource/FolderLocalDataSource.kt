@@ -53,6 +53,7 @@ class FolderLocalDataSourceImpl @Inject constructor(
             createdAt = now,
             updatedAt = now
         )
+
         folderDao.insertFoldersIgnoreConflict(listOf(defaultBookmarkFolder, defaultBlockedFolder))
     }
 
@@ -81,9 +82,15 @@ class FolderLocalDataSourceImpl @Inject constructor(
     }
 
     override suspend fun deleteFolder(folderId: Long): Boolean {
-        // Business logic note: Repository layer should handle recursive deletion or
-        // moving children/rules before calling this if necessary.
-        // The FK constraint `onDelete = SET_NULL` handles DB integrity.
+        val folder = getFolderByIdSuspend(folderId)
+        if (folder == null) {
+            throw IllegalArgumentException("Folder with ID $folderId does not exist.")
+        }
+
+        if (hasChildFolders(folderId)) {
+            throw IllegalStateException("Cannot delete folder with ID $folderId as it contains child folders. Handle cleanup in the Repository layer first.")
+        }
+
         return folderDao.deleteFolderById(folderId) > 0
     }
 
