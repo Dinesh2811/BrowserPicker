@@ -22,7 +22,12 @@ data class ParsedUri(
     val query: String?,
     val fragment: String?,
     val port: Int = -1,
-)
+) {
+    init {
+        require(host.isNotBlank()) { "Host cannot be blank." }
+        require(scheme.isNotBlank()) { "Scheme cannot be blank." }
+    }
+}
 
 interface UriParser {
     fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String> = DEFAULT_SUPPORTED_SCHEMES): MyResult<ParsedUri?, UriValidationError>

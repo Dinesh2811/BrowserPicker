@@ -69,13 +69,13 @@ sealed interface MyResult<out T, out E : AppError> {
 }
 
 fun <T> Flow<T>.asResult(
-    errorMapper: (Throwable) -> AppError = { AppError.Error("Flow collection failed", it) },
+    unknownErrorMapper: (Throwable) -> AppError = { AppError.UnknownError("Flow collection failed", it) },
 ): Flow<MyResult<T, AppError>> {
     return this
         .map<T, MyResult<T, AppError>> { MyResult.Success(it) }
         .catch { throwable ->
             Timber.e(throwable.cause, "Flow<T>.asResult caught an exception: ${throwable.message}")
-            emit(MyResult.Error(errorMapper(throwable)))
+            emit(MyResult.Error(unknownErrorMapper(throwable)))
         }
 }
 

@@ -7,7 +7,13 @@ sealed interface AppError {
     val cause: Throwable?
         get() = null
 
-    data class Error(override val message: String = "An unexpected error occurred.", override val cause: Throwable?): AppError
+    data class UnknownError(override val message: String = "An unexpected error occurred.", override val cause: Throwable? = null): AppError
+    data class ValidationError(override val message: String, override val cause: Throwable? = null): AppError
+    data class DataNotFound(override val message: String, override val cause: Throwable? = null): AppError
+    data class DataIntegrityError(override val message: String, override val cause: Throwable? = null): AppError
+    data class FolderNotEmptyError(val folderId: Long, override val message: String, override val cause: Throwable? = null): AppError
+    data class NetworkError(override val message: String, override val cause: Throwable? = null): AppError // Example
+    data class DatabaseError(override val message: String, override val cause: Throwable? = null): AppError // Example
 }
 
 @Immutable
