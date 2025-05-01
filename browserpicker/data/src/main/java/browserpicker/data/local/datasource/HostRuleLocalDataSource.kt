@@ -39,7 +39,38 @@ class HostRuleLocalDataSourceImpl @Inject constructor(
     }
 
     override suspend fun upsertHostRule(rule: HostRule): Long {
-        return hostRuleDao.upsertHostRule(HostRuleMapper.toEntity(rule))
+
+        // --- Start ---
+        var ruleToSave = rule
+
+        // Constraint 2 & 6: If uriStatus is NONE, folderId MUST be null.
+        // Constraint 5: If uriStatus is BLOCKED, preferredBrowserPackage MUST be null and isPreferenceEnabled MUST be false.
+        when (ruleToSave.uriStatus) {
+            UriStatus.NONE -> {
+                if (ruleToSave.folderId != null || ruleToSave.preferredBrowserPackage != null || ruleToSave.isPreferenceEnabled) {
+                    ruleToSave = ruleToSave.copy(folderId = null, preferredBrowserPackage = null, isPreferenceEnabled = false)
+                    println("Warning: HostRule with NONE status had folderId, preference, or enabled status set. Clearing them.")
+                }
+            }
+            UriStatus.BLOCKED -> {
+                if (ruleToSave.preferredBrowserPackage != null || ruleToSave.isPreferenceEnabled) {
+                    ruleToSave = ruleToSave.copy(preferredBrowserPackage = null, isPreferenceEnabled = false)
+                    println("Warning: HostRule with BLOCKED status had preference fields set. Clearing them.")
+                }
+                // Complex check: Ensure folderId (if not null) points to a BLOCK folder.
+                // This validation is primarily handled in the Repository layer.
+                // This DataSource assumes the Repository provided a valid folderId if one is set.
+            }
+            UriStatus.BOOKMARKED -> {
+                // Complex check: Ensure folderId (if not null) points to a BOOKMARK folder.
+                // This validation is primarily handled in the Repository layer.
+                // This DataSource assumes the Repository provided a valid folderId if one is set.
+            }
+            UriStatus.UNKNOWN -> throw IllegalArgumentException("Cannot upsert HostRule with UNKNOWN uriStatus.")   // Constraint 1
+        }
+        // --- End ---
+
+        return hostRuleDao.upsertHostRule(HostRuleMapper.toEntity(ruleToSave))
     }
 
     override fun getAllHostRules(): Flow<List<HostRule>> {

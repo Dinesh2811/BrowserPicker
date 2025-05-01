@@ -108,7 +108,7 @@ class UriHistoryRepositoryImpl @Inject constructor(
         chosenBrowser: String?,
         associatedHostRuleId: Long?,
     ): Result<Long> = runCatching {
-        uriParser.parseAndValidateWebUri(uriString).getOrThrow<ParsedUri?, UriValidationError>()
+        uriParser.parseAndValidateWebUri(uriString).getOrThrow()
         require(host.isNotBlank()) { "Host cannot be blank." }
         if (chosenBrowser != null) {
             require(chosenBrowser.isNotBlank()) { "Chosen browser package name cannot be blank if provided." }
@@ -139,14 +139,15 @@ class UriHistoryRepositoryImpl @Inject constructor(
         Timber.e(e, "[Repository] Failed to get URI record with id: %d", id)
     }.getOrNull()
 
-    override suspend fun deleteUriRecord(id: Long): Boolean {
-        return runCatching {
-            withContext(ioDispatcher) {
-                dataSource.deleteUriRecord(id)
+    override suspend fun deleteUriRecord(id: Long): Result<Unit> = runCatching {
+        withContext(ioDispatcher) {
+            val deleted = dataSource.deleteUriRecord(id)
+            if (!deleted) {
+                Timber.w("[Repository] URI record with id: $id not found or delete failed in data source.")
             }
-        }.onFailure { e ->
-            Timber.e(e, "[Repository] Failed to delete URI record with id: $id")
-        }.getOrDefault(false)
+        }
+    }.onFailure { e ->
+        Timber.e(e, "[Repository] Failed to delete URI record with id: $id")
     }
 
     override suspend fun deleteAllUriRecords(): Result<Int> = runCatching {
@@ -317,12 +318,6 @@ class HostRuleRepositoryImpl @Inject constructor(
         }.onFailure { e ->
             Timber.e(e, "[Repository] Failed transaction to save host rule: host='%s', status='%s', folderId='%s', preferredBrowser='%s'", host, status, folderId, preferredBrowser)
         }
-    }
-
-    private fun UriStatus.toFolderType(): FolderType? = when (this) {
-        UriStatus.BOOKMARKED -> FolderType.BOOKMARK
-        UriStatus.BLOCKED -> FolderType.BLOCK
-        else -> null
     }
 
     override suspend fun deleteHostRuleById(id: Long): Result<Unit> = runCatching {
@@ -555,8 +550,11 @@ class FolderRepositoryImpl @Inject constructor(
 
             val hasChildren = folderDataSource.hasChildFolders(folderId)
             if (hasChildren) {
+                // This repository method requires that child folders are handled (deleted or moved)
+                // by the caller (e.g., Use Case) *before* this method is invoked.
                 throw IllegalStateException("Cannot delete folder ID $folderId because it contains child folders. Delete or move children first.")
             }
+            // Clear association for any HostRules linked to this folder BEFORE deleting the folder.
             hostRuleDataSource.clearFolderIdForRules(folderId)
 
             val deleted = folderDataSource.deleteFolder(folderId)
@@ -579,7 +577,6 @@ class BrowserStatsRepositoryImpl @Inject constructor(
             dataSource.recordBrowserUsage(packageName)
         }
     }.onFailure { e -> Timber.e(e, "[Repository] Failed to record browser usage for: $packageName") }
-
 
     override fun getBrowserStat(packageName: String): Flow<BrowserUsageStat?> {
         return dataSource.getBrowserStat(packageName)
@@ -616,10 +613,10 @@ class BrowserStatsRepositoryImpl @Inject constructor(
         }
     }.onFailure { e -> Timber.e(e, "[Repository] Failed to delete browser stat for: $packageName") }
 
-
-    override suspend fun deleteAllStats(): Result<Int> = runCatching {
+    override suspend fun deleteAllStats(): Result<Unit> = runCatching {
         withContext(ioDispatcher) {
-            dataSource.deleteAllStats()
+            val count = dataSource.deleteAllStats()
+            Timber.d("[Repository] Deleted $count browser stats.")
         }
     }.onFailure { e -> Timber.e(e, "[Repository] Failed to delete all browser stats") }
 }

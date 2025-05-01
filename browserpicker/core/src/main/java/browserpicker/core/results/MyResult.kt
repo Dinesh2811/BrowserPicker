@@ -59,11 +59,12 @@ sealed interface MyResult<out T, out E : AppError> {
             is Error -> this
         }
     }
-    fun <T, E: AppError> exceptionOrNull(): Throwable? = (this as? Error)?.error?.cause
-    fun <T, E: AppError> throwOnFailure() = exceptionOrNull<T, AppError>()?: Exception("Unknown error")
-    fun <T, E: AppError> getOrThrow(): AppError {
-        this.throwOnFailure<T, AppError>()
-        return this as AppError
+    fun exceptionOrNull(): Throwable? = (this as? Error)?.error?.cause
+    fun getOrThrow(): T {
+        when (this) {
+            is Success -> return data
+            is Error -> throw error.cause?: RuntimeException("MyResult.Error without cause: ${error.message}")
+        }
     }
 }
 

@@ -26,7 +26,7 @@ interface UriHistoryRepository {
     ): Result<Long>
 
     suspend fun getUriRecord(id: Long): UriRecord?
-    suspend fun deleteUriRecord(id: Long): Boolean
+    suspend fun deleteUriRecord(id: Long): Result<Unit>
     suspend fun deleteAllUriRecords(): Result<Int>
 
     fun getDistinctHosts(): Flow<List<String>>

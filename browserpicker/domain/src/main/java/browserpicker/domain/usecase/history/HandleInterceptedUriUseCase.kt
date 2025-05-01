@@ -43,7 +43,7 @@ class HandleInterceptedUriUseCaseImpl @Inject constructor(
         val parsedUri = parseResult.getOrNull()
         if (parsedUri == null) {
             // Handle invalid/unsupported URI based on parse error
-            val error = parseResult.exceptionOrNull<ParsedUri?, UriValidationError>()?.toDomainError()?.let {
+            val error = parseResult.exceptionOrNull()?.toDomainError()?.let {
                 // Convert parse errors to user-friendly messages for InvalidUri result
                 when (it) {
                     is DomainError.Validation -> it.message

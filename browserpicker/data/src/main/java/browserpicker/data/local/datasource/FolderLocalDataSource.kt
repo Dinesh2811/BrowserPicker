@@ -66,10 +66,16 @@ class FolderLocalDataSourceImpl @Inject constructor(
             )
         }
 
-        // Explicitly check for uniqueness before inserting (adds a layer of validation)
         val existing = findFolderByNameAndParent(entity.name, entity.parentFolderId, FolderType.fromValue(entity.folderType))
         if (existing != null) {
-            throw IllegalArgumentException("Folder with name \'${entity.name}\' already exists in this parent folder and type.")
+            throw IllegalArgumentException("Folder with name '${entity.name}' already exists in this parent folder and type.")
+        }
+
+        entity.parentFolderId?.let {
+            val parentExists = folderDao.getFolderById(it).firstOrNull() != null
+            if (!parentExists) {
+                throw IllegalArgumentException("Parent folder with ID $it does not exist.")
+            }
         }
 
         return folderDao.upsertFolder(entity)
@@ -77,7 +83,16 @@ class FolderLocalDataSourceImpl @Inject constructor(
 
     override suspend fun updateFolder(folder: Folder): Boolean {
         val entity = FolderMapper.toEntity(folder).copy(updatedAt = instantProvider.now())
-        // Optionally add checks here: e.g., ensure parent folder exists and is of the correct type if moving.
+        if (!FolderType.isValidValue(entity.folderType)) {
+            throw IllegalArgumentException("Invalid folder type value: ${entity.folderType}")
+        }
+
+        entity.parentFolderId?.let {
+            val parentExists = folderDao.getFolderById(it).firstOrNull() != null
+            if (!parentExists) {
+                throw IllegalArgumentException("Parent folder with ID $it does not exist for update.")
+            }
+        }
         return folderDao.updateFolder(entity) > 0
     }
 
@@ -94,9 +109,7 @@ class FolderLocalDataSourceImpl @Inject constructor(
         return folderDao.deleteFolderById(folderId) > 0
     }
 
-    override suspend fun getFolderByIdSuspend(folderId: Long): Folder? = withContext(Dispatchers.IO) {
-        folderDao.getFolderById(folderId).firstOrNull()?.let { FolderMapper.toDomainModel(it) }
-    }
+    override suspend fun getFolderByIdSuspend(folderId: Long): Folder? = folderDao.getFolderById(folderId).firstOrNull()?.let { FolderMapper.toDomainModel(it) }
 
     override fun getFolder(folderId: Long): Flow<Folder?> {
         return folderDao.getFolderById(folderId).map { entity ->

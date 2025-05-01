@@ -31,7 +31,7 @@ class DeleteUriRecordUseCaseImpl @Inject constructor(
             val deleted = withContext(ioDispatcher) {
                 repository.deleteUriRecord(id)
             }
-            if (deleted) {
+            if (deleted.isSuccess) {
                 Timber.i("URI record deleted successfully: ID=$id")
                 onSuccess()
             } else {

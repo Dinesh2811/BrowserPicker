@@ -5,5 +5,6 @@ import kotlinx.datetime.Instant
 
 @Immutable
 data class GroupCount(val groupValue: String?, val count: Int)
+
 @Immutable
 data class DateCount(val date: Instant?, val count: Int)
