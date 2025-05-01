@@ -57,18 +57,21 @@ class FolderLocalDataSourceImpl @Inject constructor(
     }
 
     override suspend fun createFolder(folder: Folder): Long {
-        // Ensure createdAt/updatedAt are set if not already
+        val now = instantProvider.now()
         val entity = FolderMapper.toEntity(folder).let {
-            val now = instantProvider.now()
             it.copy(
-                createdAt = if (it.createdAt.epochSeconds == 0L) now else it.createdAt, // Avoid overwriting if pre-set
-                updatedAt = now // Always update 'updatedAt' on creation/modification
+                createdAt = if (it.createdAt.epochSeconds == 0L) now else it.createdAt,
+                updatedAt = now
             )
         }
-        // Consider adding uniqueness check here before inserting if strict guarantees needed beyond DB
-        // val existing = findFolderByNameAndParent(entity.name, entity.parentFolderId, entity.folderType)
-        // if (existing != null) throw SomeSpecificException("Folder already exists")
-        return folderDao.upsertFolder(entity) // Using upsert handles potential ID conflicts if user provides one
+
+        // Explicitly check for uniqueness before inserting (adds a layer of validation)
+        val existing = findFolderByNameAndParent(entity.name, entity.parentFolderId, FolderType.fromValue(entity.folderType))
+        if (existing != null) {
+            throw IllegalArgumentException("Folder with name \'${entity.name}\' already exists in this parent folder and type.")
+        }
+
+        return folderDao.upsertFolder(entity)
     }
 
     override suspend fun updateFolder(folder: Folder): Boolean {
