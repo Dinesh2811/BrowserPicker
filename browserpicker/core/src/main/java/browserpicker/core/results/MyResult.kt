@@ -37,8 +37,21 @@ sealed interface MyResult<out T, out E : AppError> {
 //    }
 
 
-    fun isSuccess(): Boolean = this is Success
-    fun isError(): Boolean = this is Error
+    suspend fun fold(
+        onSuccess: suspend (value: T) -> Any,
+        onFailure: suspend (exception: Throwable) -> Any
+    ): T {
+        return when (val exception = exceptionOrNull()) {
+            null -> onSuccess(this as T)
+            else -> onFailure(exception)
+        } as T
+    }
+    fun onFailure(action: (exception: Throwable) -> Unit): Result<T> {
+        exceptionOrNull()?.let { action(it) }
+        return this as Result<T>
+    }
+    val isSuccess: Boolean get() = this is Success
+    val isError: Boolean get() = this is Error
     fun getOrNull(): T? = (this as? Success)?.data
     fun errorOrNull(): E? = (this as? Error)?.error
     fun onSuccess(action: (T) -> Unit): MyResult<T, E> {

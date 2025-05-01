@@ -122,7 +122,7 @@ class UriHistoryRepositoryImpl @Inject constructor(
                 if (chosenBrowser.isBlank()) throw IllegalArgumentException("Chosen browser package name cannot be blank if provided.")
             }
             val parsedUriResult = uriParser.parseAndValidateWebUri(uriString)
-            if (parsedUriResult.isError()) {
+            if (parsedUriResult.isError) {
                 return@withContext MyResult.Error(parsedUriResult.errorOrNull()!!)
             }
 
