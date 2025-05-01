@@ -12,16 +12,16 @@ import javax.inject.Singleton
 interface BrowserStatsLocalDataSource {
     suspend fun recordBrowserUsage(packageName: String)
     fun getBrowserStat(packageName: String): Flow<BrowserUsageStat?>
-    fun getAllBrowserStats(): Flow<List<BrowserUsageStat>> // Default: sorted by count
+    fun getAllBrowserStats(): Flow<List<BrowserUsageStat>>
     fun getAllBrowserStatsSortedByLastUsed(): Flow<List<BrowserUsageStat>>
     suspend fun deleteBrowserStat(packageName: String): Boolean
-    suspend fun deleteAllStats()
+    suspend fun deleteAllStats(): Int
 }
 
 @Singleton
 class BrowserStatsLocalDataSourceImpl @Inject constructor(
     private val browserUsageStatDao: BrowserUsageStatDao,
-    private val instantProvider: InstantProvider, // Inject InstantProvider
+    private val instantProvider: InstantProvider,
 ): BrowserStatsLocalDataSource {
 
     override suspend fun recordBrowserUsage(packageName: String) {
@@ -47,7 +47,7 @@ class BrowserStatsLocalDataSourceImpl @Inject constructor(
         return browserUsageStatDao.deleteBrowserUsageStat(packageName) > 0
     }
 
-    override suspend fun deleteAllStats() {
-        browserUsageStatDao.deleteAllStats()
+    override suspend fun deleteAllStats(): Int {
+        return browserUsageStatDao.deleteAllStats()
     }
 }

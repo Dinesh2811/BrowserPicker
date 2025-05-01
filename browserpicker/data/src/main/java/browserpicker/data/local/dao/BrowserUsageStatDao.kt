@@ -45,5 +45,5 @@ interface BrowserUsageStatDao {
     suspend fun deleteBrowserUsageStat(packageName: String): Int
 
     @Query("DELETE FROM browser_usage_stats")
-    suspend fun deleteAllStats()
+    suspend fun deleteAllStats(): Int
 }

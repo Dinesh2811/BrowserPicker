@@ -53,7 +53,7 @@ class UriHistoryRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getTotalUriRecordCount(query: UriHistoryQuery): Flow<Int> {
+    override fun getTotalUriRecordCount(query: UriHistoryQuery): Flow<Long> {
         return try {
             val dataQueryConfig = mapQueryToConfig(query)
             dataSource.getTotalUriRecordCount(dataQueryConfig)
@@ -64,7 +64,7 @@ class UriHistoryRepositoryImpl @Inject constructor(
                 .flowOn(ioDispatcher)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to create TotalUriRecordCount Flow for query: %s", query)
-            flowOf(0).flowOn(ioDispatcher)
+            flowOf(0L).flowOn(ioDispatcher)
         }
     }
 
@@ -147,7 +147,7 @@ class UriHistoryRepositoryImpl @Inject constructor(
         }.getOrDefault(false)
     }
 
-    override suspend fun deleteAllUriRecords(): Result<Unit> = runCatching {
+    override suspend fun deleteAllUriRecords(): Result<Int> = runCatching {
         withContext(ioDispatcher) {
             dataSource.deleteAllUriRecords()
         }
@@ -615,7 +615,7 @@ class BrowserStatsRepositoryImpl @Inject constructor(
     }.onFailure { e -> Timber.e(e, "[Repository] Failed to delete browser stat for: $packageName") }
 
 
-    override suspend fun deleteAllStats(): Result<Unit> = runCatching {
+    override suspend fun deleteAllStats(): Result<Int> = runCatching {
         withContext(ioDispatcher) {
             dataSource.deleteAllStats()
         }

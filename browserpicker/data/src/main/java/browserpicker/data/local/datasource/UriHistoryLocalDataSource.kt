@@ -19,14 +19,14 @@ import javax.inject.Singleton
 
 interface UriHistoryLocalDataSource {
     fun getPagedUriRecords(config: UriRecordQueryConfig, pagingConfig: PagingConfig): Flow<PagingData<UriRecord>>
-    fun getTotalUriRecordCount(config: UriRecordQueryConfig): Flow<Int>
+    fun getTotalUriRecordCount(config: UriRecordQueryConfig): Flow<Long>
     fun getGroupCounts(config: UriRecordQueryConfig): Flow<List<GroupCount>>
     fun getDateCounts(config: UriRecordQueryConfig): Flow<List<DateCount>>
     suspend fun insertUriRecord(record: UriRecord): Long
     suspend fun insertUriRecords(records: List<UriRecord>)
     suspend fun getUriRecord(id: Long): UriRecord?
     suspend fun deleteUriRecord(id: Long): Boolean
-    suspend fun deleteAllUriRecords()
+    suspend fun deleteAllUriRecords(): Int
     fun getDistinctHosts(): Flow<List<String>>
     fun getDistinctChosenBrowsers(): Flow<List<String?>>
 }
@@ -52,7 +52,7 @@ class UriHistoryLocalDataSourceImpl @Inject constructor(
             }
     }
 
-    override fun getTotalUriRecordCount(config: UriRecordQueryConfig): Flow<Int> {
+    override fun getTotalUriRecordCount(config: UriRecordQueryConfig): Flow<Long> {
         val query = queryBuilder.buildTotalCountQuery(config)
         return uriRecordDao.getTotalUriRecordCount(query)
     }
@@ -83,8 +83,8 @@ class UriHistoryLocalDataSourceImpl @Inject constructor(
         return uriRecordDao.deleteUriRecordById(id) > 0
     }
 
-    override suspend fun deleteAllUriRecords() {
-        uriRecordDao.deleteAllUriRecords()
+    override suspend fun deleteAllUriRecords(): Int {
+        return uriRecordDao.deleteAllUriRecords()
     }
 
     override fun getDistinctHosts(): Flow<List<String>> {

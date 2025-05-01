@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @Keep
 data class HistoryOverview(
-    val totalCount: Int,
+    val totalCount: Long,
     val groupCounts: List<DomainGroupCount>,
     val dateCounts: List<DomainDateCount>,
 )

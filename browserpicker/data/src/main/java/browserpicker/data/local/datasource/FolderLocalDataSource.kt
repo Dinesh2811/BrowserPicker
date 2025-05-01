@@ -72,7 +72,6 @@ class FolderLocalDataSourceImpl @Inject constructor(
     }
 
     override suspend fun updateFolder(folder: Folder): Boolean {
-        // Ensure updatedAt is set
         val entity = FolderMapper.toEntity(folder).copy(updatedAt = instantProvider.now())
         // Optionally add checks here: e.g., ensure parent folder exists and is of the correct type if moving.
         return folderDao.updateFolder(entity) > 0

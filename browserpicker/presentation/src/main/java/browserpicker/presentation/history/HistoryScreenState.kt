@@ -26,7 +26,7 @@ data class HistoryScreenState(
 @Immutable
 data class HistoryOverviewState(
     val loadingStatus: LoadingStatus = LoadingStatus.IDLE,
-    val totalCount: Int = 0,
+    val totalCount: Long = 0L,
     val groupCounts: List<DomainGroupCount> = emptyList(),
     val dateCounts: List<DomainDateCount> = emptyList(),
     // Add calculated insights here later if needed

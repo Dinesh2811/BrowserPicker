@@ -9,5 +9,5 @@ interface BrowserStatsRepository {
     fun getAllBrowserStats(): Flow<List<BrowserUsageStat>> // Default: sorted by count
     fun getAllBrowserStatsSortedByLastUsed(): Flow<List<BrowserUsageStat>>
     suspend fun deleteBrowserStat(packageName: String): Result<Unit>
-    suspend fun deleteAllStats(): Result<Unit>
+    suspend fun deleteAllStats(): Result<Int>
 }

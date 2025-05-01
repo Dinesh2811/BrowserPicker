@@ -30,7 +30,7 @@ interface UriRecordDao {
 
     // For Total Count
     @RawQuery(observedEntities = [UriRecordEntity::class])
-    fun getTotalUriRecordCount(query: SupportSQLiteQuery): Flow<Int>
+    fun getTotalUriRecordCount(query: SupportSQLiteQuery): Flow<Long>
 
     // For Grouping Counts (Generic)
     @RawQuery(observedEntities = [UriRecordEntity::class])
@@ -55,8 +55,8 @@ interface UriRecordDao {
     fun getDistinctChosenBrowsers(): Flow<List<String?>>
 
     @Query("DELETE FROM uri_records")
-    suspend fun deleteAllUriRecords()
+    suspend fun deleteAllUriRecords(): Int
 
     @Query("SELECT COUNT(*) FROM uri_records")
-    suspend fun count(): Int
+    suspend fun count(): Long
 }

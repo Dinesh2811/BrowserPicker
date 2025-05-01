@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface UriHistoryRepository {
     fun getPagedUriRecords(query: UriHistoryQuery, pagingConfig: PagingConfig): Flow<PagingData<UriRecord>>
-    fun getTotalUriRecordCount(query: UriHistoryQuery): Flow<Int>
+    fun getTotalUriRecordCount(query: UriHistoryQuery): Flow<Long>
     fun getGroupCounts(query: UriHistoryQuery): Flow<List<DomainGroupCount>>
     fun getDateCounts(query: UriHistoryQuery): Flow<List<DomainDateCount>>
 
@@ -27,7 +27,7 @@ interface UriHistoryRepository {
 
     suspend fun getUriRecord(id: Long): UriRecord?
     suspend fun deleteUriRecord(id: Long): Boolean
-    suspend fun deleteAllUriRecords(): Result<Unit>
+    suspend fun deleteAllUriRecords(): Result<Int>
 
     fun getDistinctHosts(): Flow<List<String>>
     fun getDistinctChosenBrowsers(): Flow<List<String?>>

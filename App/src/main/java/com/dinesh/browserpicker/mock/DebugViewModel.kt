@@ -35,7 +35,7 @@ class DebugViewModel @Inject constructor(
                 .distinctUntilChanged()
                 .collect { count ->
                     Timber.d("Database URI record count changed: $count")
-                    _isDatabaseEmpty.value = count == 0
+                    _isDatabaseEmpty.value = count == 0L
                 }
         }
     }
