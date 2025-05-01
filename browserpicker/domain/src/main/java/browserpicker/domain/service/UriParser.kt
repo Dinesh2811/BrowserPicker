@@ -3,13 +3,17 @@ package browserpicker.domain.service
 import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import androidx.core.net.toUri
+import browserpicker.core.results.MyResult
+import browserpicker.core.results.UriValidationError
 import kotlinx.serialization.Serializable
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 import browserpicker.domain.model.UriRecord
 
-@Immutable @Serializable @Keep
+@Immutable
+@Serializable
+@Keep
 data class ParsedUri(
     val originalString: String,
     val scheme: String,
@@ -21,7 +25,7 @@ data class ParsedUri(
 )
 
 interface UriParser {
-    fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String> = DEFAULT_SUPPORTED_SCHEMES): Result<ParsedUri?>
+    fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String> = DEFAULT_SUPPORTED_SCHEMES): MyResult<ParsedUri?, UriValidationError>
 
     companion object {
         val DEFAULT_SUPPORTED_SCHEMES: Set<String> = setOf("http", "https")
@@ -29,34 +33,39 @@ interface UriParser {
 }
 
 @Singleton
-class AndroidUriParser @Inject constructor() : UriParser {
-    override fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String>): Result<ParsedUri?> {
+class AndroidUriParser @Inject constructor(): UriParser {
+    override fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String>): MyResult<ParsedUri?, UriValidationError> {
         require(supportedSchemes.isNotEmpty()) { "At least one supported scheme must be provided." }
-        if (uriString.isBlank()) return Result.success(null)
+
+        if (uriString.isBlank()) {
+            return MyResult.Error(UriValidationError.BlankOrEmpty(message = "URI string cannot be blank or empty."))
+        }
 
         return try {
             val uri = uriString.toUri()
             val scheme = uri.scheme
             val host = uri.host
             when {
-                host.isNullOrEmpty() -> Result.failure(IllegalArgumentException("Host cannot be missing or blank in URI: $uriString"))
-                !uri.isAbsolute -> Result.failure(IllegalArgumentException("URI must be absolute: $uriString"))
-                scheme == null || scheme !in supportedSchemes -> Result.failure(IllegalArgumentException("Invalid or unsupported scheme '$scheme' in URI: $uriString. Only $supportedSchemes are supported."))
-                else -> Result.success(
-                    ParsedUri(
-                        originalString = uriString,
-                        scheme = scheme,
-                        host = host,
-                        path = uri.path,
-                        query = uri.query,
-                        fragment = uri.fragment,
-                        port = uri.port
+                host.isNullOrEmpty() -> MyResult.Error(UriValidationError.Invalid(message = "Host cannot be missing or blank in URI: $uriString"))
+                !uri.isAbsolute -> MyResult.Error(UriValidationError.Invalid(message = "URI must be absolute: $uriString"))
+                scheme == null || scheme !in supportedSchemes -> MyResult.Error(UriValidationError.Invalid(message = "Invalid or unsupported scheme '$scheme' in URI: $uriString. Only $supportedSchemes are supported."))
+                else -> {
+                    MyResult.Success(
+                        data = ParsedUri(
+                            originalString = uriString,
+                            scheme = scheme,
+                            host = host,
+                            path = uri.path,
+                            query = uri.query,
+                            fragment = uri.fragment,
+                            port = uri.port
+                        ),
+                        message = "Successfully parsed valid URI: $uriString"
                     )
-                )
+                }
             }
         } catch (e: Exception) {
-            Timber.e(e, "Failed to parse URI: $uriString")
-            Result.failure(e)
+            MyResult.Error(UriValidationError.Invalid("Failed to parse URI: $uriString", e))
         }
     }
 }

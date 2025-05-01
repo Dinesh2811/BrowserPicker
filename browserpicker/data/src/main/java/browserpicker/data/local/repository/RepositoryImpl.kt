@@ -4,6 +4,7 @@ import androidx.paging.*
 import androidx.room.*
 import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
+import browserpicker.core.results.UriValidationError
 import kotlinx.coroutines.flow.*
 import timber.log.Timber
 import browserpicker.data.local.datasource.*
@@ -12,6 +13,7 @@ import browserpicker.data.local.query.model.*
 import browserpicker.domain.model.*
 import browserpicker.domain.model.query.*
 import browserpicker.domain.repository.*
+import browserpicker.domain.service.ParsedUri
 import browserpicker.domain.service.UriParser
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -106,7 +108,7 @@ class UriHistoryRepositoryImpl @Inject constructor(
         chosenBrowser: String?,
         associatedHostRuleId: Long?,
     ): Result<Long> = runCatching {
-        uriParser.parseAndValidateWebUri(uriString).getOrThrow()
+        uriParser.parseAndValidateWebUri(uriString).getOrThrow<ParsedUri?, UriValidationError>()
         require(host.isNotBlank()) { "Host cannot be blank." }
         if (chosenBrowser != null) {
             require(chosenBrowser.isNotBlank()) { "Chosen browser package name cannot be blank if provided." }

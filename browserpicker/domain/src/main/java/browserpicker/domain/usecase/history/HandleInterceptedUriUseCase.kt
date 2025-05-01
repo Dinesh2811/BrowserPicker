@@ -2,6 +2,8 @@ package browserpicker.domain.usecase.history
 
 import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
+import browserpicker.core.results.MyResult
+import browserpicker.core.results.UriValidationError
 import browserpicker.domain.model.InteractionAction
 import browserpicker.domain.model.UriSource
 import browserpicker.domain.model.UriStatus
@@ -9,6 +11,7 @@ import browserpicker.domain.model.query.HandleUriResult
 import browserpicker.domain.repository.HostRuleRepository
 import browserpicker.domain.repository.UriHistoryRepository
 import browserpicker.domain.service.DomainError
+import browserpicker.domain.service.ParsedUri
 import browserpicker.domain.service.UriParser
 import browserpicker.domain.service.toDomainError
 import kotlinx.coroutines.CoroutineDispatcher
@@ -35,12 +38,12 @@ class HandleInterceptedUriUseCaseImpl @Inject constructor(
         }
 
         // Use the injected UriParser to validate and get the parsed model
-        val parseResult = uriParser.parseAndValidateWebUri(uriString)
+        val parseResult: MyResult<ParsedUri?, UriValidationError> = uriParser.parseAndValidateWebUri(uriString)
 
         val parsedUri = parseResult.getOrNull()
         if (parsedUri == null) {
             // Handle invalid/unsupported URI based on parse error
-            val error = parseResult.exceptionOrNull()?.toDomainError()?.let {
+            val error = parseResult.exceptionOrNull<ParsedUri?, UriValidationError>()?.toDomainError()?.let {
                 // Convert parse errors to user-friendly messages for InvalidUri result
                 when (it) {
                     is DomainError.Validation -> it.message

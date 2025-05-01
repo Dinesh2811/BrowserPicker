@@ -5,6 +5,15 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 
+//fun <T, E: AppError>  MyResult<T, AppError>.throwOnFailure() {
+////    if (this is MyResult.Error) throw this.error.cause!!
+//    if (this is MyResult.Error) throw this.error.cause!!
+//}
+//fun <T, E: AppError> MyResult<T, AppError>.getOrThrow(): AppError {
+//    this.throwOnFailure<T, AppError>()
+//    return this as AppError
+//}
+
 sealed interface MyResult<out T, out E : AppError> {
     data class Success<out T>(val data: T, val message: String? = null) : MyResult<T, Nothing> {
         init {
@@ -17,6 +26,16 @@ sealed interface MyResult<out T, out E : AppError> {
             Timber.e(error.cause, "MyResult.Error: ${error.message}")
         }
     }
+
+
+//    fun <T, E: AppError> exceptionOrNull(): Throwable? = (this as? Error)?.error?.cause
+//    fun <T, E: AppError> exceptionOrNull(): Throwable? {
+//        return when {
+//            this is Throwable -> this.cause
+//            else -> null
+//        }
+//    }
+
 
     fun isSuccess(): Boolean = this is Success
     fun isError(): Boolean = this is Error
@@ -39,6 +58,12 @@ sealed interface MyResult<out T, out E : AppError> {
             is Success -> Success(transform(data))
             is Error -> this
         }
+    }
+    fun <T, E: AppError> exceptionOrNull(): Throwable? = (this as? Error)?.error?.cause
+    fun <T, E: AppError> throwOnFailure() = exceptionOrNull<T, AppError>()?: Exception("Unknown error")
+    fun <T, E: AppError> getOrThrow(): AppError {
+        this.throwOnFailure<T, AppError>()
+        return this as AppError
     }
 }
 
