@@ -12,34 +12,34 @@ import kotlinx.coroutines.flow.map
  * @param F The type of the failure error. (We'll use a sealed Failure class for F)
  */
 sealed class DomainResult<out S, out F> {
-    data class Success<out S>(val data: S) : DomainResult<S, Nothing>()
-    data class Failure<out F>(val error: F) : DomainResult<Nothing, F>()
+    data class Success<out S>(val data: S): DomainResult<S, Nothing>()
+    data class Failure<out F>(val error: F): DomainResult<Nothing, F>()
 
-    /**
-     * Returns the success data if the result is [Success], otherwise returns null.
-     */
     fun getOrNull(): S? = when (this) {
         is Success -> data
         is Failure -> null
     }
 
-    /**
-     * Returns the failure error if the result is [Failure], otherwise returns null.
-     */
     fun errorOrNull(): F? = when (this) {
         is Success -> null
         is Failure -> error
     }
 
-    /**
-     * Returns true if the result is [Success].
-     */
     val isSuccess: Boolean get() = this is Success<S>
-
-    /**
-     * Returns true if the result is [Failure].
-     */
     val isFailure: Boolean get() = this is Failure<F>
+    inline fun onSuccess(action: (S) -> Unit): DomainResult<S, F> {
+        if (this is Success) {
+            action(data)
+        }
+        return this
+    }
+
+    inline fun onFailure(action: (F) -> Unit): DomainResult<S, F> {
+        if (this is Failure) {
+            action(error)
+        }
+        return this
+    }
 
     /**
      * Transforms the success data using the provided [transform] function.
@@ -64,25 +64,6 @@ sealed class DomainResult<out S, out F> {
         }
     }
 
-    /**
-     * Performs an action on the success data if the result is [Success].
-     */
-    inline fun onSuccess(action: (S) -> Unit): DomainResult<S, F> {
-        if (this is Success) {
-            action(data)
-        }
-        return this
-    }
-
-    /**
-     * Performs an action on the failure error if the result is [Failure].
-     */
-    inline fun onFailure(action: (F) -> Unit): DomainResult<S, F> {
-        if (this is Failure) {
-            action(error)
-        }
-        return this
-    }
 
     /**
      * Handles both success and failure cases by applying the appropriate function.
@@ -90,7 +71,7 @@ sealed class DomainResult<out S, out F> {
      */
     inline fun <R> fold(
         onSuccess: (S) -> R,
-        onFailure: (F) -> R
+        onFailure: (F) -> R,
     ): R {
         return when (this) {
             is Success -> onSuccess(data)
@@ -104,14 +85,14 @@ sealed class DomainResult<out S, out F> {
  * This provides a structured and extensible way to categorize errors.
  */
 sealed class Failure {
-    data class ValidationError(val errors: List<ValidationErrorDetail>) : Failure()
-    data class ServerError(val message: String, val code: Int? = null) : Failure()
-    data class NetworkError(val message: String) : Failure()
-    data class NotFound(val message: String? = null) : Failure()
-    data class Unauthorized(val message: String? = null) : Failure()
-    data class BusinessRuleError(val message: String) : Failure() // For generic business logic failures
-    data class DataMappingError(val message: String) : Failure() // For errors during DTO/Entity to Domain mapping
-    data class Unknown(val throwable: Throwable? = null) : Failure() // For unexpected exceptions
+    data class ValidationError(val errors: List<ValidationErrorDetail>): Failure()
+    data class ServerError(val message: String, val code: Int? = null): Failure()
+    data class NetworkError(val message: String): Failure()
+    data class NotFound(val message: String? = null): Failure()
+    data class Unauthorized(val message: String? = null): Failure()
+    data class BusinessRuleError(val message: String): Failure() // For generic business logic failures
+    data class DataMappingError(val message: String): Failure() // For errors during DTO/Entity to Domain mapping
+    data class Unknown(val throwable: Throwable? = null): Failure() // For unexpected exceptions
 
     // Add more specific failure types as your application grows
     // Example: data class InsufficientPermissions(val permission: String) : Failure()
@@ -123,7 +104,7 @@ sealed class Failure {
  */
 data class ValidationErrorDetail(
     val field: String?, // Optional: field that failed validation
-    val message: String
+    val message: String,
 )
 
 // --- Extension Functions for Flow<DomainResult<S, Failure>> ---
@@ -134,7 +115,7 @@ data class ValidationErrorDetail(
  * while preserving failures.
  */
 inline fun <S, F> Flow<DomainResult<List<S>, F>>.filterSuccessList(
-    crossinline predicate: (S) -> Boolean
+    crossinline predicate: (S) -> Boolean,
 ): Flow<DomainResult<List<S>, F>> {
     return this.map { result ->
         result.mapSuccess { list ->
@@ -147,7 +128,7 @@ inline fun <S, F> Flow<DomainResult<List<S>, F>>.filterSuccessList(
  * Performs an action on the success data of each emitted [DomainResult] in the Flow.
  */
 inline fun <S, F> Flow<DomainResult<S, F>>.onEachSuccess(
-    crossinline action: suspend (S) -> Unit
+    crossinline action: suspend (S) -> Unit,
 ): Flow<DomainResult<S, F>> {
     return this.map { result ->
         result.onSuccess { data -> action(data) }
@@ -159,7 +140,7 @@ inline fun <S, F> Flow<DomainResult<S, F>>.onEachSuccess(
  * Performs an action on the failure error of each emitted [DomainResult] in the Flow.
  */
 inline fun <S, F> Flow<DomainResult<S, F>>.onEachFailure(
-    crossinline action: suspend (F) -> Unit
+    crossinline action: suspend (F) -> Unit,
 ): Flow<DomainResult<S, F>> {
     return this.map { result ->
         result.onFailure { error -> action(error) }

@@ -84,14 +84,14 @@ sealed interface MyResult<out T, out E : AppError> {
 
  */
 
-sealed interface MyResult<out T, out E : AppError> {
-    data class Success<out T>(val data: T, val message: String? = null) : MyResult<T, Nothing>
-    data class Error<out E : AppError>(val error: E) : MyResult<Nothing, E>
+sealed interface MyResult<out T, out E: AppError> {
+    data class Success<out T>(val data: T, val message: String? = null): MyResult<T, Nothing>
+    data class Error<out E: AppError>(val error: E): MyResult<Nothing, E>
 
     suspend fun fold(
         onSuccess: suspend (value: T) -> Any,
-        onFailure: suspend (exception: Throwable) -> Any
-    ): T{
+        onFailure: suspend (exception: Throwable) -> Any,
+    ): T {
         return when (val exception = exceptionOrNull()) {
             null -> onSuccess(this as T)
             else -> onFailure(exception)
@@ -102,6 +102,7 @@ sealed interface MyResult<out T, out E : AppError> {
         exceptionOrNull()?.let { action(it) }
         return this
     }
+
     val isSuccess: Boolean get() = this is Success
     val isError: Boolean get() = this is Error
     fun getOrNull(): T? = (this as? Success)?.data
@@ -112,18 +113,21 @@ sealed interface MyResult<out T, out E : AppError> {
         }
         return this
     }
+
     fun onError(action: (E) -> Unit): MyResult<T, E> {
         if (this is Error) {
             action(error)
         }
         return this
     }
+
     fun <R> map(transform: (T) -> R): MyResult<R, E> {
         return when (this) {
             is Success -> Success(transform(data))
             is Error -> this
         }
     }
+
     fun exceptionOrNull(): Throwable? = (this as? Error)?.error?.cause
     fun getOrThrow(): T {
         return when (this) {
@@ -144,7 +148,7 @@ fun <T> Flow<T>.asResult(
         }
 }
 
-fun <T, E : AppError> Flow<MyResult<T, E>>.safeCatch(
+fun <T, E: AppError> Flow<MyResult<T, E>>.safeCatch(
     errorMapper: (Throwable) -> E,
 ): Flow<MyResult<T, E>> {
     return this.catch { throwable ->
