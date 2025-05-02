@@ -14,6 +14,7 @@ import timber.log.Timber
 //    return this as AppError
 //}
 
+/*
 sealed interface MyResult<out T, out E : AppError> {
     data class Success<out T>(val data: T, val message: String? = null) : MyResult<T, Nothing> {
         init {
@@ -77,6 +78,57 @@ sealed interface MyResult<out T, out E : AppError> {
         when (this) {
             is Success -> return data
             is Error -> throw error.cause?: RuntimeException("MyResult.Error without cause: ${error.message}")
+        }
+    }
+}
+
+ */
+
+sealed interface MyResult<out T, out E : AppError> {
+    data class Success<out T>(val data: T, val message: String? = null) : MyResult<T, Nothing>
+    data class Error<out E : AppError>(val error: E) : MyResult<Nothing, E>
+
+    suspend fun fold(
+        onSuccess: suspend (value: T) -> Any,
+        onFailure: suspend (exception: Throwable) -> Any
+    ): T{
+        return when (val exception = exceptionOrNull()) {
+            null -> onSuccess(this as T)
+            else -> onFailure(exception)
+        } as T
+    }
+
+    fun onFailure(action: (exception: Throwable) -> Unit): MyResult<T, E> {
+        exceptionOrNull()?.let { action(it) }
+        return this
+    }
+    val isSuccess: Boolean get() = this is Success
+    val isError: Boolean get() = this is Error
+    fun getOrNull(): T? = (this as? Success)?.data
+    fun errorOrNull(): E? = (this as? Error)?.error
+    fun onSuccess(action: (T) -> Unit): MyResult<T, E> {
+        if (this is Success) {
+            action(data)
+        }
+        return this
+    }
+    fun onError(action: (E) -> Unit): MyResult<T, E> {
+        if (this is Error) {
+            action(error)
+        }
+        return this
+    }
+    fun <R> map(transform: (T) -> R): MyResult<R, E> {
+        return when (this) {
+            is Success -> Success(transform(data))
+            is Error -> this
+        }
+    }
+    fun exceptionOrNull(): Throwable? = (this as? Error)?.error?.cause
+    fun getOrThrow(): T {
+        return when (this) {
+            is Success -> data
+            is Error -> throw error.cause ?: RuntimeException("MyResult.Error without cause: ${error.message}")
         }
     }
 }
