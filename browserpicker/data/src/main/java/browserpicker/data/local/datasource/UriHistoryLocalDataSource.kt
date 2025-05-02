@@ -21,7 +21,7 @@ interface UriHistoryLocalDataSource {
     suspend fun insertUriRecord(record: UriRecordEntity): Long
     suspend fun insertUriRecords(records: List<UriRecordEntity>)
     suspend fun getUriRecord(id: Long): UriRecordEntity?
-    suspend fun deleteUriRecord(id: Long): Boolean
+    suspend fun deleteUriRecord(id: Long): Int
     suspend fun deleteAllUriRecords(): Int
     fun getDistinctHosts(): Flow<List<String>>
     fun getDistinctChosenBrowsers(): Flow<List<String?>>
@@ -70,8 +70,8 @@ class UriHistoryLocalDataSourceImpl @Inject constructor(
         return uriRecordDao.getUriRecordById(id)
     }
 
-    override suspend fun deleteUriRecord(id: Long): Boolean {
-        return uriRecordDao.deleteUriRecordById(id) > 0
+    override suspend fun deleteUriRecord(id: Long): Int {
+        return uriRecordDao.deleteUriRecordById(id)
     }
 
     override suspend fun deleteAllUriRecords(): Int {

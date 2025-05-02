@@ -73,4 +73,9 @@ class AndroidUriParser @Inject constructor(): UriParser {
             MyResult.Error(UriValidationError.Invalid("Failed to parse URI: $uriString", e))
         }
     }
+
+    private fun isValidHostFormat(host: String): Boolean {
+        val hostRegex = Regex("^[a-zA-Z0-9.-]+$" )
+        return host.isNotBlank() && hostRegex.matches(host)
+    }
 }

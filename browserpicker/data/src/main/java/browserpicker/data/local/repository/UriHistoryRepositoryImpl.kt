@@ -187,7 +187,7 @@ class UriHistoryRepositoryImpl @Inject constructor(
     override suspend fun deleteUriRecord(id: Long): MyResult<Unit, AppError> = withContext(ioDispatcher) {
         try {
             val deleted = dataSource.deleteUriRecord(id)
-            if (deleted) {
+            if (deleted > 0) {
                 MyResult.Success(Unit)
             } else {
                 Timber.w("[Repository] URI record with id: $id not found for deletion or delete failed in data source. Reporting as success (item not present).")
