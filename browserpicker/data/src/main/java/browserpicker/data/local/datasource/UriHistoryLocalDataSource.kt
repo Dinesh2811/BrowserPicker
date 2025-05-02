@@ -3,27 +3,24 @@ package browserpicker.data.local.datasource
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import androidx.paging.map
 import browserpicker.data.local.dao.UriRecordDao
 import browserpicker.data.local.entity.UriRecordEntity
-import browserpicker.data.local.mapper.UriRecordMapper
 import browserpicker.data.local.query.UriRecordQueryBuilder
 import browserpicker.data.local.query.model.UriRecordQueryConfig
-import browserpicker.domain.model.*
-import browserpicker.domain.model.UriRecord
+import browserpicker.domain.model.DateCount
+import browserpicker.domain.model.GroupCount
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
 interface UriHistoryLocalDataSource {
-    fun getPagedUriRecords(config: UriRecordQueryConfig, pagingConfig: PagingConfig): Flow<PagingData<UriRecord>>
+    fun getPagedUriRecords(config: UriRecordQueryConfig, pagingConfig: PagingConfig): Flow<PagingData<UriRecordEntity>>
     fun getTotalUriRecordCount(config: UriRecordQueryConfig): Flow<Long>
     fun getGroupCounts(config: UriRecordQueryConfig): Flow<List<GroupCount>>
     fun getDateCounts(config: UriRecordQueryConfig): Flow<List<DateCount>>
-    suspend fun insertUriRecord(record: UriRecord): Long
-    suspend fun insertUriRecords(records: List<UriRecord>)
-    suspend fun getUriRecord(id: Long): UriRecord?
+    suspend fun insertUriRecord(record: UriRecordEntity): Long
+    suspend fun insertUriRecords(records: List<UriRecordEntity>)
+    suspend fun getUriRecord(id: Long): UriRecordEntity?
     suspend fun deleteUriRecord(id: Long): Boolean
     suspend fun deleteAllUriRecords(): Int
     fun getDistinctHosts(): Flow<List<String>>
@@ -36,7 +33,7 @@ class UriHistoryLocalDataSourceImpl @Inject constructor(
     private val queryBuilder: UriRecordQueryBuilder,
 ): UriHistoryLocalDataSource {
 
-    override fun getPagedUriRecords(config: UriRecordQueryConfig, pagingConfig: PagingConfig): Flow<PagingData<UriRecord>> {
+    override fun getPagedUriRecords(config: UriRecordQueryConfig, pagingConfig: PagingConfig): Flow<PagingData<UriRecordEntity>> {
         return Pager(
             config = pagingConfig,
             pagingSourceFactory = {
@@ -44,11 +41,6 @@ class UriHistoryLocalDataSourceImpl @Inject constructor(
                 uriRecordDao.getPagedUriRecords(query)
             }
         ).flow
-            .map { pagingDataEntity: PagingData<UriRecordEntity> ->
-                pagingDataEntity.map { entity ->
-                    UriRecordMapper.toDomainModel(entity)
-                }
-            }
     }
 
     override fun getTotalUriRecordCount(config: UriRecordQueryConfig): Flow<Long> {
@@ -66,16 +58,16 @@ class UriHistoryLocalDataSourceImpl @Inject constructor(
         return uriRecordDao.getDateCounts(query)
     }
 
-    override suspend fun insertUriRecord(record: UriRecord): Long {
-        return uriRecordDao.insertUriRecord(UriRecordMapper.toEntity(record))
+    override suspend fun insertUriRecord(record: UriRecordEntity): Long {
+        return uriRecordDao.insertUriRecord(record)
     }
 
-    override suspend fun insertUriRecords(records: List<UriRecord>) {
-        uriRecordDao.insertUriRecords(records.map { UriRecordMapper.toEntity(it) })
+    override suspend fun insertUriRecords(records: List<UriRecordEntity>) {
+        uriRecordDao.insertUriRecords(records)
     }
 
-    override suspend fun getUriRecord(id: Long): UriRecord? {
-        return uriRecordDao.getUriRecordById(id)?.let { UriRecordMapper.toDomainModel(it) }
+    override suspend fun getUriRecord(id: Long): UriRecordEntity? {
+        return uriRecordDao.getUriRecordById(id)
     }
 
     override suspend fun deleteUriRecord(id: Long): Boolean {

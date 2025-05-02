@@ -8,6 +8,8 @@ import browserpicker.core.results.MyResult
 import browserpicker.data.local.datasource.FolderLocalDataSource
 import browserpicker.data.local.datasource.HostRuleLocalDataSource
 import browserpicker.data.local.db.BrowserPickerDatabase
+import browserpicker.data.local.mapper.HostRuleMapper
+import browserpicker.domain.model.FolderType
 import browserpicker.domain.model.HostRule
 import browserpicker.domain.model.UriStatus
 import browserpicker.domain.model.toFolderType
@@ -16,7 +18,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
@@ -33,6 +37,9 @@ class HostRuleRepositoryImpl @Inject constructor(
 
     override fun getHostRuleByHost(host: String): Flow<HostRule?> {
         return hostRuleDataSource.getHostRuleByHost(host)
+            .map { entity ->
+                entity?.let { HostRuleMapper.toDomainModel(it) }
+            }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching HostRule for host: %s", host)
                 emit(null)
@@ -42,7 +49,8 @@ class HostRuleRepositoryImpl @Inject constructor(
 
     override suspend fun getHostRuleById(id: Long): MyResult<HostRule?, AppError> = withContext(ioDispatcher) {
         try {
-            val rule = hostRuleDataSource.getHostRuleById(id)
+            val entity = hostRuleDataSource.getHostRuleById(id)
+            val rule = entity?.let { HostRuleMapper.toDomainModel(it) }
             MyResult.Success(rule)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to get HostRule by ID: %d", id)
@@ -56,6 +64,9 @@ class HostRuleRepositoryImpl @Inject constructor(
 
     override fun getAllHostRules(): Flow<List<HostRule>> {
         return hostRuleDataSource.getAllHostRules()
+            .map { entities ->
+                HostRuleMapper.toDomainModels(entities)
+            }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching all HostRules")
                 emit(emptyList())
@@ -64,7 +75,14 @@ class HostRuleRepositoryImpl @Inject constructor(
     }
 
     override fun getHostRulesByStatus(status: UriStatus): Flow<List<HostRule>> {
+        if (status == UriStatus.UNKNOWN) {
+            Timber.w("[Repository] Requesting HostRules with UNKNOWN status, returning empty list.")
+            return flowOf(emptyList())
+        }
         return hostRuleDataSource.getHostRulesByStatus(status)
+            .map { entities ->
+                HostRuleMapper.toDomainModels(entities)
+            }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching HostRules by status: %s", status)
                 emit(emptyList())
@@ -74,6 +92,9 @@ class HostRuleRepositoryImpl @Inject constructor(
 
     override fun getHostRulesByFolder(folderId: Long): Flow<List<HostRule>> {
         return hostRuleDataSource.getHostRulesByFolder(folderId)
+            .map { entities ->
+                HostRuleMapper.toDomainModels(entities)
+            }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching HostRules by folderId: %d", folderId)
                 emit(emptyList())
@@ -82,7 +103,14 @@ class HostRuleRepositoryImpl @Inject constructor(
     }
 
     override fun getRootHostRulesByStatus(status: UriStatus): Flow<List<HostRule>> {
+        if (status == UriStatus.UNKNOWN) {
+            Timber.w("[Repository] Requesting Root HostRules with UNKNOWN status, returning empty list.")
+            return flowOf(emptyList())
+        }
         return hostRuleDataSource.getRootHostRulesByStatus(status)
+            .map { entities ->
+                HostRuleMapper.toDomainModels(entities)
+            }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching root HostRules by status: %s", status)
                 emit(emptyList())
@@ -120,7 +148,8 @@ class HostRuleRepositoryImpl @Inject constructor(
             }
 
             val now = instantProvider.now()
-            val currentRule = hostRuleDataSource.getHostRuleByHost(trimmedHost).firstOrNull()
+            val currentRuleEntity = hostRuleDataSource.getHostRuleByHost(trimmedHost).firstOrNull()
+            val currentRuleDomain = currentRuleEntity?.let { HostRuleMapper.toDomainModel(it) }
 
             var effectiveFolderId = folderId
             var effectivePreferredBrowser = trimmedPreferredBrowser
@@ -138,34 +167,36 @@ class HostRuleRepositoryImpl @Inject constructor(
             }
 
             if (effectiveFolderId != null && (status == UriStatus.BOOKMARKED || status == UriStatus.BLOCKED)) {
-                val folder = folderDataSource.getFolderByIdSuspend(effectiveFolderId)
-                if (folder == null) {
+                val folderEntity = folderDataSource.getFolderByIdSuspend(effectiveFolderId)
+                if (folderEntity == null) {
                     throw IllegalStateException("Folder with ID $effectiveFolderId does not exist.")
                 }
                 val expectedFolderType = status.toFolderType()
+                val actualFolderType = FolderType.fromValue(folderEntity.folderType)
 
                 if (expectedFolderType == null) {
                     Timber.w("Rule status $status unexpectedly requires a folder check but has no matching FolderType. Clearing folder ID.")
                     effectiveFolderId = null
-                } else if (folder.type != expectedFolderType) {
-                    throw IllegalArgumentException("Folder type mismatch: Rule status ($status) requires folder type $expectedFolderType, but folder $effectiveFolderId has type ${folder.type}.")
+                } else if (actualFolderType != expectedFolderType) {
+                    throw IllegalArgumentException("Folder type mismatch: Rule status ($status) requires folder type $expectedFolderType, but folder $effectiveFolderId has type $actualFolderType.")
                 }
             } else if (status != UriStatus.NONE) {
                 effectiveFolderId = null
             }
 
             val ruleToSave = HostRule(
-                id = currentRule?.id ?: 0,
+                id = currentRuleDomain?.id ?: 0,
                 host = trimmedHost,
                 uriStatus = status,
                 folderId = effectiveFolderId,
                 preferredBrowserPackage = effectivePreferredBrowser,
                 isPreferenceEnabled = effectiveIsPreferenceEnabled,
-                createdAt = currentRule?.createdAt ?: now,
+                createdAt = currentRuleDomain?.createdAt ?: now,
                 updatedAt = now
             )
 
-            val ruleId = hostRuleDataSource.upsertHostRule(ruleToSave)
+            val entityToSave = HostRuleMapper.toEntity(ruleToSave)
+            val ruleId = hostRuleDataSource.upsertHostRule(entityToSave)
             MyResult.Success(ruleId)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed transaction to save host rule: host=$host, status=$status, folderId=$folderId, preferredBrowser=$preferredBrowser \n ${e.message}")

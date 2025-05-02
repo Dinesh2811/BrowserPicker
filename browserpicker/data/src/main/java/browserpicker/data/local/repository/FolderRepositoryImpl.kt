@@ -9,13 +9,16 @@ import browserpicker.data.FolderNotEmptyException
 import browserpicker.data.local.datasource.FolderLocalDataSource
 import browserpicker.data.local.datasource.HostRuleLocalDataSource
 import browserpicker.data.local.db.BrowserPickerDatabase
+import browserpicker.data.local.mapper.FolderMapper
 import browserpicker.domain.model.Folder
 import browserpicker.domain.model.FolderType
 import browserpicker.domain.repository.FolderRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
@@ -40,8 +43,6 @@ class FolderRepositoryImpl @Inject constructor(
             try {
                 folderDataSource.ensureDefaultFoldersExist()
             } catch (e: Exception) {
-                // This is a critical startup operation. Log error but don't return MyResult here
-                // as this is likely called during app initialization and failure may be unrecoverable
                 Timber.e(e, "[Repository] Failed to ensure default folders exist")
             }
         }
@@ -49,6 +50,9 @@ class FolderRepositoryImpl @Inject constructor(
 
     override fun getFolder(folderId: Long): Flow<Folder?> {
         return folderDataSource.getFolder(folderId)
+            .map { entity ->
+                entity?.let { FolderMapper.toDomainModel(it) }
+            }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching Folder by id: %d", folderId)
                 emit(null)
@@ -58,6 +62,9 @@ class FolderRepositoryImpl @Inject constructor(
 
     override fun getChildFolders(parentFolderId: Long): Flow<List<Folder>> {
         return folderDataSource.getChildFolders(parentFolderId)
+            .map { entities ->
+                FolderMapper.toDomainModels(entities)
+            }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching child folders for parentId: %d", parentFolderId)
                 emit(emptyList())
@@ -66,7 +73,14 @@ class FolderRepositoryImpl @Inject constructor(
     }
 
     override fun getRootFoldersByType(type: FolderType): Flow<List<Folder>> {
+        if (type == FolderType.UNKNOWN) {
+            Timber.w("[Repository] Requesting root folders with UNKNOWN type, returning empty list.")
+            return flowOf(emptyList())
+        }
         return folderDataSource.getRootFoldersByType(type)
+            .map { entities ->
+                FolderMapper.toDomainModels(entities)
+            }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching root folders for type: %s", type)
                 emit(emptyList())
@@ -75,7 +89,14 @@ class FolderRepositoryImpl @Inject constructor(
     }
 
     override fun getAllFoldersByType(type: FolderType): Flow<List<Folder>> {
+        if (type == FolderType.UNKNOWN) {
+            Timber.w("[Repository] Requesting all folders with UNKNOWN type, returning empty list.")
+            return flowOf(emptyList())
+        }
         return folderDataSource.getAllFoldersByType(type)
+            .map { entities ->
+                FolderMapper.toDomainModels(entities)
+            }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching all folders for type: %s", type)
                 emit(emptyList())
@@ -84,9 +105,14 @@ class FolderRepositoryImpl @Inject constructor(
     }
 
     override suspend fun findFolderByNameAndParent(name: String, parentFolderId: Long?, type: FolderType): Folder? {
+        if (type == FolderType.UNKNOWN) {
+            Timber.w("[Repository] Finding folder with UNKNOWN type, returning null.")
+            return null
+        }
         return runCatching {
             withContext(ioDispatcher) {
-                folderDataSource.findFolderByNameAndParent(name.trim(), parentFolderId, type)
+                val entity = folderDataSource.findFolderByNameAndParent(name.trim(), parentFolderId, type)
+                entity?.let { FolderMapper.toDomainModel(it) }
             }
         }.onFailure { e ->
             Timber.e(e, "[Repository] Failed to find folder by name/parent: Name='%s', Parent='%s', Type='%s'", name, parentFolderId, type)
@@ -103,27 +129,32 @@ class FolderRepositoryImpl @Inject constructor(
             if (trimmedName.isEmpty()) {
                 throw IllegalArgumentException("Folder name cannot be empty.")
             }
+            if (type == FolderType.UNKNOWN) {
+                throw IllegalArgumentException("Cannot create folder with UNKNOWN type.")
+            }
+
             if (parentFolderId == null && isReservedRootName(trimmedName)) {
-                val existingDefault = findFolderByNameAndParent(trimmedName, parentFolderId, type)
-                if (existingDefault != null && (existingDefault.id == Folder.DEFAULT_BOOKMARK_ROOT_FOLDER_ID || existingDefault.id == Folder.DEFAULT_BLOCKED_ROOT_FOLDER_ID)) {
-                    Timber.w("[Repository] Attempted to recreate default folder: Name='$trimmedName', Type='$type'. Returning existing ID ${existingDefault.id}.")
-                    return@withTransaction MyResult.Success(existingDefault.id)
+                val existingDefaultEntity = folderDataSource.findFolderByNameAndParent(trimmedName, parentFolderId, type)
+                if (existingDefaultEntity != null && (existingDefaultEntity.id == Folder.DEFAULT_BOOKMARK_ROOT_FOLDER_ID || existingDefaultEntity.id == Folder.DEFAULT_BLOCKED_ROOT_FOLDER_ID)) {
+                    Timber.w("[Repository] Attempted to recreate default folder: Name='$trimmedName', Type='$type'. Returning existing ID ${existingDefaultEntity.id}.")
+                    return@withTransaction MyResult.Success(existingDefaultEntity.id)
                 } else {
                     throw IllegalArgumentException("Cannot create folder with reserved root name '$trimmedName'.")
                 }
             }
 
             if (parentFolderId != null) {
-                val parentFolder = folderDataSource.getFolderByIdSuspend(parentFolderId)
+                val parentFolderEntity = folderDataSource.getFolderByIdSuspend(parentFolderId)
                     ?: throw IllegalStateException("Parent folder with ID $parentFolderId not found during creation.")
-                if (parentFolder.type != type) {
-                    throw IllegalArgumentException("Parent folder type (${parentFolder.type}) must match new folder type ($type).")
+                val parentFolderType = FolderType.fromValue(parentFolderEntity.folderType)
+                if (parentFolderType != type) {
+                    throw IllegalArgumentException("Parent folder type ($parentFolderType) must match new folder type ($type).")
                 }
             }
 
-            val existing = folderDataSource.findFolderByNameAndParent(trimmedName, parentFolderId, type)
-            if (existing != null) {
-                throw IllegalStateException("A folder named '$trimmedName' already exists in this location with the same type (ID: ${existing.id}).")
+            val existingEntity = folderDataSource.findFolderByNameAndParent(trimmedName, parentFolderId, type)
+            if (existingEntity != null) {
+                throw IllegalStateException("A folder named '$trimmedName' already exists in this location with the same type (ID: ${existingEntity.id}).")
             }
 
             val now = instantProvider.now()
@@ -135,7 +166,8 @@ class FolderRepositoryImpl @Inject constructor(
                 createdAt = now,
                 updatedAt = now
             )
-            val folderId = folderDataSource.createFolder(newFolder)
+            val newFolderEntity = FolderMapper.toEntity(newFolder)
+            val folderId = folderDataSource.createFolder(newFolderEntity)
             MyResult.Success(folderId)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to create folder: Name='$name', Parent='$parentFolderId', Type='$type'")
@@ -170,14 +202,15 @@ class FolderRepositoryImpl @Inject constructor(
                 throw IllegalArgumentException("Cannot rename a root folder to the reserved name '$trimmedName'.")
             }
 
-            val currentFolder = folderDataSource.getFolderByIdSuspend(folder.id)
-                ?: throw IllegalStateException("Folder with ID ${folder.id} not found for update during transaction.") // Should exist if starting update
+            val currentFolderEntity = folderDataSource.getFolderByIdSuspend(folder.id)
+                ?: throw IllegalStateException("Folder with ID ${folder.id} not found for update during transaction.")
+            val currentFolderDomain = FolderMapper.toDomainModel(currentFolderEntity)
 
-            if (currentFolder.type != folder.type) {
-                throw IllegalArgumentException("Cannot change the type of an existing folder (from ${currentFolder.type} to ${folder.type}).")
+            if (currentFolderDomain.type != folder.type) {
+                throw IllegalArgumentException("Cannot change the type of an existing folder (from ${currentFolderDomain.type} to ${folder.type}).")
             }
 
-            if (currentFolder.parentFolderId != folder.parentFolderId) {
+            if (currentFolderDomain.parentFolderId != folder.parentFolderId) {
                 folder.parentFolderId?.let { newParentId ->
                     if (newParentId == folder.id) {
                         throw IllegalArgumentException("Cannot move a folder into itself.")
@@ -185,31 +218,31 @@ class FolderRepositoryImpl @Inject constructor(
                     if (isDescendantRecursive(newParentId, folder.id)) {
                         throw IllegalStateException("Cannot move folder ID ${folder.id} into its own descendant (potential new parent ID $newParentId). Circular reference detected.")
                     }
-                    val newParent = folderDataSource.getFolderByIdSuspend(newParentId)
-                        ?: throw IllegalStateException("New parent folder with ID $newParentId not found during transaction.") // Should exist if parentId is set
-                    if (newParent.type != folder.type) {
-                        throw IllegalArgumentException("New parent folder type (${newParent.type}) must match folder type (${folder.type}).")
+                    val newParentEntity = folderDataSource.getFolderByIdSuspend(newParentId)
+                        ?: throw IllegalStateException("New parent folder with ID $newParentId not found during transaction.")
+                    val newParentType = FolderType.fromValue(newParentEntity.folderType)
+                    if (newParentType != folder.type) {
+                        throw IllegalArgumentException("New parent folder type ($newParentType) must match folder type (${folder.type}).")
                     }
                 }
             }
 
-            if (currentFolder.name != trimmedName || currentFolder.parentFolderId != folder.parentFolderId) {
-                val conflictingFolder = folderDataSource.findFolderByNameAndParent(trimmedName, folder.parentFolderId, folder.type)
-                if (conflictingFolder != null && conflictingFolder.id != folder.id) {
-                    throw IllegalStateException("A folder named '$trimmedName' already exists in the target location with the same type (ID: ${conflictingFolder.id}) during transaction.")
+            if (currentFolderDomain.name != trimmedName || currentFolderDomain.parentFolderId != folder.parentFolderId) {
+                val conflictingFolderEntity = folderDataSource.findFolderByNameAndParent(trimmedName, folder.parentFolderId, folder.type)
+                if (conflictingFolderEntity != null && conflictingFolderEntity.id != folder.id) {
+                    throw IllegalStateException("A folder named '$trimmedName' already exists in the target location with the same type (ID: ${conflictingFolderEntity.id}) during transaction.")
                 }
             }
 
-            val folderToUpdate = currentFolder.copy(
+            val updatedFolder = currentFolderDomain.copy(
                 name = trimmedName,
                 parentFolderId = folder.parentFolderId,
                 updatedAt = instantProvider.now()
             )
 
-            val updated = folderDataSource.updateFolder(folderToUpdate)
+            val folderEntityToUpdate = FolderMapper.toEntity(updatedFolder)
+            val updated = folderDataSource.updateFolder(folderEntityToUpdate)
             if (!updated) {
-                // This case is unlikely if the folder existed at the start of the transaction,
-                // but can indicate a serious data integrity issue or concurrent modification.
                 throw IllegalStateException("Failed to update folder with ID ${folder.id} in data source during transaction (record might not exist anymore or update failed).")
             }
             MyResult.Success(Unit)
@@ -239,8 +272,6 @@ class FolderRepositoryImpl @Inject constructor(
 
             val deleted = folderDataSource.deleteFolder(folderId)
             if (!deleted) {
-                // This could happen if the folder was deleted concurrently outside the transaction,
-                // or if the folderId was invalid to begin with. Report as DataNotFound if delete count is 0.
                 throw IllegalStateException("Folder with ID $folderId not found for deletion or delete failed.")
             }
             MyResult.Success(Unit)

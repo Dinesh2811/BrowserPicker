@@ -27,6 +27,11 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.paging.map
+import androidx.room.withTransaction
+import browserpicker.data.local.mapper.UriRecordMapper
+import browserpicker.domain.*
+import kotlinx.coroutines.flow.firstOrNull
 
 @Singleton
 class UriHistoryRepositoryImpl @Inject constructor(
@@ -54,7 +59,13 @@ class UriHistoryRepositoryImpl @Inject constructor(
     override fun getPagedUriRecords(query: UriHistoryQuery, pagingConfig: PagingConfig): Flow<PagingData<UriRecord>> {
         return try {
             val dataQueryConfig = mapQueryToConfig(query)
-            dataSource.getPagedUriRecords(dataQueryConfig, pagingConfig).flowOn(ioDispatcher)
+            dataSource.getPagedUriRecords(dataQueryConfig, pagingConfig)
+                .map { pagingDataEntity ->
+                    pagingDataEntity.map { entity ->
+                        UriRecordMapper.toDomainModel(entity)
+                    }
+                }
+                .flowOn(ioDispatcher)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to create PagedUriRecords Flow for query: %s", query)
             flowOf(PagingData.empty<UriRecord>()).flowOn(ioDispatcher)
@@ -79,12 +90,12 @@ class UriHistoryRepositoryImpl @Inject constructor(
     override fun getGroupCounts(query: UriHistoryQuery): Flow<List<GroupCount>> {
         return try {
             val dataQueryConfig = mapQueryToConfig(query)
-            dataSource.getGroupCounts(dataQueryConfig).map { dataGroupCounts ->
-                dataGroupCounts.map { GroupCount(it.groupValue, it.count) }
-            }.catch { e ->
-                Timber.e(e, "[Repository] Error fetching group counts for query: %s", query)
-                emit(emptyList())
-            }.flowOn(ioDispatcher)
+            dataSource.getGroupCounts(dataQueryConfig)
+                .catch { e ->
+                    Timber.e(e, "[Repository] Error fetching group counts for query: %s", query)
+                    emit(emptyList())
+                }
+                .flowOn(ioDispatcher)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to create GroupCounts Flow for query: %s", query)
             flowOf(emptyList<GroupCount>())
@@ -94,12 +105,12 @@ class UriHistoryRepositoryImpl @Inject constructor(
     override fun getDateCounts(query: UriHistoryQuery): Flow<List<DateCount>> {
         return try {
             val dataQueryConfig = mapQueryToConfig(query)
-            dataSource.getDateCounts(dataQueryConfig).map { dataDateCounts ->
-                dataDateCounts.map { DateCount(it.date, it.count) }
-            }.catch { e ->
-                Timber.e(e, "[Repository] Error fetching date counts for query: %s", query)
-                emit(emptyList())
-            }.flowOn(ioDispatcher)
+            dataSource.getDateCounts(dataQueryConfig)
+                .catch { e ->
+                    Timber.e(e, "[Repository] Error fetching date counts for query: %s", query)
+                    emit(emptyList())
+                }
+                .flowOn(ioDispatcher)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to create DateCounts Flow for query: %s", query)
             flowOf(emptyList<DateCount>())
@@ -139,7 +150,8 @@ class UriHistoryRepositoryImpl @Inject constructor(
                 associatedHostRuleId = associatedHostRuleId
             )
 
-            val id = dataSource.insertUriRecord(record)
+            val entity = UriRecordMapper.toEntity(record)
+            val id = dataSource.insertUriRecord(entity)
             if (id <= 0) {
                 throw IllegalStateException("Failed to insert URI record: received invalid ID $id")
             }
@@ -159,7 +171,8 @@ class UriHistoryRepositoryImpl @Inject constructor(
 
     override suspend fun getUriRecord(id: Long): MyResult<UriRecord?, AppError> = withContext(ioDispatcher) {
         try {
-            val record = dataSource.getUriRecord(id)
+            val entity = dataSource.getUriRecord(id)
+            val record = entity?.let { UriRecordMapper.toDomainModel(it) }
             MyResult.Success(record)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to get URI record with id: %d", id)
