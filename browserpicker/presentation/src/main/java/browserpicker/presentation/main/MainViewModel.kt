@@ -141,7 +141,7 @@ class MainViewModel @Inject constructor(
             recordUriInteractionUseCase(
                 uriString = context.uriString,
                 host = context.host,
-                source = UriSource.fromValue(context.sourceValue),
+                source = UriSource.fromValue(context.sourceValue)?: UriSource.INTENT,
                 action = InteractionAction.OPENED_ONCE,
                 chosenBrowser = browser.packageName,
                 associatedHostRuleId = context.associatedHostRuleId,
@@ -175,7 +175,7 @@ class MainViewModel @Inject constructor(
                         recordUriInteractionUseCase(
                             uriString = context.uriString,
                             host = context.host,
-                            source = UriSource.fromValue(context.sourceValue),
+                            source = UriSource.fromValue(context.sourceValue)?: UriSource.INTENT,
                             action = InteractionAction.PREFERENCE_SET,
                             chosenBrowser = browser.packageName,
                             associatedHostRuleId = savedRuleId,
@@ -222,7 +222,7 @@ class MainViewModel @Inject constructor(
                         recordUriInteractionUseCase(
                             uriString = context.uriString,
                             host = context.host,
-                            source = UriSource.fromValue(context.sourceValue),
+                            source = UriSource.fromValue(context.sourceValue)?: UriSource.INTENT,
                             action = InteractionAction.BLOCKED_URI_ENFORCED,
                             chosenBrowser = null,
                             associatedHostRuleId = savedRuleId,

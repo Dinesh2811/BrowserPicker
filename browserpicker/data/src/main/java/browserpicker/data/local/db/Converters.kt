@@ -33,7 +33,7 @@ object Converters {
 
     @TypeConverter
     @JvmStatic
-    fun intToUriSourceNN(value: Int): UriSource = UriSource.fromValue(value) // Throws if invalid
+    fun intToUriSourceNN(value: Int): UriSource? = UriSource.fromValue(value) // Throws if invalid
 
     @TypeConverter
     @JvmStatic

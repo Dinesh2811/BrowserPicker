@@ -11,7 +11,7 @@ enum class UriSource(val value: Int) {
     MANUAL(3);
 
     companion object {
-        fun fromValue(value: Int): UriSource = entries.find { it.value == value }?: UNKNOWN
+        fun fromValue(value: Int): UriSource? = entries.find { it.value == value }
         fun fromValueOrNull(value: Int): UriSource? = entries.find { it.value == value }
         fun isValidValue(value: Int): Boolean = fromValueOrNull(value) != null
     }

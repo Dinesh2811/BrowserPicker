@@ -6,7 +6,7 @@ import browserpicker.domain.model.*
 object UriRecordMapper {
     fun toDomainModel(entity: UriRecordEntity): UriRecord {
         val domainUriSource = UriSource.fromValue(entity.uriSource)
-            //  ?: throw MappingException("Invalid UriSource value '${entity.uriSource}' found in database for UriRecord ID ${entity.id}")
+            // ?: throw MappingException("Invalid UriSource value '${entity.uriSource}' found in database for UriRecord ID ${entity.id}")
         val domainInteractionAction = InteractionAction.fromValue(entity.interactionAction)
 
         return UriRecord(
@@ -14,8 +14,8 @@ object UriRecordMapper {
             uriString = entity.uriString,
             host = entity.host,
             timestamp = entity.timestamp,
-            uriSource = domainUriSource, // Now uses safe mapping
-            interactionAction = domainInteractionAction, // Already safe (defaults)
+            uriSource = domainUriSource?: UriSource.INTENT,
+            interactionAction = domainInteractionAction,
             chosenBrowserPackage = entity.chosenBrowserPackage,
             associatedHostRuleId = entity.associatedHostRuleId
         )
