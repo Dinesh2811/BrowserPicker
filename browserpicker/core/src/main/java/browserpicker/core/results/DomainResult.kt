@@ -5,10 +5,19 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlin.Result as KotlinResult
 
-//sealed interface AppError {
-//    val message: String
-//    val cause: Throwable?
-//}
+sealed interface AppError {
+    val message: String
+    val cause: Throwable?
+        get() = null
+
+    data class UnknownError(override val message: String = "An unexpected error occurred.", override val cause: Throwable? = null): AppError
+    data class ValidationError(override val message: String, override val cause: Throwable? = null): AppError
+    data class DataNotFound(override val message: String, override val cause: Throwable? = null): AppError
+    data class DataIntegrityError(override val message: String, override val cause: Throwable? = null): AppError
+    data class FolderNotEmptyError(val folderId: Long, override val message: String, override val cause: Throwable? = null): AppError
+    data class DatabaseError(override val message: String, override val cause: Throwable? = null): AppError
+    data class DataMappingError(override val message: String): AppError
+}
 
 /**
  * A sealed class representing the outcome of a domain operation.
@@ -103,6 +112,55 @@ sealed class DomainResult<out S, out F: AppError> {
             is Failure -> onFailure(error)
         }
     }
+
+
+    /**
+     * Returns the success data if the result is [Success], otherwise returns the result
+     * of the [onFailure] function applied to the error.
+     */
+    inline fun getOrElse(onFailure: (F) -> @UnsafeVariance S): S {
+        return when (this) {
+            is Success -> data
+            is Failure -> onFailure(error)
+        }
+    }
+
+    /**
+     * Returns the success data if the result is [Success], otherwise throws the result
+     * of the [exceptionMapper] function applied to the error.
+     */
+    inline fun getOrThrow(exceptionMapper: (F) -> Throwable): S {
+        return when (this) {
+            is Success -> data
+            is Failure -> throw exceptionMapper(error)
+        }
+    }
+
+    /**
+     * Recovers from a failure by applying the [recoveryFunction] to the error.
+     * If the result is [Success], the original success is preserved.
+     * Useful for attempting alternative operations on failure.
+     */
+    inline fun recover(recoveryFunction: (F) -> DomainResult<@UnsafeVariance S, @UnsafeVariance F>): DomainResult<S, F> {
+        return when (this) {
+            is Success -> this
+            is Failure -> recoveryFunction(error)
+        }
+    }
+
+    /**
+     * Chains another operation that returns a DomainResult, applied to the success data.
+     * If the current result is Failure, the failure is propagated.
+     * Similar to flatMap in other contexts.
+     */
+    inline fun <R> andThen(
+        crossinline nextOperation: (S) -> DomainResult<R, @UnsafeVariance F>
+    ): DomainResult<R, F> {
+        return when (this) {
+            is Success -> nextOperation(data)
+            is Failure -> DomainResult.Failure(error)
+        }
+    }
 }
 
 
@@ -110,16 +168,16 @@ sealed class DomainResult<out S, out F: AppError> {
  * A sealed class representing various types of domain-specific failures.
  * This provides a structured and extensible way to categorize errors.
  */
-sealed class Failure: AppError {
-    data class ValidationError(val errors: List<Pair<String, String>>, override val message: String = errors.joinToString { (field, message) -> message }): Failure()
-    data class ServerError(override val message: String, val code: Int? = null): Failure()
-    data class NetworkError(override val message: String): Failure()
-    data class NotFound(override val message: String): Failure()
-    data class Unauthorized(override val message: String): Failure()
-    data class BusinessRuleError(override val message: String): Failure()
-    data class DataMappingError(override val message: String): Failure()
-    data class Unknown(val throwable: Throwable? = null, override val message: String = "Unknown error" + (throwable?.message?.let { ": $it" })): Failure()
-}
+//sealed class Failure: AppError {
+//    data class ValidationError(val errors: List<Pair<String, String>>, override val message: String = errors.joinToString { (field, message) -> message }): Failure()
+//    data class ServerError(override val message: String, val code: Int? = null): Failure()
+//    data class NetworkError(override val message: String): Failure()
+//    data class NotFound(override val message: String): Failure()
+//    data class Unauthorized(override val message: String): Failure()
+//    data class BusinessRuleError(override val message: String): Failure()
+//    data class DataMappingError(override val message: String): Failure()
+//    data class Unknown(val throwable: Throwable? = null, override val message: String = "Unknown error" + (throwable?.message?.let { ": $it" })): Failure()
+//}
 
 /**
  * Transforms a Flow of DomainResult where the success data is a List<S>
@@ -168,8 +226,7 @@ inline fun <S> Flow<DomainResult<S, AppError>>.onEachFailure(
 fun <S> Flow<DomainResult<S, AppError>>.catchUnexpected(): Flow<DomainResult<S, AppError>> {
     return this.catch { e ->
         if (e !is kotlinx.coroutines.CancellationException) {
-            val error = Failure.Unknown(e) as AppError  // Ensure casting is explicit if needed
-            emit(DomainResult.Failure(error))
+            emit(DomainResult.Failure(AppError.UnknownError(cause = e)))
         } else {
             throw e
         }
@@ -183,4 +240,28 @@ inline fun <S> KotlinResult<S>.toDomainResult(
         onSuccess = { data -> DomainResult.Success(data) },
         onFailure = { throwable -> DomainResult.Failure(failureMapper(throwable)) }
     )
+}
+
+/**
+ * Transforms a DomainResult with a List<S> success into a DomainResult with a List<R> success
+ * by mapping each item in the list, preserving failures.
+ */
+inline fun <S, R, F: AppError> DomainResult<List<S>, F>.mapSuccessList(
+    transform: (S) -> R
+): DomainResult<List<R>, F> {
+    return this.mapSuccess { list ->
+        list.map(transform)
+    }
+}
+
+/**
+ * Transforms a DomainResult with a List<S> success into a DomainResult with a List<S> success
+ * by filtering the list based on a predicate, preserving failures.
+ */
+inline fun <S, F: AppError> DomainResult<List<S>, F>.filterSuccessList(
+    predicate: (S) -> Boolean
+): DomainResult<List<S>, F> {
+    return this.mapSuccess { list ->
+        list.filter(predicate)
+    }
 }

@@ -2,19 +2,19 @@ package browserpicker.core.results
 
 import androidx.compose.runtime.Immutable
 
-sealed interface AppError {
-    val message: String
-    val cause: Throwable?
-        get() = null
-
-    data class UnknownError(override val message: String = "An unexpected error occurred.", override val cause: Throwable? = null): AppError
-    data class ValidationError(override val message: String, override val cause: Throwable? = null): AppError
-    data class DataNotFound(override val message: String, override val cause: Throwable? = null): AppError
-    data class DataIntegrityError(override val message: String, override val cause: Throwable? = null): AppError
-    data class FolderNotEmptyError(val folderId: Long, override val message: String, override val cause: Throwable? = null): AppError
-    data class NetworkError(override val message: String, override val cause: Throwable? = null): AppError // Example
-    data class DatabaseError(override val message: String, override val cause: Throwable? = null): AppError // Example
-}
+//sealed interface AppError {
+//    val message: String
+//    val cause: Throwable?
+//        get() = null
+//
+//    data class UnknownError(override val message: String = "An unexpected error occurred.", override val cause: Throwable? = null): AppError
+//    data class ValidationError(override val message: String, override val cause: Throwable? = null): AppError
+//    data class DataNotFound(override val message: String, override val cause: Throwable? = null): AppError
+//    data class DataIntegrityError(override val message: String, override val cause: Throwable? = null): AppError
+//    data class FolderNotEmptyError(val folderId: Long, override val message: String, override val cause: Throwable? = null): AppError
+//    data class NetworkError(override val message: String, override val cause: Throwable? = null): AppError // Example
+//    data class DatabaseError(override val message: String, override val cause: Throwable? = null): AppError // Example
+//}
 
 @Immutable
 sealed interface UriValidationError: AppError {
