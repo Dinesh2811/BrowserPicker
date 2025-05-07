@@ -11,12 +11,20 @@ sealed interface AppError {
         get() = null
 
     data class UnknownError(override val message: String = "An unexpected error occurred.", override val cause: Throwable? = null): AppError
-    data class ValidationError(override val message: String, override val cause: Throwable? = null): AppError
     data class DataNotFound(override val message: String, override val cause: Throwable? = null): AppError
     data class DataIntegrityError(override val message: String, override val cause: Throwable? = null): AppError
     data class FolderNotEmptyError(val folderId: Long, override val message: String, override val cause: Throwable? = null): AppError
     data class DatabaseError(override val message: String, override val cause: Throwable? = null): AppError
     data class DataMappingError(override val message: String): AppError
+    data class ValidationError(override val message: String): AppError
+//    data class ValidationError(val errors: List<Pair<String, String>>, override val message: String = errors.joinToString { (field, message) -> message }): AppError
+//    data class ServerError(override val message: String, val code: Int? = null): Failure()
+//    data class NetworkError(override val message: String): Failure()
+//    data class NotFound(override val message: String): Failure()
+//    data class Unauthorized(override val message: String): Failure()
+//    data class BusinessRuleError(override val message: String): Failure()
+//    data class DataMappingError(override val message: String): Failure()
+//    data class UnknownError(val throwable: Throwable? = null, override val message: String = "An unexpected error occurred." + (throwable?.message?.let { ": $it" })): AppError
 }
 
 /**
@@ -55,6 +63,8 @@ sealed class DomainResult<out S, out F: AppError> {
      * Returns true if the result is [Failure].
      */
     val isFailure: Boolean get() = this is Failure<F>
+
+    fun exceptionOrNull(): Throwable? = (this as? Failure)?.error?.cause
 
     /**
      * Transforms the success data using the provided [transform] function.

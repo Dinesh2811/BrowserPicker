@@ -11,9 +11,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import browserpicker.domain.model.UriRecord
 
-@Immutable
-@Serializable
-@Keep
+import browserpicker.core.results.AppError
+import browserpicker.core.results.DomainResult
+
 data class ParsedUri(
     val originalString: String,
     val scheme: String,
@@ -30,7 +30,7 @@ data class ParsedUri(
 }
 
 interface UriParser {
-    fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String> = DEFAULT_SUPPORTED_SCHEMES): MyResult<ParsedUri?, UriValidationError>
+    fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String> = DEFAULT_SUPPORTED_SCHEMES): DomainResult<ParsedUri?, UriValidationError>
 
     companion object {
         val DEFAULT_SUPPORTED_SCHEMES: Set<String> = setOf("http", "https")
@@ -39,11 +39,11 @@ interface UriParser {
 
 @Singleton
 class AndroidUriParser @Inject constructor(): UriParser {
-    override fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String>): MyResult<ParsedUri?, UriValidationError> {
+    override fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String>): DomainResult<ParsedUri?, UriValidationError> {
         require(supportedSchemes.isNotEmpty()) { "At least one supported scheme must be provided." }
 
         if (uriString.isBlank()) {
-            return MyResult.Error(UriValidationError.BlankOrEmpty(message = "URI string cannot be blank or empty."))
+            return DomainResult.Failure(UriValidationError.BlankOrEmpty(message = "URI string cannot be blank or empty."))
         }
 
         return try {
@@ -51,11 +51,11 @@ class AndroidUriParser @Inject constructor(): UriParser {
             val scheme = uri.scheme
             val host = uri.host
             when {
-                host.isNullOrEmpty() -> MyResult.Error(UriValidationError.Invalid(message = "Host cannot be missing or blank in URI: $uriString"))
-                !uri.isAbsolute -> MyResult.Error(UriValidationError.Invalid(message = "URI must be absolute: $uriString"))
-                scheme == null || scheme !in supportedSchemes -> MyResult.Error(UriValidationError.Invalid(message = "Invalid or unsupported scheme '$scheme' in URI: $uriString. Only $supportedSchemes are supported."))
+                host.isNullOrEmpty() -> DomainResult.Failure(UriValidationError.Invalid(message = "Host cannot be missing or blank in URI: $uriString"))
+                !uri.isAbsolute -> DomainResult.Failure(UriValidationError.Invalid(message = "URI must be absolute: $uriString"))
+                scheme == null || scheme !in supportedSchemes -> DomainResult.Failure(UriValidationError.Invalid(message = "Invalid or unsupported scheme '$scheme' in URI: $uriString. Only $supportedSchemes are supported."))
                 else -> {
-                    MyResult.Success(
+                    DomainResult.Success(
                         data = ParsedUri(
                             originalString = uriString,
                             scheme = scheme,
@@ -64,13 +64,12 @@ class AndroidUriParser @Inject constructor(): UriParser {
                             query = uri.query,
                             fragment = uri.fragment,
                             port = uri.port
-                        ),
-                        message = "Successfully parsed valid URI: $uriString"
+                        )
                     )
                 }
             }
         } catch (e: Exception) {
-            MyResult.Error(UriValidationError.Invalid("Failed to parse URI: $uriString", e))
+            DomainResult.Failure(UriValidationError.Invalid("Failed to parse URI: $uriString", e))
         }
     }
 

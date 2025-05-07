@@ -69,8 +69,8 @@ class RecordUriInteractionUseCaseImpl @Inject constructor(
                 onSuccess(recordId)
             },
             onFailure = { throwable ->
-                Timber.e(throwable, "Failed to record URI interaction")
-                onError(throwable.toDomainError("Failed to save history record."))
+                Timber.e(throwable.cause, "Failed to record URI interaction")
+                throwable.cause?.let { onError(it.toDomainError("Failed to save history record.")) }
             }
         )
     }

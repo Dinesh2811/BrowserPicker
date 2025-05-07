@@ -7,8 +7,8 @@ import androidx.room.withTransaction
 import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
 import browserpicker.core.results.AppError
+import browserpicker.core.results.DomainResult
 import browserpicker.core.results.MyResult
-import browserpicker.core.results.UriValidationError
 import browserpicker.data.DataNotFoundException
 import browserpicker.data.FolderNotEmptyException
 import browserpicker.data.local.datasource.BrowserStatsLocalDataSource
@@ -50,6 +50,7 @@ import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
+
 @Singleton
 class UriHistoryRepositoryImpl @Inject constructor(
     private val dataSource: UriHistoryLocalDataSource,
@@ -89,48 +90,73 @@ class UriHistoryRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getTotalUriRecordCount(query: UriHistoryQuery): Flow<Long> {
+    override fun getTotalUriRecordCount(query: UriHistoryQuery): Flow<DomainResult<Long, AppError>> {
         return try {
             val dataQueryConfig = mapQueryToConfig(query)
             dataSource.getTotalUriRecordCount(dataQueryConfig)
+                .map { count ->
+                    DomainResult.Success(count) as DomainResult<Long, AppError>
+                }
                 .catch { e ->
                     Timber.e(e, "[Repository] Error fetching total URI record count for query: %s", query)
-                    emit(0)
+                    emit(DomainResult.Failure(AppError.DatabaseError(e.message ?: "Database error fetching total count", e)))
                 }
                 .flowOn(ioDispatcher)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to create TotalUriRecordCount Flow for query: %s", query)
-            flowOf(0L).flowOn(ioDispatcher)
+            flowOf(DomainResult.Failure(AppError.UnknownError("Failed to create TotalUriRecordCount Flow", e))).flowOn(ioDispatcher)
         }
     }
 
-    override fun getGroupCounts(query: UriHistoryQuery): Flow<List<GroupCount>> {
+    override fun getGroupCounts(query: UriHistoryQuery): Flow<DomainResult<List<GroupCount>, AppError>> {
         return try {
             val dataQueryConfig = mapQueryToConfig(query)
             dataSource.getGroupCounts(dataQueryConfig)
+                .map { counts ->
+                    DomainResult.Success(counts) as DomainResult<List<GroupCount>, AppError>
+                }
                 .catch { e ->
                     Timber.e(e, "[Repository] Error fetching group counts for query: %s", query)
-                    emit(emptyList())
+                    emit(DomainResult.Failure(AppError.DatabaseError(e.message ?: "Database error fetching group counts", e)))
                 }
                 .flowOn(ioDispatcher)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to create GroupCounts Flow for query: %s", query)
-            flowOf(emptyList<GroupCount>())
+            flowOf(DomainResult.Failure(AppError.UnknownError("Failed to create GroupCounts Flow", e))).flowOn(ioDispatcher)
         }
     }
 
-    override fun getDateCounts(query: UriHistoryQuery): Flow<List<DateCount>> {
+    override fun getDateCounts(query: UriHistoryQuery): Flow<DomainResult<List<DateCount>, AppError>> {
         return try {
             val dataQueryConfig = mapQueryToConfig(query)
             dataSource.getDateCounts(dataQueryConfig)
+                .map { counts ->
+                    DomainResult.Success(counts) as DomainResult<List<DateCount>, AppError>
+                }
                 .catch { e ->
                     Timber.e(e, "[Repository] Error fetching date counts for query: %s", query)
-                    emit(emptyList())
+                    emit(DomainResult.Failure(AppError.DatabaseError(e.message ?: "Database error fetching date counts", e)))
                 }
                 .flowOn(ioDispatcher)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to create DateCounts Flow for query: %s", query)
-            flowOf(emptyList<DateCount>())
+            flowOf(DomainResult.Failure(AppError.UnknownError("Failed to create DateCounts Flow", e))).flowOn(ioDispatcher)
+        }
+    }
+    private fun validateAddUriRecordInput(
+        uriString: String,
+        host: String,
+        source: UriSource,
+        action: InteractionAction,
+        chosenBrowser: String?
+    ): AppError.ValidationError? {
+        return when {
+            uriString.isBlank() -> AppError.ValidationError("URI string cannot be blank or empty")
+            host.isBlank() -> AppError.ValidationError("Host cannot be blank or empty")
+            source == UriSource.UNKNOWN -> AppError.ValidationError("URI Source cannot be UNKNOWN; use a valid source type")
+            action == InteractionAction.UNKNOWN -> AppError.ValidationError("Interaction Action cannot be UNKNOWN; use a valid action type")
+            chosenBrowser != null && chosenBrowser.isBlank() -> AppError.ValidationError("Chosen browser package name cannot be blank if provided.")
+            else -> null
         }
     }
 
@@ -141,8 +167,18 @@ class UriHistoryRepositoryImpl @Inject constructor(
         action: InteractionAction,
         chosenBrowser: String?,
         associatedHostRuleId: Long?,
-    ): MyResult<Long, AppError> = withContext(ioDispatcher) {
+    ): DomainResult<Long, AppError> = withContext(ioDispatcher) {
         try {
+//            when {
+//                uriString.isBlank() -> return@withContext DomainResult.Failure(AppError.ValidationError("URI string cannot be blank or empty"))
+//                host.isBlank() -> return@withContext DomainResult.Failure(AppError.ValidationError("Host cannot be blank or empty"))
+//                source == UriSource.UNKNOWN -> return@withContext DomainResult.Failure(AppError.ValidationError("URI Source cannot be UNKNOWN; use a valid source type"))
+//                action == InteractionAction.UNKNOWN -> return@withContext DomainResult.Failure(AppError.ValidationError("Interaction Action cannot be UNKNOWN; use a valid action type"))
+//            }
+//            if (chosenBrowser != null) {
+//                if (chosenBrowser.isBlank()) return@withContext DomainResult.Failure(AppError.ValidationError("Chosen browser package name cannot be blank if provided."))
+//            }
+
             when {
                 uriString.isBlank() -> throw IllegalArgumentException("URI string cannot be blank or empty")
                 host.isBlank() -> throw IllegalArgumentException("Host cannot be blank or empty")
@@ -152,9 +188,17 @@ class UriHistoryRepositoryImpl @Inject constructor(
             if (chosenBrowser != null) {
                 if (chosenBrowser.isBlank()) throw IllegalArgumentException("Chosen browser package name cannot be blank if provided.")
             }
+
+//            val validationError = validateAddUriRecordInput(uriString, host, source, action, chosenBrowser)
+//            if (validationError != null) {
+//                Timber.e("[Repository] Failed to add URI record: ${validationError.message}")
+//                return@withContext DomainResult.Failure(validationError)
+//            }
+
             val parsedUriResult = uriParser.parseAndValidateWebUri(uriString)
-            if (parsedUriResult.isError) {
-                return@withContext MyResult.Error(parsedUriResult.errorOrNull()!!)
+            if (parsedUriResult is DomainResult.Failure) {
+                Timber.e(parsedUriResult.error.cause, "[Repository] URI parsing and validation failed for $uriString: ${parsedUriResult.error.message}")
+                return@withContext DomainResult.Failure(parsedUriResult.error)
             }
 
             val record = UriRecord(
@@ -170,76 +214,80 @@ class UriHistoryRepositoryImpl @Inject constructor(
             val entity = UriRecordMapper.toEntity(record)
             val id = dataSource.insertUriRecord(entity)
             if (id <= 0) {
-                throw IllegalStateException("Failed to insert URI record: received invalid ID $id")
+                Timber.e("[Repository] Failed to insert URI record: received invalid ID $id for $uriString")
+                return@withContext DomainResult.Failure(AppError.DataIntegrityError("Failed to insert URI record: received invalid ID $id"))
             }
 
-            MyResult.Success(id)
+            DomainResult.Success(id)
         } catch (e: Exception) {
-            Timber.e(e, "[Repository] Failed to add URI record: $uriString, host=$host, source=$source, action=$action, browser=$chosenBrowser")
-            val appError = when (e) {
-                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data", e)
-                is IllegalStateException -> AppError.DataIntegrityError(e.message ?: "Data integrity issue", e)
-                is UriValidationError -> e
-                else -> AppError.UnknownError("Failed to add URI record", e)
-            }
-            MyResult.Error(appError)
+            Timber.e(e, "[Repository] An unexpected error occurred during URI record addition process for $uriString")
+            DomainResult.Failure(AppError.UnknownError("An unexpected error occurred while adding URI record.", e))
         }
     }
 
-    override suspend fun getUriRecord(id: Long): MyResult<UriRecord?, AppError> = withContext(ioDispatcher) {
+    override suspend fun getUriRecord(id: Long): DomainResult<UriRecord?, AppError> = withContext(ioDispatcher) {
         try {
             val entity = dataSource.getUriRecord(id)
             val record = entity?.let { UriRecordMapper.toDomainModel(it) }
-            MyResult.Success(record)
+            DomainResult.Success(record)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to get URI record with id: %d", id)
             val appError = when (e) {
                 is IllegalArgumentException -> AppError.DataIntegrityError("Data mapping error for record $id", e)
-                else -> AppError.UnknownError("Failed to get URI record $id", e)
+                is DataNotFoundException -> AppError.DataNotFound("URI record with id $id not found", e)
+                else -> AppError.UnknownError("An unexpected error occurred while getting URI record $id.", e)
             }
-            MyResult.Error(appError)
+            DomainResult.Failure(appError)
         }
     }
 
-    override suspend fun deleteUriRecord(id: Long): MyResult<Unit, AppError> = withContext(ioDispatcher) {
+    override suspend fun deleteUriRecord(id: Long): DomainResult<Unit, AppError> = withContext(ioDispatcher) {
         try {
             val deleted = dataSource.deleteUriRecord(id)
             if (deleted > 0) {
-                MyResult.Success(Unit)
+                DomainResult.Success(Unit)
             } else {
                 Timber.w("[Repository] URI record with id: $id not found for deletion or delete failed in data source. Reporting as success (item not present).")
-                MyResult.Success(Unit)
+                DomainResult.Success(Unit)
             }
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to delete URI record with id: %d", id)
-            MyResult.Error(AppError.UnknownError("Failed to delete URI record $id", e))
+            val appError = AppError.DatabaseError(e.message ?: "Database error deleting URI record $id", e)
+            DomainResult.Failure(appError)
         }
     }
 
-    override suspend fun deleteAllUriRecords(): MyResult<Int, AppError> = withContext(ioDispatcher) {
+    override suspend fun deleteAllUriRecords(): DomainResult<Int, AppError> = withContext(ioDispatcher) {
         try {
             val count = dataSource.deleteAllUriRecords()
-            MyResult.Success(count)
+            DomainResult.Success(count)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to delete all URI records")
-            MyResult.Error(AppError.UnknownError("Failed to delete all URI records", e))
+            val appError = AppError.DatabaseError(e.message ?: "Database error deleting all URI records", e)
+            DomainResult.Failure(appError)
         }
     }
 
-    override fun getDistinctHosts(): Flow<List<String>> {
+    override fun getDistinctHosts(): Flow<DomainResult<List<String>, AppError>> {
         return dataSource.getDistinctHosts()
+            .map { hosts ->
+                DomainResult.Success(hosts) as DomainResult<List<String>, AppError>
+            }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching distinct hosts")
-                emit(emptyList())
+                emit(DomainResult.Failure(AppError.DatabaseError(e.message ?: "Database error fetching distinct hosts", e)))
             }
             .flowOn(ioDispatcher)
     }
 
-    override fun getDistinctChosenBrowsers(): Flow<List<String?>> {
+    override fun getDistinctChosenBrowsers(): Flow<DomainResult<List<String?>, AppError>> {
         return dataSource.getDistinctChosenBrowsers()
+            .map { browsers ->
+                DomainResult.Success(browsers) as DomainResult<List<String?>, AppError>
+            }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching distinct chosen browsers")
-                emit(emptyList())
+                emit(DomainResult.Failure(AppError.DatabaseError(e.message ?: "Database error fetching distinct chosen browsers", e)))
             }
             .flowOn(ioDispatcher)
     }
@@ -420,7 +468,7 @@ class HostRuleRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed transaction to save host rule: host=$host, status=$status, folderId=$folderId, preferredBrowser=$preferredBrowser \n ${e.message}")
             val appError = when (e) {
-                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data", e)
+                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data")
                 is IllegalStateException -> AppError.DataIntegrityError(e.message ?: "Data integrity or state issue", e)
                 else -> AppError.UnknownError("Failed to save host rule", e)
             }
@@ -457,7 +505,7 @@ class HostRuleRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to delete host rule by host: $host")
             val appError = when (e) {
-                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data", e)
+                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data")
                 else -> AppError.UnknownError("Failed to delete host rule by host", e)
             }
             MyResult.Error(appError)
@@ -624,7 +672,7 @@ class FolderRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to create folder: Name='$name', Parent='$parentFolderId', Type='$type'")
             val appError = when (e) {
-                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data", e)
+                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data")
                 is IllegalStateException -> AppError.DataIntegrityError(e.message ?: "Data integrity or state issue", e)
                 else -> AppError.UnknownError("Failed to create folder", e)
             }
@@ -701,7 +749,7 @@ class FolderRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed transaction to update folder: ID='${folder.id}', name='${folder.name}', parentFolderId='${folder.parentFolderId}', type='${folder.type}'")
             val appError = when (e) {
-                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data", e)
+                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data")
                 is IllegalStateException -> AppError.DataIntegrityError(e.message ?: "Data integrity or state issue", e)
                 is FolderNotEmptyException -> AppError.FolderNotEmptyError(folder.id, e.message, e)
                 else -> AppError.UnknownError("Failed to update folder", e)
@@ -730,7 +778,7 @@ class FolderRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed transaction to delete folder: ID='$folderId'")
             val appError = when (e) {
-                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data", e)
+                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data")
                 is FolderNotEmptyException -> AppError.FolderNotEmptyError(folderId, e.message, e)
                 is DataNotFoundException -> AppError.DataNotFound(e.message, e)
                 is IllegalStateException -> AppError.DataIntegrityError(e.message ?: "Unexpected state issue during deletion", e)
@@ -755,7 +803,7 @@ class BrowserStatsRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to record browser usage for: $packageName")
             val appError = when (e) {
-                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data", e)
+                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data")
                 else -> AppError.UnknownError("Failed to record browser usage", e)
             }
             MyResult.Error(appError)
@@ -811,7 +859,7 @@ class BrowserStatsRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to delete browser stat for: $packageName")
             val appError = when (e) {
-                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data", e)
+                is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data")
                 else -> AppError.UnknownError("Failed to delete browser stat", e)
             }
             MyResult.Error(appError)

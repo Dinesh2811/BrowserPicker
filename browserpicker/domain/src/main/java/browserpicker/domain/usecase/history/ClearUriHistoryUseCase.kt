@@ -27,8 +27,8 @@ class ClearUriHistoryUseCaseImpl @Inject constructor(
                 onSuccess()
             },
             onFailure = {
-                Timber.e(it, "Failed to clear URI history.")
-                onError(it.toDomainError("Failed to clear history."))
+                Timber.e(it.cause, "Failed to clear URI history.")
+                it.cause?.let { it1 -> onError(it1.toDomainError("Failed to clear history.")) }
             }
         )
     }

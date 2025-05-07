@@ -2,6 +2,7 @@ package browserpicker.domain.usecase.history
 
 import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
+import browserpicker.core.results.DomainResult
 import browserpicker.core.results.MyResult
 import browserpicker.core.results.UriValidationError
 import browserpicker.domain.model.InteractionAction
@@ -38,7 +39,7 @@ class HandleInterceptedUriUseCaseImpl @Inject constructor(
         }
 
         // Use the injected UriParser to validate and get the parsed model
-        val parseResult: MyResult<ParsedUri?, UriValidationError> = uriParser.parseAndValidateWebUri(uriString)
+        val parseResult: DomainResult<ParsedUri?, UriValidationError> = uriParser.parseAndValidateWebUri(uriString)
 
         val parsedUri = parseResult.getOrNull()
         if (parsedUri == null) {

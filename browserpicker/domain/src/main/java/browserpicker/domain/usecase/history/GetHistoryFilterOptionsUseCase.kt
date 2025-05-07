@@ -1,5 +1,6 @@
 package browserpicker.domain.usecase.history
 
+import browserpicker.core.results.DomainResult
 import browserpicker.domain.model.query.FilterOptions
 import browserpicker.domain.repository.HostRuleRepository
 import browserpicker.domain.repository.UriHistoryRepository
@@ -23,14 +24,14 @@ class GetHistoryFilterOptionsUseCaseImpl @Inject constructor(
     override fun invoke(): Flow<FilterOptions> {
         Timber.d("Getting filter options...")
         return combine(
-            uriHistoryRepository.getDistinctHosts().distinctUntilChanged().catch { emit(emptyList()) },
+            uriHistoryRepository.getDistinctHosts().distinctUntilChanged().catch { emit(DomainResult.Success(emptyList())) },
             hostRuleRepository.getDistinctRuleHosts().distinctUntilChanged().catch { emit(emptyList()) },
-            uriHistoryRepository.getDistinctChosenBrowsers().distinctUntilChanged().catch { emit(emptyList()) }
+            uriHistoryRepository.getDistinctChosenBrowsers().distinctUntilChanged().catch { emit(DomainResult.Success(emptyList())) }
         ) { historyHosts, ruleHosts, browsers ->
             FilterOptions(
-                distinctHistoryHosts = historyHosts,
+                distinctHistoryHosts = historyHosts.getOrNull()!!,
                 distinctRuleHosts = ruleHosts,
-                distinctChosenBrowsers = browsers
+                distinctChosenBrowsers = browsers.getOrNull()!!
             )
         }
     }

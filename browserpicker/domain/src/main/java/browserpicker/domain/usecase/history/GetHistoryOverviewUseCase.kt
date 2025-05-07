@@ -37,9 +37,9 @@ class GetHistoryOverviewUseCaseImpl @Inject constructor(
             repository.getDateCounts(query)
         ) { total, groups, dates ->
             HistoryOverview(
-                totalCount = total,
-                groupCounts = groups,
-                dateCounts = dates
+                totalCount = total.getOrNull()!!,
+                groupCounts = groups.getOrNull()!!,
+                dateCounts = dates.getOrNull()!!
             )
         }.distinctUntilChanged() // Avoid unnecessary updates if underlying data hasn't changed results
             .catch { e ->
