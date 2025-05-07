@@ -20,11 +20,11 @@ data class UriRecord(
     init {
         require(uriString.isNotBlank()) { "uriString must not be blank" }
         require(host.isNotBlank()) { "host must not be blank" }
-        require(uriSource != UriSource.UNKNOWN) { "uriSource must be a valid type" }
-        require(interactionAction != InteractionAction.UNKNOWN) { "interactionAction must be a valid type" }
-        if (chosenBrowserPackage != null) {
-            require(chosenBrowserPackage.isNotBlank()) { "chosenBrowserPackage must not be blank if provided" }
-        }
+//        require(uriSource != UriSource.UNKNOWN) { "uriSource must be a valid type" }
+//        require(interactionAction != InteractionAction.UNKNOWN) { "interactionAction must be a valid type" }
+//        if (chosenBrowserPackage != null) {
+//            require(chosenBrowserPackage.isNotBlank()) { "chosenBrowserPackage must not be blank if provided" }
+//        }
     }
 }
 
