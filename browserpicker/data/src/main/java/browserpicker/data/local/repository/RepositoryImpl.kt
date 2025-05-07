@@ -153,7 +153,7 @@ class UriHistoryRepositoryImpl @Inject constructor(
         return when {
             uriString.isBlank() -> AppError.ValidationError("URI string cannot be blank or empty")
             host.isBlank() -> AppError.ValidationError("Host cannot be blank or empty")
-            source == UriSource.UNKNOWN -> AppError.ValidationError("URI Source cannot be UNKNOWN; use a valid source type")
+//            source == UriSource.UNKNOWN -> AppError.ValidationError("URI Source cannot be UNKNOWN; use a valid source type")
             action == InteractionAction.UNKNOWN -> AppError.ValidationError("Interaction Action cannot be UNKNOWN; use a valid action type")
             chosenBrowser != null && chosenBrowser.isBlank() -> AppError.ValidationError("Chosen browser package name cannot be blank if provided.")
             else -> null
@@ -182,7 +182,7 @@ class UriHistoryRepositoryImpl @Inject constructor(
             when {
                 uriString.isBlank() -> throw IllegalArgumentException("URI string cannot be blank or empty")
                 host.isBlank() -> throw IllegalArgumentException("Host cannot be blank or empty")
-                source == UriSource.UNKNOWN -> throw IllegalArgumentException("URI Source cannot be UNKNOWN; use a valid source type")
+//                source == UriSource.UNKNOWN -> throw IllegalArgumentException("URI Source cannot be UNKNOWN; use a valid source type")
                 action == InteractionAction.UNKNOWN -> throw IllegalArgumentException("Interaction Action cannot be UNKNOWN; use a valid action type")
             }
             if (chosenBrowser != null) {
