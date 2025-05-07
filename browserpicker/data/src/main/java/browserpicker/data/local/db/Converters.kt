@@ -1,6 +1,7 @@
 package browserpicker.data.local.db
 
 import androidx.room.TypeConverter
+import browserpicker.core.utils.logDebug
 import browserpicker.domain.model.FolderType
 import browserpicker.domain.model.InteractionAction
 import browserpicker.domain.model.UriSource
@@ -33,7 +34,7 @@ object Converters {
 
     @TypeConverter
     @JvmStatic
-    fun intToUriSourceNN(value: Int): UriSource? = UriSource.fromValue(value) // Throws if invalid
+    fun intToUriSourceNN(value: Int): UriSource = UriSource.fromValue(value)
 
     @TypeConverter
     @JvmStatic

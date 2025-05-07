@@ -4,6 +4,8 @@ import androidx.compose.runtime.Immutable
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import androidx.core.net.toUri
+import browserpicker.core.utils.logDebug
+import browserpicker.core.utils.logInfo
 import browserpicker.domain.service.UriParser
 
 @Immutable @Serializable
@@ -13,18 +15,25 @@ data class UriRecord(
     val host: String,
     val associatedHostRuleId: Long? = null,
     val timestamp: Instant,
-    val uriSource: UriSource,
+    val uriSource: UriSource = UriSource.INTENT,
     val interactionAction: InteractionAction,
     val chosenBrowserPackage: String? = null,
 ) {
     init {
+        logDebug("$uriSource     $interactionAction", "log_UriRecord")
+        if (uriSource == UriSource.INTENT || uriSource == UriSource.CLIPBOARD || uriSource == UriSource.MANUAL) {
+
+        } else {
+            logInfo("$uriSource", "log_UriRecord")
+        }
         require(uriString.isNotBlank()) { "uriString must not be blank" }
         require(host.isNotBlank()) { "host must not be blank" }
-//        require(uriSource != UriSource.UNKNOWN) { "uriSource must be a valid type" }
         require(interactionAction != InteractionAction.UNKNOWN) { "interactionAction must be a valid type" }
-//        if (chosenBrowserPackage != null) {
-//            require(chosenBrowserPackage.isNotBlank()) { "chosenBrowserPackage must not be blank if provided" }
-//        }
+        require(uriSource != UriSource.UNKNOWN) { "uriSource must be a valid type" }
+//        require(uriSource == UriSource.INTENT || uriSource == UriSource.CLIPBOARD || uriSource == UriSource.MANUAL) { "uriSource must be a valid type" }
+        if (chosenBrowserPackage != null) {
+            require(chosenBrowserPackage.isNotBlank()) { "chosenBrowserPackage must not be blank if provided" }
+        }
     }
 }
 

@@ -5,16 +5,27 @@ import browserpicker.domain.model.*
 
 object UriRecordMapper {
     fun toDomainModel(entity: UriRecordEntity): UriRecord {
-        val domainUriSource = UriSource.fromValue(entity.uriSource)
-            // ?: throw MappingException("Invalid UriSource value '${entity.uriSource}' found in database for UriRecord ID ${entity.id}")
-        val domainInteractionAction = InteractionAction.fromValue(entity.interactionAction)
+//        val domainUriSource = UriSource.fromValue(entity.uriSource)
+//            // ?: throw MappingException("Invalid UriSource value '${entity.uriSource}' found in database for UriRecord ID ${entity.id}")
+//        val domainInteractionAction = InteractionAction.fromValue(entity.interactionAction)
+
+        val domainUriSource = if (entity.uriSource == UriSource.UNKNOWN.value) {
+            UriSource.INTENT
+        } else {
+            UriSource.fromValue(entity.uriSource)
+        }
+        val domainInteractionAction = if (entity.interactionAction == InteractionAction.UNKNOWN.value) {
+            InteractionAction.UNKNOWN
+        } else {
+            InteractionAction.fromValue(entity.interactionAction)
+        }
 
         return UriRecord(
             id = entity.id,
             uriString = entity.uriString,
             host = entity.host,
             timestamp = entity.timestamp,
-            uriSource = domainUriSource?: UriSource.INTENT,
+            uriSource = domainUriSource,
             interactionAction = domainInteractionAction,
             chosenBrowserPackage = entity.chosenBrowserPackage,
             associatedHostRuleId = entity.associatedHostRuleId
@@ -63,8 +74,14 @@ object HostRuleMapper {
 
 object FolderMapper  {
     fun toDomainModel(entity: FolderEntity): Folder {
-        val domainFolderType = FolderType.fromValue(entity.folderType)
-            //  ?: throw MappingException("Invalid FolderType value '${entity.folderType}' found in database for Folder ID ${entity.id}")
+//        val domainFolderType = FolderType.fromValue(entity.folderType)
+//            //  ?: throw MappingException("Invalid FolderType value '${entity.folderType}' found in database for Folder ID ${entity.id}")
+
+        val domainFolderType = if (entity.folderType == FolderType.UNKNOWN.value) {
+            FolderType.UNKNOWN
+        } else {
+            FolderType.fromValue(entity.folderType)
+        }
 
         return Folder(
             id = entity.id,
