@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.*
 import kotlin.random.Random
 import java.io.*
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Serializable
 data class UserDto(
@@ -23,16 +25,8 @@ data class User(
 
 sealed class Result<out S, out F>
 
-data class Success<out S>(val data: S) : Result<S, Nothing>()
+//data class Success<out S>(val data: S) : Result<S, Nothing>()
 
-sealed class Failure : Result<Nothing, Failure>() {
-    data class ValidationError(val errors: List<ValidationErrorDetail>) : Failure()
-    data class ServerError(val message: String) : Failure()
-    data class NetworkError(val message: String) : Failure()
-    data class UnknownError(val message: String) : Failure()
-    // Add a specific failure type if an empty result IS a business failure in some use cases
-    data object NoDataFound : Failure() // Example of a domain-specific "failure" for empty result
-}
 
 data class ValidationErrorDetail(
     val field: String?,
@@ -111,69 +105,145 @@ class UserApiDataSourceImpl : UserApiDataSource {
 
 interface UserRepository {
     // Returns a single Result for a list
-    suspend fun getUsers(): Result<List<User>, Failure>
+    suspend fun getUsers(): DomainResult<List<User>, Failure>
 
     // Returns a Flow of Results for a list stream
-    fun getUsersFlow(): Flow<Result<List<User>, Failure>>
+    fun getUsersFlow(): Flow<DomainResult<List<User>, Failure>>
 }
 
 
-class UserRepositoryImpl(
-    private val userApiDataSource: UserApiDataSource // Dependency on DataSource interface
+// Annotate RepositoryImpl constructor with @Inject and inject the mapper
+@Singleton // Repository is often a singleton
+class UserRepositoryImpl @Inject constructor(
+    private val userApiDataSource: UserApiDataSource, // Injected DataSource
+    private val userMapper: UserMapper // Injected Mapper (using interface)
 ) : UserRepository {
 
-    // Implementation for single list return
-    override suspend fun getUsers(): Result<List<User>, Failure> {
+    // Example using try-catch in Repository
+    override suspend fun getUsers(): DomainResult<List<User>, Failure> {
         return try {
             val userDtos = userApiDataSource.getUsers()
-            println("Repository: Received ${userDtos.size} DTOs from DataSource for getUsers")
-            // Map DTOs to Domain Models
-            val users = userDtos.map { userDto ->
-                // Basic mapping validation: handle potential nulls from DTO
-                User(
-                    id = userDto.id,
-                    name = userDto.name ?: "Unnamed User", // Map null name to a default
-                    email = userDto.email ?: ""
-                )
-            }
-            // IMPORTANT: An empty list from DataSource is a Success at the Repository level
-            println("Repository: Returning Success with ${users.size} Users for getUsers")
-            Success(users)
+            val users = userMapper.mapDtoListToDomainList(userDtos) // Mapping can also throw
+
+            DomainResult.Success(users)
+
         } catch (e: IOException) {
-            println("Repository: Caught IOException for getUsers: ${e.message}")
-            Failure.NetworkError(e.message ?: "Unknown network error")
+            // Explicitly catch network errors
+            DomainResult.Failure(Failure.NetworkError(e.message ?: "Network error"))
+//        } catch (e: DataMappingException) {
+//            // Explicitly catch mapping errors
+//            DomainResult.Failure(Failure.DataMappingError(e.message ?: "Data mapping failed"))
         } catch (e: Exception) {
-            println("Repository: Caught other Exception for getUsers: ${e.message}")
-            Failure.ServerError("Could not fetch users: ${e.message}")
+            // Catch any other unexpected exceptions
+            DomainResult.Failure(Failure.Unknown(e))
+        }
+    }
+    
+    // Example using runCatching in Repository
+     suspend fun getUsers1(): DomainResult<List<User>, Failure> {
+        return runCatching {
+            // Code that might throw exceptions goes here
+            val userDtos = userApiDataSource.getUsers()
+            val users = userMapper.mapDtoListToDomainList(userDtos)
+            users // The result of the success path
+        }.fold(
+            onSuccess = { users ->
+                // Map kotlin.Result.Success to DomainResult.Success
+                DomainResult.Success(users)
+            },
+            onFailure = { throwable ->
+                // Map kotlin.Result.Failure (Throwable) to DomainResult.Failure (Failure subtype)
+                when (throwable) {
+                    is IOException -> Failure.NetworkError(throwable.message ?: "Network error")
+//                    is DataMappingException -> Failure.DataMappingError(throwable.message ?: "Data mapping failed")
+                    else -> Failure.Unknown(throwable)
+                }.let { failure ->
+                    DomainResult.Failure(failure) // Wrap the mapped failure in DomainResult.Failure
+                }
+            }
+        )
+    }
+
+
+    suspend fun getUsers2(): DomainResult<List<User>, Failure> {
+        return runCatching {
+            val userDtos = userApiDataSource.getUsers()
+            userMapper.mapDtoListToDomainList(userDtos) // This is what goes into runCatching
+        }.toDomainResult { throwable -> // Use the new extension function
+            // Provide the mapping from Throwable to your Failure subtypes
+            when (throwable) {
+                is IOException -> Failure.NetworkError(throwable.message ?: "Network error")
+//                is DataMappingException -> Failure.DataMappingError(throwable.message ?: "Data mapping failed")
+                else -> Failure.Unknown(throwable)
+            }
         }
     }
 
     // Implementation for Flow of lists return
-    override fun getUsersFlow(): Flow<Result<List<User>, Failure>> {
+    override fun getUsersFlow(): Flow<DomainResult<List<User>, Failure>> {
         return userApiDataSource.getUsersFlow() // Get the raw flow from DataSource
             .map { userDtos ->
                 println("Repository: Received ${userDtos.size} DTOs from DataSource in Flow")
-                // Map DTOs to Domain Models within the flow pipeline
-                val users = userDtos.map { userDto ->
-                    // Basic mapping validation
-                    User(
-                        id = userDto.id,
-                        name = userDto.name ?: "Unnamed User",
-                        email = userDto.email ?: ""
-                    )
-                }
-                // IMPORTANT: Each emitted empty list from DataSource is a Success emission in the Flow
+                // --- Use the injected mapper to convert the list within the flow pipeline ---
+                val users = userMapper.mapDtoListToDomainList(userDtos)
+                // ------------------------------------------------------------------------
                 println("Repository: Emitting Success with ${users.size} Users in Flow")
-                Success(users) as Result<List<User>, Failure> // Cast needed for sealed class variance
+                DomainResult.Success(users) as DomainResult<List<User>, Failure> // Cast needed
             }
             .catch { e ->
-                // Catch exceptions emitted by the DataSource flow
+                // Catch exceptions from the DataSource flow or potential mapping exceptions
                 println("Repository: Caught exception in Flow: ${e.message}")
-                // Emit a Failure result downstream instead of letting the exception crash the flow consumer
+                // Emit a Failure result downstream
                 when (e) {
-                    is IOException -> emit(Failure.NetworkError(e.message ?: "Unknown network error"))
-                    else -> emit(Failure.ServerError("Could not fetch users stream: ${e.message}"))
+                    is IOException -> emit(DomainResult.Failure(Failure.NetworkError(e.message ?: "Unknown network error")))
+                    // if (e is CustomMappingException) {
+                    //     emit(DomainResult.Failure(Failure.DataMappingError(e.message ?: "Mapping failed in flow")))
+                    // } else {
+                    else -> emit(DomainResult.Failure(Failure.ServerError("Could not fetch users stream: ${e.message}")))
+                    // }
                 }
             }
     }
+}
+
+
+// Optional: Define an interface for better testability
+interface UserMapper {
+    fun mapDtoToDomain(dto: UserDto): User
+    fun mapDtoListToDomainList(dtos: List<UserDto>): List<User>
+    // Add mapping from Entity to Domain if you have a database source
+    // fun mapEntityToDomain(entity: UserEntity): User
+    // fun mapEntityListToDomainList(entities: List<UserEntity>): List<User>
+}
+
+
+// Annotate the constructor with @Inject to allow Hilt to create instances
+@Singleton // Annotate with a scope if it's stateless and reusable
+class UserDtoMapperImpl @Inject constructor() : UserMapper { // Implement the interface
+
+    // Implement the mapping logic
+    override fun mapDtoToDomain(dto: UserDto): User {
+        // Basic mapping validation/handling potential nulls from DTO
+        // If mapping fails critically (e.g., required non-nullable field is null),
+        // you might throw a custom DataMappingException here that the Repository catches.
+        // For simplicity, handling null with a default here.
+        if (dto.name == null) {
+            // Depending on strictness, you might throw or map to a default/error state earlier
+            // For this example, we'll assume mapping null name to "Unnamed User" is acceptable here.
+            // In a stricter scenario, the Repository's catch block would handle an exception thrown here.
+        }
+
+        return User(
+            id = dto.id,
+            name = dto.name ?: "Unnamed User", // Handle potential null name from DTO
+            email = dto.email ?: "" // Handle potential null email from DTO
+        )
+    }
+
+    // Implement list mapping (often just maps each item)
+    override fun mapDtoListToDomainList(dtos: List<UserDto>): List<User> {
+        return dtos.map { mapDtoToDomain(it) }
+    }
+
+    // Implement other mapping methods as needed (e.g., Entity to Domain)
 }

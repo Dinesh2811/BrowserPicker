@@ -3,6 +3,7 @@ package com.dinesh.playground.test
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlin.Result as KotlinResult
 
 /**
  * A sealed class representing the outcome of a domain operation.
@@ -175,6 +176,15 @@ fun <S> Flow<DomainResult<S, Failure>>.catchUnexpected(): Flow<DomainResult<S, F
     }
 }
 
+
+inline fun <S> KotlinResult<S>.toDomainResult(
+    failureMapper: (Throwable) -> Failure
+): DomainResult<S, Failure> {
+    return fold(
+        onSuccess = { data -> DomainResult.Success(data) },
+        onFailure = { throwable -> DomainResult.Failure(failureMapper(throwable)) }
+    )
+}
 
 // --- Example Usage in Repository ---
 
