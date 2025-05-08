@@ -47,8 +47,8 @@ class SaveHostRuleUseCaseImpl @Inject constructor(
                 onSuccess(ruleId)
             },
             onFailure = { throwable ->
-                Timber.e(throwable, "Failed to save host rule for: $host")
-                onError(throwable.toDomainError("Failed to save rule."))
+                Timber.e(throwable.cause, "Failed to save host rule for: $host")
+                throwable.cause?.let { onError(it.toDomainError("Failed to save rule.")) }
             }
         )
     }

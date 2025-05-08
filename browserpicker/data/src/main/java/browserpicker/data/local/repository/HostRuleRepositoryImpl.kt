@@ -4,7 +4,7 @@ import androidx.room.withTransaction
 import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
 import browserpicker.core.results.AppError
-import browserpicker.core.results.MyResult
+import browserpicker.core.results.DomainResult
 import browserpicker.data.local.datasource.FolderLocalDataSource
 import browserpicker.data.local.datasource.HostRuleLocalDataSource
 import browserpicker.data.local.db.BrowserPickerDatabase
@@ -51,7 +51,7 @@ class HostRuleRepositoryImpl @Inject constructor(
             .flowOn(ioDispatcher)
     }
 
-    override suspend fun getHostRuleById(id: Long): MyResult<HostRule?, AppError> = withContext(ioDispatcher) {
+    override suspend fun getHostRuleById(id: Long): DomainResult<HostRule?, AppError> = withContext(ioDispatcher) {
         try {
             val entity = hostRuleDataSource.getHostRuleById(id)
             val rule = entity?.let {
@@ -59,14 +59,14 @@ class HostRuleRepositoryImpl @Inject constructor(
                     .onFailure { e -> Timber.e(e, "[Repository] Failed to map HostRuleEntity for ID: %d", id) }
                     .getOrNull()
             }
-            MyResult.Success(rule)
+            DomainResult.Success(rule)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to get HostRule by ID: %d", id)
             val appError = when (e) {
                 is IllegalArgumentException -> AppError.DataIntegrityError("Data mapping error for host rule $id", e)
                 else -> AppError.UnknownError("Failed to get host rule $id", e)
             }
-            MyResult.Error(appError)
+            DomainResult.Failure(appError)
         }
     }
 
@@ -165,7 +165,7 @@ class HostRuleRepositoryImpl @Inject constructor(
         folderId: Long?,
         preferredBrowser: String?,
         isPreferenceEnabled: Boolean,
-    ): MyResult<Long, AppError> = browserPickerDatabase.withTransaction {
+    ): DomainResult<Long, AppError> = browserPickerDatabase.withTransaction {
         try {
             val trimmedHost = host.trim()
             if (trimmedHost.isEmpty()) {
@@ -229,7 +229,7 @@ class HostRuleRepositoryImpl @Inject constructor(
 
             val entityToSave = HostRuleMapper.toEntity(ruleToSave)
             val ruleId = hostRuleDataSource.upsertHostRule(entityToSave)
-            MyResult.Success(ruleId)
+            DomainResult.Success(ruleId)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed transaction to save host rule: host=$host, status=$status, folderId=$folderId, preferredBrowser=$preferredBrowser \n ${e.message}")
             val appError = when (e) {
@@ -237,35 +237,35 @@ class HostRuleRepositoryImpl @Inject constructor(
                 is IllegalStateException -> AppError.DataIntegrityError(e.message ?: "Data integrity or state issue", e)
                 else -> AppError.UnknownError("Failed to save host rule", e)
             }
-            MyResult.Error(appError)
+            DomainResult.Failure(appError)
         }
     }
 
-    override suspend fun deleteHostRuleById(id: Long): MyResult<Unit, AppError> = withContext(ioDispatcher) {
+    override suspend fun deleteHostRuleById(id: Long): DomainResult<Unit, AppError> = withContext(ioDispatcher) {
         try {
             val deleted = hostRuleDataSource.deleteHostRuleById(id)
             if (deleted) {
-                MyResult.Success(Unit)
+                DomainResult.Success(Unit)
             } else {
                 Timber.w("[Repository] Host rule with ID $id not found for deletion or delete failed. Reporting as success.")
-                MyResult.Success(Unit)
+                DomainResult.Success(Unit)
             }
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to delete host rule by ID: $id")
-            MyResult.Error(AppError.UnknownError("Failed to delete host rule $id", e))
+            DomainResult.Failure(AppError.UnknownError("Failed to delete host rule $id", e))
         }
     }
 
-    override suspend fun deleteHostRuleByHost(host: String): MyResult<Unit, AppError> = withContext(ioDispatcher) {
+    override suspend fun deleteHostRuleByHost(host: String): DomainResult<Unit, AppError> = withContext(ioDispatcher) {
         try {
             val trimmedHost = host.trim()
             if (trimmedHost.isEmpty()) throw IllegalArgumentException("Host cannot be blank for deletion.")
             val deleted = hostRuleDataSource.deleteHostRuleByHost(trimmedHost)
             if (deleted) {
-                MyResult.Success(Unit)
+                DomainResult.Success(Unit)
             } else {
                 Timber.w("[Repository] Host rule for host '$trimmedHost' not found for deletion or delete failed. Reporting as success.")
-                MyResult.Success(Unit)
+                DomainResult.Success(Unit)
             }
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to delete host rule by host: $host")
@@ -273,17 +273,17 @@ class HostRuleRepositoryImpl @Inject constructor(
                 is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data")
                 else -> AppError.UnknownError("Failed to delete host rule by host", e)
             }
-            MyResult.Error(appError)
+            DomainResult.Failure(appError)
         }
     }
 
-    override suspend fun clearFolderAssociation(folderId: Long): MyResult<Unit, AppError> = withContext(ioDispatcher) {
+    override suspend fun clearFolderAssociation(folderId: Long): DomainResult<Unit, AppError> = withContext(ioDispatcher) {
         try {
             hostRuleDataSource.clearFolderIdForRules(folderId)
-            MyResult.Success(Unit)
+            DomainResult.Success(Unit)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to clear folder association for folderId: $folderId")
-            MyResult.Error(AppError.UnknownError("Failed to clear folder association for folder $folderId", e))
+            DomainResult.Failure(AppError.UnknownError("Failed to clear folder association for folder $folderId", e))
         }
     }
 

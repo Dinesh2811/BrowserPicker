@@ -36,9 +36,9 @@ class DeleteHostRuleUseCaseImpl @Inject constructor(
                 onSuccess()
             },
             onFailure = { throwable ->
-                Timber.e(throwable, "Failed to delete host rule for: $host")
+                Timber.e(throwable.cause, "Failed to delete host rule for: $host")
                 // Check if it was just 'not found' vs other error? Repository logs this.
-                onError(throwable.toDomainError("Failed to delete rule."))
+                throwable.cause?.let { onError(it.toDomainError("Failed to delete rule.")) }
             }
         )
     }
