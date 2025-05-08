@@ -46,7 +46,7 @@ class RulesViewModel @Inject constructor(
 
     // Folders matching the current rule type
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val foldersFlow: Flow<List<Folder>> = _currentType
+    private val foldersFlow: Flow<DomainResult<List<Folder>, AppError>> = _currentType
         .flatMapLatest { type ->
             val folderType = if (type == UriStatus.BOOKMARKED) FolderType.BOOKMARK else FolderType.BLOCK
             getFoldersUseCase(parentFolderId = null, type = folderType) // Get root folders first
@@ -71,7 +71,7 @@ class RulesViewModel @Inject constructor(
                     currentState.copy(
                         isLoading = false, // Assuming loading handled internally by flows for now
                         rules = rules.getOrNull()!!,
-                        folders = folders,
+                        folders = folders.getOrNull()!!,
                         currentType = type,
                         selectedFolderId = folderId,
                         // Keep dialog state and messages unless explicitly changed

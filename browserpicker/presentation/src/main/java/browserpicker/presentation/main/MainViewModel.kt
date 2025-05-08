@@ -87,7 +87,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch { // Use viewModelScope for fetching data
             // Fetch necessary context data (rule, folders)
             val currentRule = if (host.isNotBlank()) getHostRuleUseCase(host).firstOrNull() else null
-            val folders = getFoldersUseCase(null, FolderType.BOOKMARK).firstOrNull() ?: emptyList()
+            val folders = (getFoldersUseCase(null, FolderType.BOOKMARK).firstOrNull())?.getOrNull() ?: emptyList()
 
             val context = PickerSheetContext(
                 uriString = uri,

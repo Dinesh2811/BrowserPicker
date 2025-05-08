@@ -75,7 +75,7 @@ class PickerViewModel @Inject constructor(
             // 3. Load available bookmark folders
             val foldersFlow = getFoldersUseCase(parentFolderId = null, type = FolderType.BOOKMARK)
                 // TODO: Load full hierarchy if needed for a nested dropdown
-                .catch { emit(emptyList()) } // Handle error fetching folders
+//                .catch { emit(emptyList()) } // Handle error fetching folders
 
             // Combine results
             combine(ruleFlow, foldersFlow) { rule, folders ->
@@ -86,7 +86,7 @@ class PickerViewModel @Inject constructor(
                         isLoading = false,
                         browsers = dummyBrowsers,
                         currentRule = rule?.getOrNull(),
-                        availableBookmarkFolders = folders,
+                        availableBookmarkFolders = folders.getOrNull()!!,
                         // Update rule ID from fetched rule if initial was null but rule exists
                         associatedHostRuleId = it.associatedHostRuleId ?: rule?.getOrNull()?.id
                     )

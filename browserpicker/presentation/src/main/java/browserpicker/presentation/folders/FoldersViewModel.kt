@@ -2,6 +2,8 @@ package browserpicker.presentation.folders
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import browserpicker.core.results.AppError
+import browserpicker.core.results.DomainResult
 import browserpicker.domain.model.*
 import browserpicker.domain.service.DomainError
 import browserpicker.domain.usecase.folders.CreateFolderUseCase
@@ -37,7 +39,7 @@ class FoldersViewModel @Inject constructor(
 
     // Flow that fetches ALL folders of the current type
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val allFoldersFlow: Flow<List<Folder>> = _currentType
+    private val allFoldersFlow: Flow<DomainResult<List<Folder>, AppError>> = _currentType
         .flatMapLatest { type ->
             // Replace with actual use case fetching *all* folders by type
             // For now, simulate with root fetching - THIS NEEDS FIXING
@@ -56,7 +58,7 @@ class FoldersViewModel @Inject constructor(
                 _currentType
             ) { flatList, type ->
                 // Build tree structure from flat list
-                val tree = buildFolderTree(flatList)
+                val tree = buildFolderTree(flatList.getOrNull()!!)
                 _uiState.update { currentState ->
                     currentState.copy(
                         isLoading = false, // Manage loading state more granularly if needed

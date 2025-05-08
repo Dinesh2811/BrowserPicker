@@ -1,5 +1,7 @@
 package browserpicker.domain.usecase.folders
 
+import browserpicker.core.results.AppError
+import browserpicker.core.results.DomainResult
 import browserpicker.domain.model.Folder
 import browserpicker.domain.model.FolderType
 import browserpicker.domain.repository.FolderRepository
@@ -8,13 +10,13 @@ import timber.log.Timber
 import javax.inject.Inject
 
 interface GetFoldersUseCase {
-    operator fun invoke(parentFolderId: Long?, type: FolderType): Flow<List<Folder>>
+    operator fun invoke(parentFolderId: Long?, type: FolderType): Flow<DomainResult<List<Folder>, AppError>>
 }
 
 class GetFoldersUseCaseImpl @Inject constructor(
     private val repository: FolderRepository
 ) : GetFoldersUseCase {
-    override fun invoke(parentFolderId: Long?, type: FolderType): Flow<List<Folder>> {
+    override fun invoke(parentFolderId: Long?, type: FolderType): Flow<DomainResult<List<Folder>, AppError>> {
         return if (parentFolderId == null) {
             Timber.d("Getting root folders of type: $type")
             repository.getRootFoldersByType(type)

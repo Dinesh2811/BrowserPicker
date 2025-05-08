@@ -10,6 +10,7 @@ import browserpicker.data.FolderNotEmptyException
 import browserpicker.data.local.datasource.FolderLocalDataSource
 import browserpicker.data.local.datasource.HostRuleLocalDataSource
 import browserpicker.data.local.db.BrowserPickerDatabase
+import browserpicker.data.local.entity.FolderEntity
 import browserpicker.data.local.mapper.FolderMapper
 import browserpicker.domain.model.Folder
 import browserpicker.domain.model.FolderType
@@ -49,105 +50,127 @@ class FolderRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getFolder(folderId: Long): Flow<Folder?> {
+    override fun getFolder(folderId: Long): Flow<DomainResult<Folder?, AppError>> {
         return folderDataSource.getFolder(folderId)
-            .map { entity ->
+            .map<FolderEntity?, DomainResult<Folder?, AppError>> { entity ->
                 entity?.let {
-                    runCatching {
-                        FolderMapper.toDomainModel(it)
-                    }.onFailure { e ->
-                        Timber.e(e, "[Repository] Failed to map FolderEntity %d to domain model during getFolder flow, returning null.", it.id)
-                    }.getOrNull()
-                }
+                    runCatching { FolderMapper.toDomainModel(it) }
+                        .fold(
+                            onSuccess = { DomainResult.Success(it) },
+                            onFailure = {
+                                Timber.e(it, "[Repository] Failed to map FolderEntity %d to domain model during getFolder flow.", entity.id)
+                                DomainResult.Failure(AppError.DataMappingError("Failed to map folder data."))
+                            }
+                        )
+                } ?: DomainResult.Success(null)
             }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching Folder by id: %d", folderId)
-                emit(null)
+                emit(DomainResult.Failure(AppError.DatabaseError("Error fetching folder from database.", e)))
             }
             .flowOn(ioDispatcher)
     }
 
-    override fun getChildFolders(parentFolderId: Long): Flow<List<Folder>> {
+    override fun getChildFolders(parentFolderId: Long): Flow<DomainResult<List<Folder>, AppError>> {
         return folderDataSource.getChildFolders(parentFolderId)
-            .map { entities ->
-                entities.mapNotNull { entity ->
-                    runCatching {
-                        FolderMapper.toDomainModel(entity)
-                    }.onFailure { e ->
-                        Timber.e(e, "[Repository] Failed to map FolderEntity %d to domain model for parentId %d, skipping.", entity.id, parentFolderId)
-                    }.getOrNull()
+            .map<List<FolderEntity>, DomainResult<List<Folder>, AppError>> { entities ->
+                val mappedFolders = mutableListOf<Folder>()
+                for (entity in entities) {
+                    runCatching { FolderMapper.toDomainModel(entity) }
+                        .onSuccess { mappedFolders.add(it) }
+                        .onFailure { e ->
+                            Timber.e(e, "[Repository] Failed to map FolderEntity %d to domain model for parentId %d, skipping.", entity.id, parentFolderId)
+                            // Optionally, decide if one failed mapping should fail the whole list or just skip the item
+                            // Here we choose to skip and log.
+                        }
                 }
+                DomainResult.Success(mappedFolders)
             }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching child folders for parentId: %d", parentFolderId)
-                emit(emptyList())
+                emit(DomainResult.Failure(AppError.DatabaseError("Error fetching child folders from database.", e)))
             }
             .flowOn(ioDispatcher)
     }
 
-    override fun getRootFoldersByType(type: FolderType): Flow<List<Folder>> {
+    override fun getRootFoldersByType(type: FolderType): Flow<DomainResult<List<Folder>, AppError>> {
         if (type == FolderType.UNKNOWN) {
-            Timber.w("[Repository] Requesting root folders with UNKNOWN type, returning empty list.")
-            return flowOf(emptyList())
+            Timber.w("[Repository] Requesting root folders with UNKNOWN type, returning empty list success.")
+            return flowOf(DomainResult.Success(emptyList()))
         }
         return folderDataSource.getRootFoldersByType(type)
-            .map { entities ->
-                entities.mapNotNull { entity ->
-                    runCatching {
-                        FolderMapper.toDomainModel(entity)
-                    }.onFailure { e ->
-                        Timber.e(e, "[Repository] Failed to map FolderEntity %d to domain model for type %s, skipping.", entity.id, type)
-                    }.getOrNull()
+            .map<List<FolderEntity>, DomainResult<List<Folder>, AppError>> { entities ->
+                val mappedFolders = mutableListOf<Folder>()
+                for (entity in entities) {
+                    runCatching { FolderMapper.toDomainModel(entity) }
+                        .onSuccess { mappedFolders.add(it) }
+                        .onFailure { e ->
+                            Timber.e(e, "[Repository] Failed to map FolderEntity %d to domain model for type %s, skipping.", entity.id, type)
+                        }
                 }
+                DomainResult.Success(mappedFolders)
             }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching root folders for type: %s", type)
-                emit(emptyList())
+                emit(DomainResult.Failure(AppError.DatabaseError("Error fetching root folders from database.", e)))
             }
             .flowOn(ioDispatcher)
     }
 
-    override fun getAllFoldersByType(type: FolderType): Flow<List<Folder>> {
+    override fun getAllFoldersByType(type: FolderType): Flow<DomainResult<List<Folder>, AppError>> {
         if (type == FolderType.UNKNOWN) {
-            Timber.w("[Repository] Requesting all folders with UNKNOWN type, returning empty list.")
-            return flowOf(emptyList())
+            Timber.w("[Repository] Requesting all folders with UNKNOWN type, returning empty list success.")
+            return flowOf(DomainResult.Success(emptyList()))
         }
         return folderDataSource.getAllFoldersByType(type)
-            .map { entities ->
-                entities.mapNotNull { entity ->
-                    runCatching {
-                        FolderMapper.toDomainModel(entity)
-                    }.onFailure { e ->
-                        Timber.e(e, "[Repository] Failed to map FolderEntity %d to domain model for type %s, skipping.", entity.id, type)
-                    }.getOrNull()
+            .map<List<FolderEntity>, DomainResult<List<Folder>, AppError>> { entities ->
+                val mappedFolders = mutableListOf<Folder>()
+                for (entity in entities) {
+                    runCatching { FolderMapper.toDomainModel(entity) }
+                        .onSuccess { mappedFolders.add(it) }
+                        .onFailure { e ->
+                            Timber.e(e, "[Repository] Failed to map FolderEntity %d to domain model for type %s, skipping.", entity.id, type)
+                        }
                 }
+                DomainResult.Success(mappedFolders)
             }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching all folders for type: %s", type)
-                emit(emptyList())
+                emit(DomainResult.Failure(AppError.DatabaseError("Error fetching all folders from database.", e)))
             }
             .flowOn(ioDispatcher)
     }
 
-    override suspend fun findFolderByNameAndParent(name: String, parentFolderId: Long?, type: FolderType): Folder? {
+    override suspend fun findFolderByNameAndParent(name: String, parentFolderId: Long?, type: FolderType): DomainResult<Folder?, AppError> {
         if (type == FolderType.UNKNOWN) {
-            Timber.w("[Repository] Finding folder with UNKNOWN type, returning null.")
-            return null
+            Timber.w("[Repository] Finding folder with UNKNOWN type, returning null success.")
+            return DomainResult.Success(null)
         }
         return runCatching {
             withContext(ioDispatcher) {
                 val entity = folderDataSource.findFolderByNameAndParent(name.trim(), parentFolderId, type)
                 entity?.let {
-                    runCatching {
-                        FolderMapper.toDomainModel(it)
-                    }.onFailure { e ->
-                        Timber.e(e, "[Repository] Failed to map FolderEntity %d to domain model during find by name/parent, returning null.", it.id)
-                    }.getOrNull()
-                }
+                    runCatching { FolderMapper.toDomainModel(it) }
+                        .fold(
+                            onSuccess = { DomainResult.Success(it) },
+                            onFailure = {
+                                Timber.e(it, "[Repository] Failed to map FolderEntity %d to domain model during find by name/parent.", entity.id)
+                                DomainResult.Failure(AppError.DataMappingError("Failed to map folder data."))
+                            }
+                        )
+                } ?: DomainResult.Success(null)
             }
-        }.onFailure { e ->
-            Timber.e(e, "[Repository] Failed to find folder by name/parent: Name='%s', Parent='%s', Type='%s'", name, parentFolderId, type)
-        }.getOrNull()
+        }.fold(
+            onSuccess = { it }, // The inner result is already a DomainResult
+            onFailure = {
+                Timber.e(it, "[Repository] Failed to find folder by name/parent: Name='%s', Parent='%s', Type='%s'", name, parentFolderId, type)
+                val appError = when (it) {
+                    is IllegalArgumentException -> AppError.ValidationError(it.message ?: "Invalid input data")
+                    else -> AppError.DatabaseError("Error finding folder by name and parent.", it)
+                }
+                DomainResult.Failure(appError)
+            }
+        )
     }
 
     override suspend fun createFolder(
