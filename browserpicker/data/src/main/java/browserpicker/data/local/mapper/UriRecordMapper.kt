@@ -1,12 +1,14 @@
 package browserpicker.data.local.mapper
 
+import android.util.Log
 import browserpicker.data.local.entity.*
 import browserpicker.domain.model.*
 
 object UriRecordMapper {
     fun toDomainModel(entity: UriRecordEntity): UriRecord {
+//        Log.e("log_UriRecord", "toDomainModel: ${entity.uriSource}")
 //        val domainUriSource = UriSource.fromValue(entity.uriSource)
-//            // ?: throw MappingException("Invalid UriSource value '${entity.uriSource}' found in database for UriRecord ID ${entity.id}")
+//             ?: throw MappingException("Invalid UriSource value '${entity.uriSource}' found in database for UriRecord ID ${entity.id}")
 //        val domainInteractionAction = InteractionAction.fromValue(entity.interactionAction)
 
         val domainUriSource = if (entity.uriSource == UriSource.UNKNOWN.value) {

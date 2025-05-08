@@ -2,6 +2,8 @@ package browserpicker.data.local.repository
 
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.paging.filter
+import androidx.paging.flatMap
 import androidx.paging.map
 import androidx.room.withTransaction
 import browserpicker.core.di.InstantProvider
@@ -9,6 +11,8 @@ import browserpicker.core.di.IoDispatcher
 import browserpicker.core.results.AppError
 import browserpicker.core.results.DomainResult
 import browserpicker.core.results.MyResult
+import browserpicker.core.utils.logDebug
+import browserpicker.core.utils.logError
 import browserpicker.data.DataNotFoundException
 import browserpicker.data.FolderNotEmptyException
 import browserpicker.data.local.datasource.BrowserStatsLocalDataSource
@@ -41,6 +45,7 @@ import browserpicker.domain.service.UriParser
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
@@ -79,10 +84,21 @@ class UriHistoryRepositoryImpl @Inject constructor(
             val dataQueryConfig = mapQueryToConfig(query)
             dataSource.getPagedUriRecords(dataQueryConfig, pagingConfig)
                 .map { pagingDataEntity ->
-                    pagingDataEntity.map { entity ->
-                        UriRecordMapper.toDomainModel(entity)
-                    }
+                    pagingDataEntity
+//                        .filter { entity -> entity.uriSource != UriSource.UNKNOWN.value }
+                        .flatMap { entity ->
+                            runCatching {
+                                listOf(UriRecordMapper.toDomainModel(entity))
+                            }.onFailure {
+                                Timber.e(it, "[Repository] Failed to map UriRecordEntity ${entity.id} to domain model, skipping.")
+                            }.getOrElse { emptyList() }
+                        }
                 }
+                .catch {
+                    Timber.e(it, "[Repository] Error fetching paged URI records for query: %s", query)
+                    emit(PagingData.empty())
+                }
+                .filterNotNull()
                 .flowOn(ioDispatcher)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to create PagedUriRecords Flow for query: %s", query)
