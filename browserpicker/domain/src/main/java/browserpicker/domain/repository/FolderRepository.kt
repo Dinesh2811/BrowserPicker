@@ -7,12 +7,11 @@ import browserpicker.domain.model.FolderType
 import kotlinx.coroutines.flow.Flow
 
 interface FolderRepository {
-    suspend fun ensureDefaultFoldersExist()
+    suspend fun ensureDefaultFoldersExist(): DomainResult<Unit, AppError>
     fun getFolder(folderId: Long): Flow<DomainResult<Folder?, AppError>>
     fun getChildFolders(parentFolderId: Long): Flow<DomainResult<List<Folder>, AppError>>
     fun getRootFoldersByType(type: FolderType): Flow<DomainResult<List<Folder>, AppError>>
     fun getAllFoldersByType(type: FolderType): Flow<DomainResult<List<Folder>, AppError>>
-//    suspend fun findFolderByNameAndParent(name: String, parentFolderId: Long?, type: FolderType): Folder?
     suspend fun findFolderByNameAndParent(name: String, parentFolderId: Long?, type: FolderType): DomainResult<Folder?, AppError>
 
     suspend fun createFolder(

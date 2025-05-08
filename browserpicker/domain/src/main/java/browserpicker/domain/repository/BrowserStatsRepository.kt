@@ -6,7 +6,6 @@ import browserpicker.core.results.MyResult
 import browserpicker.domain.model.BrowserUsageStat
 import kotlinx.coroutines.flow.Flow
 
-
 interface BrowserStatsRepository {
     suspend fun recordBrowserUsage(packageName: String): DomainResult<Unit, AppError>
     fun getBrowserStat(packageName: String): Flow<DomainResult<BrowserUsageStat?, AppError>>

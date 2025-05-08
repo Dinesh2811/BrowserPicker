@@ -40,12 +40,13 @@ class FolderRepositoryImpl @Inject constructor(
                 name.equals(Folder.DEFAULT_BLOCKED_ROOT_FOLDER_NAME, ignoreCase = true)
     }
 
-    override suspend fun ensureDefaultFoldersExist() {
-        withContext(ioDispatcher) {
+    override suspend fun ensureDefaultFoldersExist(): DomainResult<Unit, AppError> {
+        return withContext(ioDispatcher) {
             try {
-                folderDataSource.ensureDefaultFoldersExist()
+                DomainResult.Success(folderDataSource.ensureDefaultFoldersExist())
             } catch (e: Exception) {
                 Timber.e(e, "[Repository] Failed to ensure default folders exist")
+                DomainResult.Failure(AppError.UnknownError("Failed to ensure default folders exist.", e))
             }
         }
     }
