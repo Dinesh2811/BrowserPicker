@@ -2,6 +2,8 @@ package browserpicker.presentation.rules
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import browserpicker.core.results.AppError
+import browserpicker.core.results.DomainResult
 import browserpicker.domain.model.*
 import browserpicker.domain.service.DomainError
 import browserpicker.domain.usecase.folders.GetFoldersUseCase
@@ -30,7 +32,7 @@ class RulesViewModel @Inject constructor(
 
     // Combine filters to drive data fetching
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val rulesFlow: Flow<List<HostRule>> = combine(
+    private val rulesFlow: Flow<DomainResult<List<HostRule>, AppError>> = combine(
         _currentType,
         _selectedFolderId
     ) { type, folderId -> Pair(type, folderId) }
@@ -68,7 +70,7 @@ class RulesViewModel @Inject constructor(
                 _uiState.update { currentState ->
                     currentState.copy(
                         isLoading = false, // Assuming loading handled internally by flows for now
-                        rules = rules,
+                        rules = rules.getOrNull()!!,
                         folders = folders,
                         currentType = type,
                         selectedFolderId = folderId,

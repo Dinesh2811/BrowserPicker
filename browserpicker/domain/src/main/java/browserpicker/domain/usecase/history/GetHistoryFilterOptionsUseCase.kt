@@ -25,12 +25,12 @@ class GetHistoryFilterOptionsUseCaseImpl @Inject constructor(
         Timber.d("Getting filter options...")
         return combine(
             uriHistoryRepository.getDistinctHosts().distinctUntilChanged().catch { emit(DomainResult.Success(emptyList())) },
-            hostRuleRepository.getDistinctRuleHosts().distinctUntilChanged().catch { emit(emptyList()) },
+            hostRuleRepository.getDistinctRuleHosts().distinctUntilChanged().catch { emit(DomainResult.Success(emptyList())) },
             uriHistoryRepository.getDistinctChosenBrowsers().distinctUntilChanged().catch { emit(DomainResult.Success(emptyList())) }
         ) { historyHosts, ruleHosts, browsers ->
             FilterOptions(
                 distinctHistoryHosts = historyHosts.getOrNull()!!,
-                distinctRuleHosts = ruleHosts,
+                distinctRuleHosts = ruleHosts.getOrNull()!!,
                 distinctChosenBrowsers = browsers.getOrNull()!!
             )
         }

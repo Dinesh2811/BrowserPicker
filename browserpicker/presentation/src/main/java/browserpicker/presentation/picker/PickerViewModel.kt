@@ -85,10 +85,10 @@ class PickerViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         browsers = dummyBrowsers,
-                        currentRule = rule,
+                        currentRule = rule?.getOrNull(),
                         availableBookmarkFolders = folders,
                         // Update rule ID from fetched rule if initial was null but rule exists
-                        associatedHostRuleId = it.associatedHostRuleId ?: rule?.id
+                        associatedHostRuleId = it.associatedHostRuleId ?: rule?.getOrNull()?.id
                     )
                 }
             }

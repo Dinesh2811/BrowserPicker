@@ -66,7 +66,7 @@ class HandleInterceptedUriUseCaseImpl @Inject constructor(
 
                 when {
                     // 1. Blocked?
-                    hostRule?.uriStatus == UriStatus.BLOCKED -> {
+                    hostRule?.getOrNull()?.uriStatus == UriStatus.BLOCKED -> {
                         Timber.i("URI blocked by rule for host: $host")
                         // Record the blocking action immediately
                         // Pass the components from the validated parsedUri
@@ -76,13 +76,13 @@ class HandleInterceptedUriUseCaseImpl @Inject constructor(
                             source = source,
                             action = InteractionAction.BLOCKED_URI_ENFORCED,
                             chosenBrowser = null, // No browser chosen
-                            associatedHostRuleId = hostRule.id
+                            associatedHostRuleId = hostRule.getOrNull()?.id
                         ) // Ignore result for this internal logging
                         HandleUriResult.Blocked
                     }
                     // 2. Preference set and enabled?
-                    hostRule?.isPreferenceEnabled == true && !hostRule.preferredBrowserPackage.isNullOrBlank() && hostRule.uriStatus != UriStatus.BLOCKED -> {
-                        Timber.i("Opening URI with preference for host: $host, browser: ${hostRule.preferredBrowserPackage}")
+                    hostRule?.getOrNull()?.isPreferenceEnabled == true && !hostRule.getOrNull()?.preferredBrowserPackage.isNullOrBlank() && hostRule.getOrNull()?.uriStatus != UriStatus.BLOCKED -> {
+                        Timber.i("Opening URI with preference for host: $host, browser: ${hostRule.getOrNull()?.preferredBrowserPackage}")
                         // Record the action
                         // Pass the components from the validated parsedUri
                         uriHistoryRepository.addUriRecord(
@@ -90,16 +90,16 @@ class HandleInterceptedUriUseCaseImpl @Inject constructor(
                             host = parsedUri.host,
                             source = source,
                             action = InteractionAction.OPENED_BY_PREFERENCE,
-                            chosenBrowser = hostRule.preferredBrowserPackage,
-                            associatedHostRuleId = hostRule.id
+                            chosenBrowser = hostRule.getOrNull()?.preferredBrowserPackage,
+                            associatedHostRuleId = hostRule.getOrNull()?.id
                         ) // Ignore result for this internal logging
-                        HandleUriResult.OpenDirectly(hostRule.preferredBrowserPackage, hostRule.id)
+                        HandleUriResult.OpenDirectly(hostRule.getOrNull()?.preferredBrowserPackage!!, hostRule.getOrNull()?.id)
                     }
                     // 3. Otherwise, show the picker
                     else -> {
                         Timber.d("No blocking rule or active preference for host: $host. Showing picker.")
                         // Pass the components from the validated parsedUri to the next screen
-                        HandleUriResult.ShowPicker(parsedUri.originalString, parsedUri.host, hostRule?.id)
+                        HandleUriResult.ShowPicker(parsedUri.originalString, parsedUri.host, hostRule?.getOrNull()?.id)
                     }
                 }
             } catch (e: Exception) {

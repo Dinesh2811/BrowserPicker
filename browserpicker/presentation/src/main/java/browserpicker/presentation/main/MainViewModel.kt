@@ -93,8 +93,8 @@ class MainViewModel @Inject constructor(
                 uriString = uri,
                 host = host,
                 sourceValue = source.value,
-                associatedHostRuleId = ruleId ?: currentRule?.id,
-                currentRule = currentRule,
+                associatedHostRuleId = ruleId ?: currentRule?.getOrNull()?.id,
+                currentRule = currentRule?.getOrNull(),
                 availableBookmarkFolders = folders
             )
 

@@ -5,9 +5,11 @@ import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
 import browserpicker.core.results.AppError
 import browserpicker.core.results.DomainResult
+import browserpicker.core.results.catchUnexpected
 import browserpicker.data.local.datasource.FolderLocalDataSource
 import browserpicker.data.local.datasource.HostRuleLocalDataSource
 import browserpicker.data.local.db.BrowserPickerDatabase
+import browserpicker.data.local.entity.HostRuleEntity
 import browserpicker.data.local.mapper.HostRuleMapper
 import browserpicker.domain.model.FolderType
 import browserpicker.domain.model.HostRule
@@ -16,7 +18,6 @@ import browserpicker.domain.model.toFolderType
 import browserpicker.domain.repository.HostRuleRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
@@ -35,19 +36,17 @@ class HostRuleRepositoryImpl @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ): HostRuleRepository {
 
-    override fun getHostRuleByHost(host: String): Flow<HostRule?> {
+    override fun getHostRuleByHost(host: String): Flow<DomainResult<HostRule?, AppError>> {
         return hostRuleDataSource.getHostRuleByHost(host)
-            .map { entity ->
-                entity?.let { ent ->
+            .map<HostRuleEntity?, DomainResult<HostRule?, AppError>> { entity ->
+                val domainModel = entity?.let { ent ->
                     runCatching { HostRuleMapper.toDomainModel(ent) }
                         .onFailure { e -> Timber.e(e, "[Repository] Failed to map HostRuleEntity for host: %s", host) }
                         .getOrNull()
                 }
+                DomainResult.Success(domainModel)
             }
-            .catch { e ->
-                Timber.e(e, "[Repository] Error fetching HostRule for host: %s", host)
-                emit(null)
-            }
+            .catchUnexpected()
             .flowOn(ioDispatcher)
     }
 
@@ -70,92 +69,82 @@ class HostRuleRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getAllHostRules(): Flow<List<HostRule>> {
+    override fun getAllHostRules(): Flow<DomainResult<List<HostRule>, AppError>> {
         return hostRuleDataSource.getAllHostRules()
-            .map { entities ->
-                entities.mapNotNull { entity ->
+            .map<List<HostRuleEntity>, DomainResult<List<HostRule>, AppError>> { entities ->
+                val domainModels = entities.mapNotNull { entity ->
                     runCatching {
                         HostRuleMapper.toDomainModel(entity)
                     }.onFailure { e ->
                         Timber.e(e, "[Repository] Failed to map HostRuleEntity ${entity.id} to domain model, skipping.")
                     }.getOrNull()
                 }
+                DomainResult.Success(domainModels)
             }
-            .catch { e ->
-                Timber.e(e, "[Repository] Error fetching or processing all HostRules flow")
-                emit(emptyList())
-            }
+            .catchUnexpected()
             .flowOn(ioDispatcher)
     }
 
-    override fun getHostRulesByStatus(status: UriStatus): Flow<List<HostRule>> {
+    override fun getHostRulesByStatus(status: UriStatus): Flow<DomainResult<List<HostRule>, AppError>> {
         if (status == UriStatus.UNKNOWN) {
             Timber.w("[Repository] Requesting HostRules with UNKNOWN status, returning empty list.")
-            return flowOf(emptyList())
+            return flowOf(DomainResult.Success(emptyList()))
         }
         return hostRuleDataSource.getHostRulesByStatus(status)
-            .map { entities ->
-                entities.mapNotNull { entity ->
+            .map<List<HostRuleEntity>, DomainResult<List<HostRule>, AppError>> { entities ->
+                val domainModels = entities.mapNotNull { entity ->
                     runCatching {
                         HostRuleMapper.toDomainModel(entity)
                     }.onFailure { e ->
                         Timber.e(e, "[Repository] Failed to map HostRuleEntity ${entity.id} to domain model for status $status, skipping.")
                     }.getOrNull()
                 }
+                DomainResult.Success(domainModels)
             }
-            .catch { e ->
-                Timber.e(e, "[Repository] Error fetching or processing HostRules by status $status flow")
-                emit(emptyList())
-            }
+            .catchUnexpected()
             .flowOn(ioDispatcher)
     }
 
-    override fun getHostRulesByFolder(folderId: Long): Flow<List<HostRule>> {
+    override fun getHostRulesByFolder(folderId: Long): Flow<DomainResult<List<HostRule>, AppError>> {
         return hostRuleDataSource.getHostRulesByFolder(folderId)
-            .map { entities ->
-                entities.mapNotNull { entity ->
+            .map<List<HostRuleEntity>, DomainResult<List<HostRule>, AppError>> { entities ->
+                val domainModels = entities.mapNotNull { entity ->
                     runCatching {
                         HostRuleMapper.toDomainModel(entity)
                     }.onFailure { e ->
                         Timber.e(e, "[Repository] Failed to map HostRuleEntity ${entity.id} to domain model for folder $folderId, skipping.")
                     }.getOrNull()
                 }
+                DomainResult.Success(domainModels)
             }
-            .catch { e ->
-                Timber.e(e, "[Repository] Error fetching or processing HostRules by folderId $folderId flow")
-                emit(emptyList())
-            }
+            .catchUnexpected()
             .flowOn(ioDispatcher)
     }
 
-    override fun getRootHostRulesByStatus(status: UriStatus): Flow<List<HostRule>> {
+    override fun getRootHostRulesByStatus(status: UriStatus): Flow<DomainResult<List<HostRule>, AppError>> {
         if (status == UriStatus.UNKNOWN) {
             Timber.w("[Repository] Requesting Root HostRules with UNKNOWN status, returning empty list.")
-            return flowOf(emptyList())
+            return flowOf(DomainResult.Success(emptyList()))
         }
         return hostRuleDataSource.getRootHostRulesByStatus(status)
-            .map { entities ->
-                entities.mapNotNull { entity ->
+            .map<List<HostRuleEntity>, DomainResult<List<HostRule>, AppError>> { entities ->
+                val domainModels = entities.mapNotNull { entity ->
                     runCatching {
                         HostRuleMapper.toDomainModel(entity)
                     }.onFailure { e ->
                         Timber.e(e, "[Repository] Failed to map HostRuleEntity ${entity.id} to domain model for root status $status, skipping.")
                     }.getOrNull()
                 }
+                DomainResult.Success(domainModels)
             }
-            .catch { e ->
-                Timber.e(e, "[Repository] Error fetching or processing root HostRules by status $status flow")
-                emit(emptyList())
-            }
+            .catchUnexpected()
             .flowOn(ioDispatcher)
     }
 
-    override fun getDistinctRuleHosts(): Flow<List<String>> {
+    override fun getDistinctRuleHosts(): Flow<DomainResult<List<String>, AppError>> {
         return hostRuleDataSource.getDistinctRuleHosts()
-            .catch { e ->
-                Timber.e(e, "[Repository] Error fetching distinct rule hosts")
-                emit(emptyList())
-            }
+            .map<List<String>, DomainResult<List<String>, AppError>> { hosts -> DomainResult.Success(hosts) }
+            .catchUnexpected()
             .flowOn(ioDispatcher)
     }
 

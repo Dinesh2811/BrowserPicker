@@ -1,5 +1,7 @@
 package browserpicker.domain.usecase.rules
 
+import browserpicker.core.results.AppError
+import browserpicker.core.results.DomainResult
 import browserpicker.domain.model.HostRule
 import browserpicker.domain.model.UriStatus
 import browserpicker.domain.repository.HostRuleRepository
@@ -13,7 +15,7 @@ interface GetHostRulesUseCase {
         statusFilter: UriStatus? = null,
         folderFilter: Long? = null,
         rootOnlyForStatus: UriStatus? = null
-    ): Flow<List<HostRule>>
+    ): Flow<DomainResult<List<HostRule>, AppError>>
 }
 
 class GetHostRulesUseCaseImpl @Inject constructor(
@@ -23,7 +25,7 @@ class GetHostRulesUseCaseImpl @Inject constructor(
         statusFilter: UriStatus?,
         folderFilter: Long?,
         rootOnlyForStatus: UriStatus?
-    ): Flow<List<HostRule>> {
+    ): Flow<DomainResult<List<HostRule>, AppError>> {
         Timber.d("Getting host rules with filters: status=$statusFilter, folder=$folderFilter, rootOnly=$rootOnlyForStatus")
         return when {
             rootOnlyForStatus != null -> repository.getRootHostRulesByStatus(rootOnlyForStatus)

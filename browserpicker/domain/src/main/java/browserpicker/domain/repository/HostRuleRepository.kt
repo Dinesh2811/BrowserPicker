@@ -7,13 +7,13 @@ import browserpicker.domain.model.UriStatus
 import kotlinx.coroutines.flow.Flow
 
 interface HostRuleRepository {
-    fun getHostRuleByHost(host: String): Flow<HostRule?>
+    fun getHostRuleByHost(host: String): Flow<DomainResult<HostRule?, AppError>>
     suspend fun getHostRuleById(id: Long): DomainResult<HostRule?, AppError>
-    fun getAllHostRules(): Flow<List<HostRule>>
-    fun getHostRulesByStatus(status: UriStatus): Flow<List<HostRule>>
-    fun getHostRulesByFolder(folderId: Long): Flow<List<HostRule>>
-    fun getRootHostRulesByStatus(status: UriStatus): Flow<List<HostRule>>
-    fun getDistinctRuleHosts(): Flow<List<String>>
+    fun getAllHostRules(): Flow<DomainResult<List<HostRule>, AppError>>
+    fun getHostRulesByStatus(status: UriStatus): Flow<DomainResult<List<HostRule>, AppError>>
+    fun getHostRulesByFolder(folderId: Long): Flow<DomainResult<List<HostRule>, AppError>>
+    fun getRootHostRulesByStatus(status: UriStatus): Flow<DomainResult<List<HostRule>, AppError>>
+    fun getDistinctRuleHosts(): Flow<DomainResult<List<String>, AppError>>
 
     suspend fun saveHostRule(
         host: String,
@@ -27,7 +27,6 @@ interface HostRuleRepository {
     suspend fun deleteHostRuleByHost(host: String): DomainResult<Unit, AppError>
     suspend fun clearFolderAssociation(folderId: Long): DomainResult<Unit, AppError>
 }
-
 
 /*
 
