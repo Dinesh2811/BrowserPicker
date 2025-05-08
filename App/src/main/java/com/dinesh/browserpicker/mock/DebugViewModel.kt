@@ -11,12 +11,21 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 import browserpicker.domain.repository.UriHistoryRepository
+import com.dinesh.browserpicker.v1.domain.di.*
 import kotlinx.coroutines.flow.*
 
 @HiltViewModel
 class DebugViewModel @Inject constructor(
     private val mockDataGenerator: MockDataGenerator,
     private val uriHistoryRepository: UriHistoryRepository,
+
+    private val uriHandlingUseCases: UriHandlingUseCases,
+    private val browserUseCases: BrowserUseCases,
+    private val hostRuleUseCases: HostRuleUseCases,
+    private val uriHistoryUseCases: UriHistoryUseCases,
+    private val folderUseCases: FolderUseCases,
+    private val searchAndAnalyticsUseCases: SearchAndAnalyticsUseCases,
+    private val systemIntegrationUseCases: SystemIntegrationUseCases,
 ) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
