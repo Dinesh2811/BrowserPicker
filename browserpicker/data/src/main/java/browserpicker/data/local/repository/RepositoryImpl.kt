@@ -23,6 +23,7 @@ import browserpicker.data.local.db.BrowserPickerDatabase
 import browserpicker.data.local.mapper.BrowserUsageStatMapper
 import browserpicker.data.local.mapper.FolderMapper
 import browserpicker.data.local.mapper.HostRuleMapper
+import browserpicker.data.local.mapper.MappingException
 import browserpicker.data.local.mapper.UriRecordMapper
 import browserpicker.data.local.query.model.UriRecordQueryConfig
 import browserpicker.domain.model.BrowserUsageStat
@@ -54,7 +55,6 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
-
 
 @Singleton
 class UriHistoryRepositoryImpl @Inject constructor(
@@ -185,31 +185,10 @@ class UriHistoryRepositoryImpl @Inject constructor(
         associatedHostRuleId: Long?,
     ): DomainResult<Long, AppError> = withContext(ioDispatcher) {
         try {
-//            when {
-//                uriString.isBlank() -> return@withContext DomainResult.Failure(AppError.ValidationError("URI string cannot be blank or empty"))
-//                host.isBlank() -> return@withContext DomainResult.Failure(AppError.ValidationError("Host cannot be blank or empty"))
-//                source == UriSource.UNKNOWN -> return@withContext DomainResult.Failure(AppError.ValidationError("URI Source cannot be UNKNOWN; use a valid source type"))
-//                action == InteractionAction.UNKNOWN -> return@withContext DomainResult.Failure(AppError.ValidationError("Interaction Action cannot be UNKNOWN; use a valid action type"))
-//            }
-//            if (chosenBrowser != null) {
-//                if (chosenBrowser.isBlank()) return@withContext DomainResult.Failure(AppError.ValidationError("Chosen browser package name cannot be blank if provided."))
-//            }
-
-            when {
-                uriString.isBlank() -> throw IllegalArgumentException("URI string cannot be blank or empty")
-                host.isBlank() -> throw IllegalArgumentException("Host cannot be blank or empty")
-                source == UriSource.UNKNOWN -> throw IllegalArgumentException("URI Source cannot be UNKNOWN; use a valid source type")
-                action == InteractionAction.UNKNOWN -> throw IllegalArgumentException("Interaction Action cannot be UNKNOWN; use a valid action type")
+            validateAddUriRecordInput(uriString, host, source, action, chosenBrowser)?.let { validationError ->
+                Timber.e("[Repository] Failed to add URI record due to validation error: ${validationError.message}")
+                return@withContext DomainResult.Failure(validationError)
             }
-            if (chosenBrowser != null) {
-                if (chosenBrowser.isBlank()) throw IllegalArgumentException("Chosen browser package name cannot be blank if provided.")
-            }
-
-//            val validationError = validateAddUriRecordInput(uriString, host, source, action, chosenBrowser)
-//            if (validationError != null) {
-//                Timber.e("[Repository] Failed to add URI record: ${validationError.message}")
-//                return@withContext DomainResult.Failure(validationError)
-//            }
 
             val parsedUriResult = uriParser.parseAndValidateWebUri(uriString)
             if (parsedUriResult is DomainResult.Failure) {
@@ -244,12 +223,20 @@ class UriHistoryRepositoryImpl @Inject constructor(
     override suspend fun getUriRecord(id: Long): DomainResult<UriRecord?, AppError> = withContext(ioDispatcher) {
         try {
             val entity = dataSource.getUriRecord(id)
-            val record = entity?.let { UriRecordMapper.toDomainModel(it) }
+//            val record = entity?.let { UriRecordMapper.toDomainModel(it) }
+            val record = entity?.let { recordEntity ->
+                runCatching {
+                    UriRecordMapper.toDomainModel(recordEntity)
+                }.onFailure {
+                    Timber.e(it, "[Repository] Failed to map UriRecordEntity ${recordEntity.id} to domain model during getUriRecord.")
+                }.getOrNull()
+            }
             DomainResult.Success(record)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to get URI record with id: %d", id)
             val appError = when (e) {
                 is IllegalArgumentException -> AppError.DataIntegrityError("Data mapping error for record $id", e)
+                is MappingException -> AppError.DataIntegrityError("Data mapping error for record $id", e)
                 is DataNotFoundException -> AppError.DataNotFound("URI record with id $id not found", e)
                 else -> AppError.UnknownError("An unexpected error occurred while getting URI record $id.", e)
             }
