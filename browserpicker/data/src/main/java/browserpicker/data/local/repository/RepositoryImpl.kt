@@ -96,7 +96,7 @@ class UriHistoryRepositoryImpl @Inject constructor(
                 }
                 .catch {
                     Timber.e(it, "[Repository] Error fetching paged URI records for query: %s", query)
-                    emit(PagingData.empty())
+                    emit(PagingData.empty<UriRecord>())
                 }
                 .filterNotNull()
                 .flowOn(ioDispatcher)
@@ -308,7 +308,11 @@ class HostRuleRepositoryImpl @Inject constructor(
     override fun getHostRuleByHost(host: String): Flow<HostRule?> {
         return hostRuleDataSource.getHostRuleByHost(host)
             .map { entity ->
-                entity?.let { HostRuleMapper.toDomainModel(it) }
+                entity?.let { ent ->
+                    runCatching { HostRuleMapper.toDomainModel(ent) }
+                        .onFailure { e -> Timber.e(e, "[Repository] Failed to map HostRuleEntity for host: %s", host) }
+                        .getOrNull()
+                }
             }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching HostRule for host: %s", host)
@@ -320,7 +324,11 @@ class HostRuleRepositoryImpl @Inject constructor(
     override suspend fun getHostRuleById(id: Long): MyResult<HostRule?, AppError> = withContext(ioDispatcher) {
         try {
             val entity = hostRuleDataSource.getHostRuleById(id)
-            val rule = entity?.let { HostRuleMapper.toDomainModel(it) }
+            val rule = entity?.let {
+                runCatching { HostRuleMapper.toDomainModel(it) }
+                    .onFailure { e -> Timber.e(e, "[Repository] Failed to map HostRuleEntity for ID: %d", id) }
+                    .getOrNull()
+            }
             MyResult.Success(rule)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to get HostRule by ID: %d", id)
@@ -335,10 +343,16 @@ class HostRuleRepositoryImpl @Inject constructor(
     override fun getAllHostRules(): Flow<List<HostRule>> {
         return hostRuleDataSource.getAllHostRules()
             .map { entities ->
-                HostRuleMapper.toDomainModels(entities)
+                entities.mapNotNull { entity ->
+                    runCatching {
+                        HostRuleMapper.toDomainModel(entity)
+                    }.onFailure { e ->
+                        Timber.e(e, "[Repository] Failed to map HostRuleEntity ${entity.id} to domain model, skipping.")
+                    }.getOrNull()
+                }
             }
             .catch { e ->
-                Timber.e(e, "[Repository] Error fetching all HostRules")
+                Timber.e(e, "[Repository] Error fetching or processing all HostRules flow")
                 emit(emptyList())
             }
             .flowOn(ioDispatcher)
@@ -351,10 +365,16 @@ class HostRuleRepositoryImpl @Inject constructor(
         }
         return hostRuleDataSource.getHostRulesByStatus(status)
             .map { entities ->
-                HostRuleMapper.toDomainModels(entities)
+                entities.mapNotNull { entity ->
+                    runCatching {
+                        HostRuleMapper.toDomainModel(entity)
+                    }.onFailure { e ->
+                        Timber.e(e, "[Repository] Failed to map HostRuleEntity ${entity.id} to domain model for status $status, skipping.")
+                    }.getOrNull()
+                }
             }
             .catch { e ->
-                Timber.e(e, "[Repository] Error fetching HostRules by status: %s", status)
+                Timber.e(e, "[Repository] Error fetching or processing HostRules by status $status flow")
                 emit(emptyList())
             }
             .flowOn(ioDispatcher)
@@ -363,10 +383,16 @@ class HostRuleRepositoryImpl @Inject constructor(
     override fun getHostRulesByFolder(folderId: Long): Flow<List<HostRule>> {
         return hostRuleDataSource.getHostRulesByFolder(folderId)
             .map { entities ->
-                HostRuleMapper.toDomainModels(entities)
+                entities.mapNotNull { entity ->
+                    runCatching {
+                        HostRuleMapper.toDomainModel(entity)
+                    }.onFailure { e ->
+                        Timber.e(e, "[Repository] Failed to map HostRuleEntity ${entity.id} to domain model for folder $folderId, skipping.")
+                    }.getOrNull()
+                }
             }
             .catch { e ->
-                Timber.e(e, "[Repository] Error fetching HostRules by folderId: %d", folderId)
+                Timber.e(e, "[Repository] Error fetching or processing HostRules by folderId $folderId flow")
                 emit(emptyList())
             }
             .flowOn(ioDispatcher)
@@ -379,10 +405,16 @@ class HostRuleRepositoryImpl @Inject constructor(
         }
         return hostRuleDataSource.getRootHostRulesByStatus(status)
             .map { entities ->
-                HostRuleMapper.toDomainModels(entities)
+                entities.mapNotNull { entity ->
+                    runCatching {
+                        HostRuleMapper.toDomainModel(entity)
+                    }.onFailure { e ->
+                        Timber.e(e, "[Repository] Failed to map HostRuleEntity ${entity.id} to domain model for root status $status, skipping.")
+                    }.getOrNull()
+                }
             }
             .catch { e ->
-                Timber.e(e, "[Repository] Error fetching root HostRules by status: %s", status)
+                Timber.e(e, "[Repository] Error fetching or processing root HostRules by status $status flow")
                 emit(emptyList())
             }
             .flowOn(ioDispatcher)
@@ -554,7 +586,13 @@ class FolderRepositoryImpl @Inject constructor(
     override fun getFolder(folderId: Long): Flow<Folder?> {
         return folderDataSource.getFolder(folderId)
             .map { entity ->
-                entity?.let { FolderMapper.toDomainModel(it) }
+                entity?.let {
+                    runCatching {
+                        FolderMapper.toDomainModel(it)
+                    }.onFailure { e ->
+                        Timber.e(e, "[Repository] Failed to map FolderEntity %d to domain model during getFolder flow, returning null.", it.id)
+                    }.getOrNull()
+                }
             }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching Folder by id: %d", folderId)
@@ -566,7 +604,13 @@ class FolderRepositoryImpl @Inject constructor(
     override fun getChildFolders(parentFolderId: Long): Flow<List<Folder>> {
         return folderDataSource.getChildFolders(parentFolderId)
             .map { entities ->
-                FolderMapper.toDomainModels(entities)
+                entities.mapNotNull { entity ->
+                    runCatching {
+                        FolderMapper.toDomainModel(entity)
+                    }.onFailure { e ->
+                        Timber.e(e, "[Repository] Failed to map FolderEntity %d to domain model for parentId %d, skipping.", entity.id, parentFolderId)
+                    }.getOrNull()
+                }
             }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching child folders for parentId: %d", parentFolderId)
@@ -582,7 +626,13 @@ class FolderRepositoryImpl @Inject constructor(
         }
         return folderDataSource.getRootFoldersByType(type)
             .map { entities ->
-                FolderMapper.toDomainModels(entities)
+                entities.mapNotNull { entity ->
+                    runCatching {
+                        FolderMapper.toDomainModel(entity)
+                    }.onFailure { e ->
+                        Timber.e(e, "[Repository] Failed to map FolderEntity %d to domain model for type %s, skipping.", entity.id, type)
+                    }.getOrNull()
+                }
             }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching root folders for type: %s", type)
@@ -598,7 +648,13 @@ class FolderRepositoryImpl @Inject constructor(
         }
         return folderDataSource.getAllFoldersByType(type)
             .map { entities ->
-                FolderMapper.toDomainModels(entities)
+                entities.mapNotNull { entity ->
+                    runCatching {
+                        FolderMapper.toDomainModel(entity)
+                    }.onFailure { e ->
+                        Timber.e(e, "[Repository] Failed to map FolderEntity %d to domain model for type %s, skipping.", entity.id, type)
+                    }.getOrNull()
+                }
             }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching all folders for type: %s", type)
@@ -615,7 +671,13 @@ class FolderRepositoryImpl @Inject constructor(
         return runCatching {
             withContext(ioDispatcher) {
                 val entity = folderDataSource.findFolderByNameAndParent(name.trim(), parentFolderId, type)
-                entity?.let { FolderMapper.toDomainModel(it) }
+                entity?.let {
+                    runCatching {
+                        FolderMapper.toDomainModel(it)
+                    }.onFailure { e ->
+                        Timber.e(e, "[Repository] Failed to map FolderEntity %d to domain model during find by name/parent, returning null.", it.id)
+                    }.getOrNull()
+                }
             }
         }.onFailure { e ->
             Timber.e(e, "[Repository] Failed to find folder by name/parent: Name='%s', Parent='%s', Type='%s'", name, parentFolderId, type)
@@ -673,7 +735,8 @@ class FolderRepositoryImpl @Inject constructor(
             val folderId = folderDataSource.createFolder(newFolderEntity)
             MyResult.Success(folderId)
         } catch (e: Exception) {
-            Timber.e(e, "[Repository] Failed to create folder: Name='$name', Parent='$parentFolderId', Type='$type'")
+            Timber.e(e, "[Repository] Failed to create folder: Name='%s', Parent='%s', Type='%s'", name, parentFolderId, type)
+            Timber.e("[Repository] Error during folder creation: ${e.message}")
             val appError = when (e) {
                 is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data")
                 is IllegalStateException -> AppError.DataIntegrityError(e.message ?: "Data integrity or state issue", e)
@@ -707,8 +770,12 @@ class FolderRepositoryImpl @Inject constructor(
 
             val currentFolderEntity = folderDataSource.getFolderByIdSuspend(folder.id)
                 ?: throw IllegalStateException("Folder with ID ${folder.id} not found for update during transaction.")
-            val currentFolderDomain = FolderMapper.toDomainModel(currentFolderEntity)
-
+            val currentFolderDomain = try {
+                FolderMapper.toDomainModel(currentFolderEntity)
+            } catch (e: IllegalArgumentException) {
+                Timber.e(e, "[Repository] Failed to map current FolderEntity %d during update.", currentFolderEntity.id)
+                throw IllegalStateException("Failed to map existing folder entity during update.", e)
+            }
             if (currentFolderDomain.type != folder.type) {
                 throw IllegalArgumentException("Cannot change the type of an existing folder (from ${currentFolderDomain.type} to ${folder.type}).")
             }
@@ -751,6 +818,7 @@ class FolderRepositoryImpl @Inject constructor(
             MyResult.Success(Unit)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed transaction to update folder: ID='${folder.id}', name='${folder.name}', parentFolderId='${folder.parentFolderId}', type='${folder.type}'")
+            Timber.e("[Repository] Error during folder update: ${e.message}")
             val appError = when (e) {
                 is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data")
                 is IllegalStateException -> AppError.DataIntegrityError(e.message ?: "Data integrity or state issue", e)
@@ -780,6 +848,7 @@ class FolderRepositoryImpl @Inject constructor(
             MyResult.Success(Unit)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed transaction to delete folder: ID='$folderId'")
+            Timber.e("[Repository] Error during folder deletion: ${e.message}")
             val appError = when (e) {
                 is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data")
                 is FolderNotEmptyException -> AppError.FolderNotEmptyError(folderId, e.message, e)
@@ -816,7 +885,13 @@ class BrowserStatsRepositoryImpl @Inject constructor(
     override fun getBrowserStat(packageName: String): Flow<BrowserUsageStat?> {
         return dataSource.getBrowserStat(packageName)
             .map { entity ->
-                entity?.let { BrowserUsageStatMapper.toDomainModel(it) }
+                entity?.let { statEntity ->
+                    runCatching {
+                        BrowserUsageStatMapper.toDomainModel(statEntity)
+                    }.onFailure {
+                        Timber.e(it, "[Repository] Failed to map BrowserUsageStatEntity ${statEntity.browserPackageName} for package $packageName, skipping.")
+                    }.getOrNull()
+                }
             }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching browser stat for: %s", packageName)
@@ -828,7 +903,13 @@ class BrowserStatsRepositoryImpl @Inject constructor(
     override fun getAllBrowserStats(): Flow<List<BrowserUsageStat>> {
         return dataSource.getAllBrowserStats()
             .map { entities ->
-                BrowserUsageStatMapper.toDomainModels(entities)
+                entities.mapNotNull { entity ->
+                    runCatching {
+                        BrowserUsageStatMapper.toDomainModel(entity)
+                    }.onFailure {
+                        Timber.e(it, "[Repository] Failed to map BrowserUsageStatEntity ${entity.browserPackageName}, skipping in getAllBrowserStats.")
+                    }.getOrNull()
+                }
             }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching all browser stats")
@@ -840,7 +921,13 @@ class BrowserStatsRepositoryImpl @Inject constructor(
     override fun getAllBrowserStatsSortedByLastUsed(): Flow<List<BrowserUsageStat>> {
         return dataSource.getAllBrowserStatsSortedByLastUsed()
             .map { entities ->
-                BrowserUsageStatMapper.toDomainModels(entities)
+                entities.mapNotNull { entity ->
+                    runCatching {
+                        BrowserUsageStatMapper.toDomainModel(entity)
+                    }.onFailure {
+                        Timber.e(it, "[Repository] Failed to map BrowserUsageStatEntity ${entity.browserPackageName}, skipping in getAllBrowserStatsSortedByLastUsed.")
+                    }.getOrNull()
+                }
             }
             .catch { e ->
                 Timber.e(e, "[Repository] Error fetching all browser stats sorted by last used")
