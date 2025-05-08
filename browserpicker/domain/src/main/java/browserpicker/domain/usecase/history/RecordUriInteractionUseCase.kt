@@ -63,7 +63,7 @@ class RecordUriInteractionUseCaseImpl @Inject constructor(
                 if ((action == InteractionAction.OPENED_ONCE) && !chosenBrowser.isNullOrBlank()) {
                     withContext(ioDispatcher) {
                         browserStatsRepository.recordBrowserUsage(chosenBrowser)
-                            .onFailure { Timber.e(it, "Failed to record browser usage for $chosenBrowser after URI interaction.") }
+                            .onFailure { Timber.e(it.cause, "Failed to record browser usage for $chosenBrowser after URI interaction.") }
                     }
                 }
                 onSuccess(recordId)

@@ -1,5 +1,7 @@
 package browserpicker.domain.usecase.stats
 
+import browserpicker.core.results.AppError
+import browserpicker.core.results.DomainResult
 import browserpicker.domain.model.BrowserUsageStat
 import browserpicker.domain.model.query.BrowserStatSortField
 import browserpicker.domain.repository.BrowserStatsRepository
@@ -11,13 +13,13 @@ import timber.log.Timber
 import javax.inject.Inject
 
 interface GetBrowserStatsUseCase {
-    operator fun invoke(sortBy: BrowserStatSortField = BrowserStatSortField.USAGE_COUNT): Flow<List<BrowserUsageStat>>
+    operator fun invoke(sortBy: BrowserStatSortField = BrowserStatSortField.USAGE_COUNT): Flow<DomainResult<List<BrowserUsageStat>, AppError>>
 }
 
 class GetBrowserStatsUseCaseImpl @Inject constructor(
     private val repository: BrowserStatsRepository,
 ): GetBrowserStatsUseCase {
-    override fun invoke(sortBy: BrowserStatSortField): Flow<List<BrowserUsageStat>> {
+    override fun invoke(sortBy: BrowserStatSortField): Flow<DomainResult<List<BrowserUsageStat>, AppError>> {
         Timber.d("Getting browser stats sorted by: $sortBy")
         return (
                 if (sortBy == BrowserStatSortField.LAST_USED_TIMESTAMP) {
@@ -27,7 +29,7 @@ class GetBrowserStatsUseCaseImpl @Inject constructor(
                 }
                 ).catch { e ->
                 Timber.e(e, "Error getting browser stats")
-                emit(emptyList()) // Emit empty list on error
+                emit(DomainResult.Failure(AppError.UnknownError("Failed to get browser stats", e)))
             }
     }
 }

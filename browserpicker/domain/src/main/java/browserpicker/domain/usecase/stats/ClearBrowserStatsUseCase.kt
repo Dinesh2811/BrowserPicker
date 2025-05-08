@@ -24,8 +24,8 @@ class ClearBrowserStatsUseCaseImpl @Inject constructor(
                 onSuccess()
             },
             onFailure = {
-                Timber.e(it, "Failed to clear browser stats.")
-                onError(it.toDomainError("Failed to clear browser stats."))
+                Timber.e(it.cause, "Failed to clear browser stats.")
+                it.cause?.let { it1 -> onError(it1.toDomainError("Failed to clear browser stats.")) }
             }
         )
     }

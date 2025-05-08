@@ -2,6 +2,8 @@ package browserpicker.presentation.stats
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import browserpicker.core.results.AppError
+import browserpicker.core.results.DomainResult
 import browserpicker.domain.model.BrowserUsageStat
 import browserpicker.domain.model.query.BrowserStatSortField
 import browserpicker.domain.service.DomainError
@@ -25,7 +27,7 @@ open class StatsViewModel @Inject constructor(
     private val _sortField = MutableStateFlow(BrowserStatSortField.USAGE_COUNT)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val statsFlow: Flow<List<BrowserUsageStat>> = _sortField
+    private val statsFlow: Flow<DomainResult<List<BrowserUsageStat>, AppError>> = _sortField
         .flatMapLatest { sortField ->
             getBrowserStatsUseCase(sortField)
         }
@@ -43,7 +45,7 @@ open class StatsViewModel @Inject constructor(
                 _uiState.update { currentState ->
                     currentState.copy(
                         isLoading = false, // Manage loading state more granularly if needed
-                        stats = stats,
+                        stats = stats.getOrNull()!!,
                         sortField = sort,
                         userMessages = currentState.userMessages // Preserve messages
                     )

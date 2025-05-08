@@ -2,14 +2,14 @@ package browserpicker.data.local.repository
 
 import browserpicker.core.di.IoDispatcher
 import browserpicker.core.results.AppError
-import browserpicker.core.results.MyResult
+import browserpicker.core.results.DomainResult
+import browserpicker.core.results.catchUnexpected
 import browserpicker.data.local.datasource.BrowserStatsLocalDataSource
 import browserpicker.data.local.mapper.BrowserUsageStatMapper
 import browserpicker.domain.model.BrowserUsageStat
 import browserpicker.domain.repository.BrowserStatsRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -23,22 +23,22 @@ class BrowserStatsRepositoryImpl @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ): BrowserStatsRepository {
 
-    override suspend fun recordBrowserUsage(packageName: String): MyResult<Unit, AppError> = withContext(ioDispatcher) {
+    override suspend fun recordBrowserUsage(packageName: String): DomainResult<Unit, AppError> = withContext(ioDispatcher) {
         try {
             if (packageName.isBlank()) throw IllegalArgumentException("Package name cannot be blank.")
             dataSource.recordBrowserUsage(packageName)
-            MyResult.Success(Unit)
+            DomainResult.Success(Unit)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to record browser usage for: $packageName")
             val appError = when (e) {
                 is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data")
                 else -> AppError.UnknownError("Failed to record browser usage", e)
             }
-            MyResult.Error(appError)
+            DomainResult.Failure(appError)
         }
     }
 
-    override fun getBrowserStat(packageName: String): Flow<BrowserUsageStat?> {
+    override fun getBrowserStat(packageName: String): Flow<DomainResult<BrowserUsageStat?, AppError>> {
         return dataSource.getBrowserStat(packageName)
             .map { entity ->
                 entity?.let { statEntity ->
@@ -47,16 +47,13 @@ class BrowserStatsRepositoryImpl @Inject constructor(
                     }.onFailure {
                         Timber.e(it, "[Repository] Failed to map BrowserUsageStatEntity ${statEntity.browserPackageName} for package $packageName, skipping.")
                     }.getOrNull()
-                }
+                }.let { DomainResult.Success(it) }
             }
-            .catch { e ->
-                Timber.e(e, "[Repository] Error fetching browser stat for: %s", packageName)
-                emit(null)
-            }
+            .catchUnexpected()
             .flowOn(ioDispatcher)
     }
 
-    override fun getAllBrowserStats(): Flow<List<BrowserUsageStat>> {
+    override fun getAllBrowserStats(): Flow<DomainResult<List<BrowserUsageStat>, AppError>> {
         return dataSource.getAllBrowserStats()
             .map { entities ->
                 entities.mapNotNull { entity ->
@@ -65,16 +62,13 @@ class BrowserStatsRepositoryImpl @Inject constructor(
                     }.onFailure {
                         Timber.e(it, "[Repository] Failed to map BrowserUsageStatEntity ${entity.browserPackageName}, skipping in getAllBrowserStats.")
                     }.getOrNull()
-                }
+                }.let { DomainResult.Success(it) }
             }
-            .catch { e ->
-                Timber.e(e, "[Repository] Error fetching all browser stats")
-                emit(emptyList())
-            }
+            .catchUnexpected()
             .flowOn(ioDispatcher)
     }
 
-    override fun getAllBrowserStatsSortedByLastUsed(): Flow<List<BrowserUsageStat>> {
+    override fun getAllBrowserStatsSortedByLastUsed(): Flow<DomainResult<List<BrowserUsageStat>, AppError>> {
         return dataSource.getAllBrowserStatsSortedByLastUsed()
             .map { entities ->
                 entities.mapNotNull { entity ->
@@ -83,24 +77,21 @@ class BrowserStatsRepositoryImpl @Inject constructor(
                     }.onFailure {
                         Timber.e(it, "[Repository] Failed to map BrowserUsageStatEntity ${entity.browserPackageName}, skipping in getAllBrowserStatsSortedByLastUsed.")
                     }.getOrNull()
-                }
+                }.let { DomainResult.Success(it) }
             }
-            .catch { e ->
-                Timber.e(e, "[Repository] Error fetching all browser stats sorted by last used")
-                emit(emptyList())
-            }
+            .catchUnexpected()
             .flowOn(ioDispatcher)
     }
 
-    override suspend fun deleteBrowserStat(packageName: String): MyResult<Unit, AppError> = withContext(ioDispatcher) {
+    override suspend fun deleteBrowserStat(packageName: String): DomainResult<Unit, AppError> = withContext(ioDispatcher) {
         try {
             if (packageName.isBlank()) throw IllegalArgumentException("Package name cannot be blank.")
             val deleted = dataSource.deleteBrowserStat(packageName)
             if (deleted) {
-                MyResult.Success(Unit)
+                DomainResult.Success(Unit)
             } else {
                 Timber.w("[Repository] Browser stat for '$packageName' not found or delete failed. Reporting as success.")
-                MyResult.Success(Unit)
+                DomainResult.Success(Unit)
             }
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to delete browser stat for: $packageName")
@@ -108,18 +99,18 @@ class BrowserStatsRepositoryImpl @Inject constructor(
                 is IllegalArgumentException -> AppError.ValidationError(e.message ?: "Invalid input data")
                 else -> AppError.UnknownError("Failed to delete browser stat", e)
             }
-            MyResult.Error(appError)
+            DomainResult.Failure(appError)
         }
     }
 
-    override suspend fun deleteAllStats(): MyResult<Unit, AppError> = withContext(ioDispatcher) {
+    override suspend fun deleteAllStats(): DomainResult<Unit, AppError> = withContext(ioDispatcher) {
         try {
             val count = dataSource.deleteAllStats()
             Timber.d("[Repository] Deleted $count browser stats.")
-            MyResult.Success(Unit)
+            DomainResult.Success(Unit)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to delete all browser stats")
-            MyResult.Error(AppError.UnknownError("Failed to delete all stats", e))
+            DomainResult.Failure(AppError.UnknownError("Failed to delete all stats", e))
         }
     }
 }
