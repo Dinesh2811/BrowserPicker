@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.hiltAndroid)
     alias(libs.plugins.serialization)
     alias(libs.plugins.compose)
+    id("androidx.room")
 
 //    id("org.jetbrains.kotlin.plugin.compose") version "2.0.20-Beta2"
 }
@@ -56,6 +57,9 @@ android {
         buildConfig = true
         viewBinding = true
         compose = true
+    }
+    room {
+        schemaDirectory("$projectDir/schemas")
     }
     packaging {
         resources {

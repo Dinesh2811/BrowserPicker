@@ -1,0 +1,419 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "9bcbd2f46f9000d6485210b2ba6e5aec",
+    "entities": [
+      {
+        "tableName": "uri_records",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri_record_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `uri_string` TEXT NOT NULL COLLATE NOCASE, `host` TEXT NOT NULL COLLATE NOCASE, `timestamp` INTEGER NOT NULL, `uri_source` INTEGER NOT NULL, `interaction_action` INTEGER NOT NULL, `chosen_browser_package` TEXT, `associated_host_rule_id` INTEGER, FOREIGN KEY(`associated_host_rule_id`) REFERENCES `host_rules`(`host_rule_id`) ON UPDATE CASCADE ON DELETE SET NULL DEFERRABLE INITIALLY DEFERRED)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "uri_record_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uriString",
+            "columnName": "uri_string",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "host",
+            "columnName": "host",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uriSource",
+            "columnName": "uri_source",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interactionAction",
+            "columnName": "interaction_action",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "chosenBrowserPackage",
+            "columnName": "chosen_browser_package",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "associatedHostRuleId",
+            "columnName": "associated_host_rule_id",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "uri_record_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_uri_records_associated_host_rule_id",
+            "unique": false,
+            "columnNames": [
+              "associated_host_rule_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_uri_records_associated_host_rule_id` ON `${TABLE_NAME}` (`associated_host_rule_id`)"
+          },
+          {
+            "name": "index_uri_records_host",
+            "unique": false,
+            "columnNames": [
+              "host"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_uri_records_host` ON `${TABLE_NAME}` (`host`)"
+          },
+          {
+            "name": "index_uri_records_timestamp",
+            "unique": false,
+            "columnNames": [
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_uri_records_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
+          },
+          {
+            "name": "index_uri_records_uri_string",
+            "unique": false,
+            "columnNames": [
+              "uri_string"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_uri_records_uri_string` ON `${TABLE_NAME}` (`uri_string`)"
+          },
+          {
+            "name": "index_uri_records_interaction_action",
+            "unique": false,
+            "columnNames": [
+              "interaction_action"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_uri_records_interaction_action` ON `${TABLE_NAME}` (`interaction_action`)"
+          },
+          {
+            "name": "index_uri_records_uri_source",
+            "unique": false,
+            "columnNames": [
+              "uri_source"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_uri_records_uri_source` ON `${TABLE_NAME}` (`uri_source`)"
+          },
+          {
+            "name": "index_uri_records_chosen_browser_package",
+            "unique": false,
+            "columnNames": [
+              "chosen_browser_package"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_uri_records_chosen_browser_package` ON `${TABLE_NAME}` (`chosen_browser_package`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "host_rules",
+            "onDelete": "SET NULL",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "associated_host_rule_id"
+            ],
+            "referencedColumns": [
+              "host_rule_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "host_rules",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`host_rule_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `host` TEXT NOT NULL COLLATE NOCASE, `uri_status` INTEGER NOT NULL, `folder_id` INTEGER, `preferred_browser_package` TEXT, `is_preference_enabled` INTEGER NOT NULL DEFAULT 1, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, FOREIGN KEY(`folder_id`) REFERENCES `folders`(`folder_id`) ON UPDATE CASCADE ON DELETE SET NULL DEFERRABLE INITIALLY DEFERRED)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "host_rule_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "host",
+            "columnName": "host",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uriStatus",
+            "columnName": "uri_status",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "folderId",
+            "columnName": "folder_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "preferredBrowserPackage",
+            "columnName": "preferred_browser_package",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isPreferenceEnabled",
+            "columnName": "is_preference_enabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "host_rule_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_host_rules_host",
+            "unique": true,
+            "columnNames": [
+              "host"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_host_rules_host` ON `${TABLE_NAME}` (`host`)"
+          },
+          {
+            "name": "index_host_rules_uri_status",
+            "unique": false,
+            "columnNames": [
+              "uri_status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_host_rules_uri_status` ON `${TABLE_NAME}` (`uri_status`)"
+          },
+          {
+            "name": "index_host_rules_folder_id",
+            "unique": false,
+            "columnNames": [
+              "folder_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_host_rules_folder_id` ON `${TABLE_NAME}` (`folder_id`)"
+          },
+          {
+            "name": "index_host_rules_is_preference_enabled",
+            "unique": false,
+            "columnNames": [
+              "is_preference_enabled"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_host_rules_is_preference_enabled` ON `${TABLE_NAME}` (`is_preference_enabled`)"
+          },
+          {
+            "name": "index_host_rules_updated_at",
+            "unique": false,
+            "columnNames": [
+              "updated_at"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_host_rules_updated_at` ON `${TABLE_NAME}` (`updated_at`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "folders",
+            "onDelete": "SET NULL",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "folder_id"
+            ],
+            "referencedColumns": [
+              "folder_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "folders",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`folder_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `parent_folder_id` INTEGER, `name` TEXT NOT NULL, `folder_type` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, FOREIGN KEY(`parent_folder_id`) REFERENCES `folders`(`folder_id`) ON UPDATE CASCADE ON DELETE SET NULL DEFERRABLE INITIALLY DEFERRED)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "folder_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parentFolderId",
+            "columnName": "parent_folder_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "folderType",
+            "columnName": "folder_type",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "folder_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_folders_parent_folder_id",
+            "unique": false,
+            "columnNames": [
+              "parent_folder_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_folders_parent_folder_id` ON `${TABLE_NAME}` (`parent_folder_id`)"
+          },
+          {
+            "name": "index_folders_name",
+            "unique": false,
+            "columnNames": [
+              "name"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_folders_name` ON `${TABLE_NAME}` (`name`)"
+          },
+          {
+            "name": "index_folders_folder_type",
+            "unique": false,
+            "columnNames": [
+              "folder_type"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_folders_folder_type` ON `${TABLE_NAME}` (`folder_type`)"
+          },
+          {
+            "name": "index_folders_parent_folder_id_name_folder_type",
+            "unique": true,
+            "columnNames": [
+              "parent_folder_id",
+              "name",
+              "folder_type"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_folders_parent_folder_id_name_folder_type` ON `${TABLE_NAME}` (`parent_folder_id`, `name`, `folder_type`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "folders",
+            "onDelete": "SET NULL",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "parent_folder_id"
+            ],
+            "referencedColumns": [
+              "folder_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "browser_usage_stats",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`browser_package_name` TEXT NOT NULL, `usage_count` INTEGER NOT NULL DEFAULT 0, `last_used_timestamp` INTEGER NOT NULL, PRIMARY KEY(`browser_package_name`))",
+        "fields": [
+          {
+            "fieldPath": "browserPackageName",
+            "columnName": "browser_package_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usageCount",
+            "columnName": "usage_count",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "lastUsedTimestamp",
+            "columnName": "last_used_timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "browser_package_name"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_browser_usage_stats_last_used_timestamp",
+            "unique": false,
+            "columnNames": [
+              "last_used_timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_browser_usage_stats_last_used_timestamp` ON `${TABLE_NAME}` (`last_used_timestamp`)"
+          },
+          {
+            "name": "index_browser_usage_stats_usage_count",
+            "unique": false,
+            "columnNames": [
+              "usage_count"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_browser_usage_stats_usage_count` ON `${TABLE_NAME}` (`usage_count`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9bcbd2f46f9000d6485210b2ba6e5aec')"
+    ]
+  }
+}

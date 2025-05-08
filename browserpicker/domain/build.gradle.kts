@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.hiltAndroid)
     alias(libs.plugins.serialization)
     alias(libs.plugins.compose)
+    id("androidx.room")
 }
 
 android {
@@ -35,6 +36,9 @@ android {
         buildConfig = true
         viewBinding = true
         compose = true
+    }
+    room {
+        schemaDirectory("$projectDir/schemas")
     }
 }
 
