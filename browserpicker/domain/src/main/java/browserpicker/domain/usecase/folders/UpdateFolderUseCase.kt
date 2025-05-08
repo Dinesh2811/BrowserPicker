@@ -32,8 +32,8 @@ class UpdateFolderUseCaseImpl @Inject constructor(
                 onSuccess()
             },
             onFailure = { throwable ->
-                Timber.e(throwable, "Failed to update folder: ID=${folder.id}")
-                onError(throwable.toDomainError("Failed to update folder."))
+                Timber.e(throwable.cause, "Failed to update folder: ID=${folder.id}")
+                throwable.cause?.let { onError(it.toDomainError("Failed to update folder.")) }
             }
         )
     }

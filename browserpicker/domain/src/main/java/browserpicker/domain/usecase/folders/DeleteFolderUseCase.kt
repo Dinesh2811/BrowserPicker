@@ -38,8 +38,8 @@ class DeleteFolderUseCaseImpl @Inject constructor(
                 onSuccess()
             },
             onFailure = { throwable ->
-                Timber.e(throwable, "Failed to delete folder: ID=$folderId")
-                onError(throwable.toDomainError("Failed to delete folder."))
+                Timber.e(throwable.cause, "Failed to delete folder: ID=$folderId")
+                throwable.cause?.let { onError(it.toDomainError("Failed to delete folder.")) }
                 // Could add specific error if it failed due to having children (if that logic is added)
             }
         )

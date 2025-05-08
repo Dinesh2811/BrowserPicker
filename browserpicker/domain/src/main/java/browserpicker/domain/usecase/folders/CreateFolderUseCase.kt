@@ -34,8 +34,8 @@ class CreateFolderUseCaseImpl @Inject constructor(
                 onSuccess(folderId)
             },
             onFailure = { throwable ->
-                Timber.e(throwable, "Failed to create folder")
-                onError(throwable.toDomainError("Failed to create folder."))
+                Timber.e(throwable.cause, "Failed to create folder")
+                throwable.cause?.let { onError(it.toDomainError("Failed to create folder.")) }
             }
         )
     }

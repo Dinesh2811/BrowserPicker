@@ -4,7 +4,7 @@ import androidx.room.withTransaction
 import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
 import browserpicker.core.results.AppError
-import browserpicker.core.results.MyResult
+import browserpicker.core.results.DomainResult
 import browserpicker.data.DataNotFoundException
 import browserpicker.data.FolderNotEmptyException
 import browserpicker.data.local.datasource.FolderLocalDataSource
@@ -154,7 +154,7 @@ class FolderRepositoryImpl @Inject constructor(
         name: String,
         parentFolderId: Long?,
         type: FolderType,
-    ): MyResult<Long, AppError> = browserPickerDatabase.withTransaction {
+    ): DomainResult<Long, AppError> = browserPickerDatabase.withTransaction {
         try {
             val trimmedName = name.trim()
             if (trimmedName.isEmpty()) {
@@ -168,7 +168,7 @@ class FolderRepositoryImpl @Inject constructor(
                 val existingDefaultEntity = folderDataSource.findFolderByNameAndParent(trimmedName, parentFolderId, type)
                 if (existingDefaultEntity != null && (existingDefaultEntity.id == Folder.DEFAULT_BOOKMARK_ROOT_FOLDER_ID || existingDefaultEntity.id == Folder.DEFAULT_BLOCKED_ROOT_FOLDER_ID)) {
                     Timber.w("[Repository] Attempted to recreate default folder: Name='$trimmedName', Type='$type'. Returning existing ID ${existingDefaultEntity.id}.")
-                    return@withTransaction MyResult.Success(existingDefaultEntity.id)
+                    return@withTransaction DomainResult.Success(existingDefaultEntity.id)
                 } else {
                     throw IllegalArgumentException("Cannot create folder with reserved root name '$trimmedName'.")
                 }
@@ -199,7 +199,7 @@ class FolderRepositoryImpl @Inject constructor(
             )
             val newFolderEntity = FolderMapper.toEntity(newFolder)
             val folderId = folderDataSource.createFolder(newFolderEntity)
-            MyResult.Success(folderId)
+            DomainResult.Success(folderId)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed to create folder: Name='%s', Parent='%s', Type='%s'", name, parentFolderId, type)
             Timber.e("[Repository] Error during folder creation: ${e.message}")
@@ -208,7 +208,7 @@ class FolderRepositoryImpl @Inject constructor(
                 is IllegalStateException -> AppError.DataIntegrityError(e.message ?: "Data integrity or state issue", e)
                 else -> AppError.UnknownError("Failed to create folder", e)
             }
-            MyResult.Error(appError)
+            DomainResult.Failure(appError)
         }
     }
 
@@ -220,7 +220,7 @@ class FolderRepositoryImpl @Inject constructor(
         return isDescendantRecursive(parentId, targetAncestorId)
     }
 
-    override suspend fun updateFolder(folder: Folder): MyResult<Unit, AppError> = browserPickerDatabase.withTransaction {
+    override suspend fun updateFolder(folder: Folder): DomainResult<Unit, AppError> = browserPickerDatabase.withTransaction {
         try {
             Timber.tag("FolderRepo").d("Attempting to update folder: id='%d', name='%s', parentId='%s'", folder.id, folder.name, folder.parentFolderId)
             val trimmedName = folder.name.trim()
@@ -281,7 +281,7 @@ class FolderRepositoryImpl @Inject constructor(
             if (!updated) {
                 throw IllegalStateException("Failed to update folder with ID ${folder.id} in data source during transaction (record might not exist anymore or update failed).")
             }
-            MyResult.Success(Unit)
+            DomainResult.Success(Unit)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed transaction to update folder: ID='${folder.id}', name='${folder.name}', parentFolderId='${folder.parentFolderId}', type='${folder.type}'")
             Timber.e("[Repository] Error during folder update: ${e.message}")
@@ -291,11 +291,11 @@ class FolderRepositoryImpl @Inject constructor(
                 is FolderNotEmptyException -> AppError.FolderNotEmptyError(folder.id, e.message, e)
                 else -> AppError.UnknownError("Failed to update folder", e)
             }
-            MyResult.Error(appError)
+            DomainResult.Failure(appError)
         }
     }
 
-    override suspend fun deleteFolder(folderId: Long): MyResult<Unit, AppError> = browserPickerDatabase.withTransaction {
+    override suspend fun deleteFolder(folderId: Long): DomainResult<Unit, AppError> = browserPickerDatabase.withTransaction {
         try {
             if (folderId == Folder.DEFAULT_BOOKMARK_ROOT_FOLDER_ID || folderId == Folder.DEFAULT_BLOCKED_ROOT_FOLDER_ID) {
                 throw IllegalArgumentException("Cannot delete the default root folders.")
@@ -311,7 +311,7 @@ class FolderRepositoryImpl @Inject constructor(
             if (!deleted) {
                 throw DataNotFoundException("Folder with ID $folderId not found for deletion or delete failed.")
             }
-            MyResult.Success(Unit)
+            DomainResult.Success(Unit)
         } catch (e: Exception) {
             Timber.e(e, "[Repository] Failed transaction to delete folder: ID='$folderId'")
             Timber.e("[Repository] Error during folder deletion: ${e.message}")
@@ -322,7 +322,7 @@ class FolderRepositoryImpl @Inject constructor(
                 is IllegalStateException -> AppError.DataIntegrityError(e.message ?: "Unexpected state issue during deletion", e)
                 else -> AppError.UnknownError("Failed to delete folder", e)
             }
-            MyResult.Error(appError)
+            DomainResult.Failure(appError)
         }
     }
 }
