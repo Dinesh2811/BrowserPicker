@@ -1,4 +1,4 @@
-package com.dinesh.browserpicker.v1.domain.usecases
+package browserpicker.domain.usecases
 
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData

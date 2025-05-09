@@ -1,10 +1,17 @@
-package com.dinesh.browserpicker.v1.domain.usecases.impl
+package browserpicker.domain.usecases.impl
 
 import browserpicker.core.results.DomainResult
 import browserpicker.core.results.AppError
-import com.dinesh.browserpicker.v1.domain.usecases.*
-import com.dinesh.browserpicker.v1.domain.usecases.impl.*
-import com.dinesh.browserpicker.v1.domain.BrowserAppInfo
+import browserpicker.domain.usecases.BackupDataUseCase
+import browserpicker.domain.usecases.CheckDefaultBrowserStatusUseCase
+import browserpicker.domain.usecases.HandleUncaughtUriUseCase
+import browserpicker.domain.usecases.MonitorSystemBrowserChangesUseCase
+import browserpicker.domain.usecases.MonitorUriClipboardUseCase
+import browserpicker.domain.usecases.OpenBrowserPreferencesUseCase
+import browserpicker.domain.usecases.OpenUriInBrowserUseCase
+import browserpicker.domain.usecases.RestoreDataUseCase
+import browserpicker.domain.usecases.SetAsDefaultBrowserUseCase
+import browserpicker.domain.usecases.ShareUriUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import javax.inject.Inject

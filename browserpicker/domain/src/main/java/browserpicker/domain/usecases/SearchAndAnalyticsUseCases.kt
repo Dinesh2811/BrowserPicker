@@ -1,4 +1,4 @@
-package com.dinesh.browserpicker.v1.domain.usecases
+package browserpicker.domain.usecases
 
 import androidx.compose.runtime.Immutable
 import androidx.paging.PagingConfig

@@ -1,12 +1,20 @@
-package com.dinesh.browserpicker.v1.domain.usecases.impl
+package browserpicker.domain.usecases.impl
 
 import browserpicker.core.results.DomainResult
 import browserpicker.core.results.AppError
 import browserpicker.domain.model.HostRule
 import browserpicker.domain.model.UriStatus
-import com.dinesh.browserpicker.v1.domain.usecases.*
-import com.dinesh.browserpicker.v1.domain.usecases.impl.*
-import com.dinesh.browserpicker.v1.domain.BrowserAppInfo
+import browserpicker.domain.usecases.BlockHostUseCase
+import browserpicker.domain.usecases.BookmarkHostUseCase
+import browserpicker.domain.usecases.ClearHostStatusUseCase
+import browserpicker.domain.usecases.DeleteHostRuleUseCase
+import browserpicker.domain.usecases.GetAllHostRulesUseCase
+import browserpicker.domain.usecases.GetHostRuleByIdUseCase
+import browserpicker.domain.usecases.GetHostRuleUseCase
+import browserpicker.domain.usecases.GetHostRulesByFolderUseCase
+import browserpicker.domain.usecases.GetHostRulesByStatusUseCase
+import browserpicker.domain.usecases.GetRootHostRulesByStatusUseCase
+import browserpicker.domain.usecases.SaveHostRuleUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import javax.inject.Inject

@@ -1,4 +1,4 @@
-package com.dinesh.browserpicker.v1.domain.usecases.impl
+package browserpicker.domain.usecases.impl
 
 import browserpicker.core.results.DomainResult
 import browserpicker.core.results.AppError
@@ -7,17 +7,23 @@ import browserpicker.domain.model.Folder
 import browserpicker.domain.model.GroupCount
 import browserpicker.domain.model.HostRule
 import browserpicker.domain.model.*
-import browserpicker.domain.model.query.*
 import browserpicker.domain.model.UriStatus
-import com.dinesh.browserpicker.v1.domain.usecases.*
-import com.dinesh.browserpicker.v1.domain.usecases.impl.*
-import com.dinesh.browserpicker.v1.domain.BrowserAppInfo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.datetime.Instant
 import javax.inject.Inject
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import browserpicker.domain.usecases.AnalyzeBrowserUsageTrendsUseCase
+import browserpicker.domain.usecases.AnalyzeUriTrendsUseCase
+import browserpicker.domain.usecases.BrowserUsageReport
+import browserpicker.domain.usecases.GenerateBrowserUsageReportUseCase
+import browserpicker.domain.usecases.GenerateHistoryReportUseCase
+import browserpicker.domain.usecases.GetMostVisitedHostsUseCase
+import browserpicker.domain.usecases.GetTopActionsByHostUseCase
+import browserpicker.domain.usecases.SearchFoldersUseCase
+import browserpicker.domain.usecases.SearchHostRulesUseCase
+import browserpicker.domain.usecases.UriHistoryReport
 
 class AnalyzeUriTrendsUseCaseImpl @Inject constructor(): AnalyzeUriTrendsUseCase {
     override operator fun invoke(timeRange: Pair<Instant, Instant>?): Flow<DomainResult<Map<String, List<DateCount>>, AppError>> {

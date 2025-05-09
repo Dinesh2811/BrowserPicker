@@ -1,11 +1,10 @@
-package com.dinesh.browserpicker.v1.domain.usecases
+package browserpicker.domain.usecases
 
 import browserpicker.core.results.DomainResult
 import browserpicker.core.results.AppError
 import browserpicker.domain.model.BrowserUsageStat
 import browserpicker.domain.model.*
 import browserpicker.domain.model.query.*
-import com.dinesh.browserpicker.v1.domain.BrowserAppInfo
 import kotlinx.coroutines.flow.Flow
 
 interface GetAvailableBrowsersUseCase {

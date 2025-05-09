@@ -1,6 +1,7 @@
-package com.dinesh.browserpicker.v1.domain
+package browserpicker.domain.model
 
 import androidx.compose.runtime.Immutable
+
 
 @Immutable
 data class BrowserAppInfo(

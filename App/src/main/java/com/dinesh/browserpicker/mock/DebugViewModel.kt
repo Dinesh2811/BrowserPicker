@@ -2,6 +2,13 @@ package com.dinesh.browserpicker.mock
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import browserpicker.domain.di.BrowserUseCases
+import browserpicker.domain.di.FolderUseCases
+import browserpicker.domain.di.HostRuleUseCases
+import browserpicker.domain.di.SearchAndAnalyticsUseCases
+import browserpicker.domain.di.SystemIntegrationUseCases
+import browserpicker.domain.di.UriHandlingUseCases
+import browserpicker.domain.di.UriHistoryUseCases
 import browserpicker.domain.model.query.UriHistoryQuery
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,7 +18,6 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 import browserpicker.domain.repository.UriHistoryRepository
-import com.dinesh.browserpicker.v1.domain.di.*
 import kotlinx.coroutines.flow.*
 
 @HiltViewModel
