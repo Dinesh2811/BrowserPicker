@@ -85,6 +85,8 @@ interface BrowserUseCases {
     val getBrowserUsageStatUseCase: GetBrowserUsageStatUseCase
     val getMostFrequentlyUsedBrowserUseCase: GetMostFrequentlyUsedBrowserUseCase
     val getMostRecentlyUsedBrowserUseCase: GetMostRecentlyUsedBrowserUseCase
+//    val deleteBrowserStatUseCase: DeleteBrowserStatUseCase
+//    val deleteAllStatsUseCase: DeleteAllStatsUseCase
 }
 
 /**
@@ -118,6 +120,8 @@ interface UriHistoryUseCases {
     val getUriFilterOptionsUseCase: GetUriFilterOptionsUseCase
     val exportUriHistoryUseCase: ExportUriHistoryUseCase
     val importUriHistoryUseCase: ImportUriHistoryUseCase
+//    val getDistinctHistoryHostsUseCase: GetDistinctHistoryHostsUseCase
+//    val getDistinctChosenBrowsersUseCase: GetDistinctChosenBrowsersUseCase
 }
 
 /**

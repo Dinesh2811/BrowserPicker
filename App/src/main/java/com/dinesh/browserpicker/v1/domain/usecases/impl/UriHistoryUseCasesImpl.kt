@@ -4,11 +4,13 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import browserpicker.core.results.DomainResult
 import browserpicker.core.results.AppError
+import browserpicker.core.results.catchUnexpected
 import browserpicker.domain.model.DateCount
 import browserpicker.domain.model.*
 import browserpicker.domain.model.GroupCount
 import browserpicker.domain.model.query.*
 import browserpicker.domain.model.query.UriHistoryQuery
+import browserpicker.domain.repository.UriHistoryRepository
 import com.dinesh.browserpicker.v1.domain.usecases.*
 import com.dinesh.browserpicker.v1.domain.usecases.impl.*
 import com.dinesh.browserpicker.v1.domain.BrowserAppInfo
@@ -89,4 +91,22 @@ class ImportUriHistoryUseCaseImpl @Inject constructor(): ImportUriHistoryUseCase
         // TODO: Implement logic
         return DomainResult.Failure(AppError.UnknownError("Not implemented"))
     }
-} 
+}
+//
+//class GetDistinctHistoryHostsUseCaseImpl @Inject constructor(
+//    private val uriHistoryRepository: UriHistoryRepository
+//) : GetDistinctHistoryHostsUseCase {
+//    override operator fun invoke(): Flow<DomainResult<List<String>, AppError>> {
+//        return uriHistoryRepository.getDistinctHosts()
+//            .catchUnexpected()
+//    }
+//}
+//
+//class GetDistinctChosenBrowsersUseCaseImpl @Inject constructor(
+//    private val uriHistoryRepository: UriHistoryRepository
+//) : GetDistinctChosenBrowsersUseCase {
+//    override operator fun invoke(): Flow<DomainResult<List<String?>, AppError>> {
+//        return uriHistoryRepository.getDistinctChosenBrowsers()
+//            .catchUnexpected()
+//    }
+//}

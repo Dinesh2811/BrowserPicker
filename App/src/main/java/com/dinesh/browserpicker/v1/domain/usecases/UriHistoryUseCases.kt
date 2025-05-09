@@ -82,4 +82,18 @@ interface ImportUriHistoryUseCase {
      * Imports URI history from a file
      */
     suspend operator fun invoke(filePath: String): DomainResult<Int, AppError>
-} 
+}
+//
+//interface GetDistinctHistoryHostsUseCase {
+//    /**
+//     * Gets all distinct hosts from URI history.
+//     */
+//    operator fun invoke(): Flow<DomainResult<List<String>, AppError>>
+//}
+//
+//interface GetDistinctChosenBrowsersUseCase {
+//    /**
+//     * Gets all distinct chosen browser package names from URI history.
+//     */
+//    operator fun invoke(): Flow<DomainResult<List<String?>, AppError>>
+//}

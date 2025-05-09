@@ -5,6 +5,7 @@ import browserpicker.core.results.AppError
 import browserpicker.domain.model.BrowserUsageStat
 import browserpicker.domain.model.*
 import browserpicker.domain.model.query.*
+import browserpicker.domain.repository.BrowserStatsRepository
 import com.dinesh.browserpicker.v1.domain.usecases.*
 import com.dinesh.browserpicker.v1.domain.usecases.impl.*
 import com.dinesh.browserpicker.v1.domain.BrowserAppInfo
@@ -84,4 +85,20 @@ class GetMostRecentlyUsedBrowserUseCaseImpl @Inject constructor(): GetMostRecent
         // TODO: Implement logic
         return emptyFlow()
     }
-} 
+}
+//
+//class DeleteBrowserStatUseCaseImpl @Inject constructor(
+//    private val browserStatsRepository: BrowserStatsRepository
+//) : DeleteBrowserStatUseCase {
+//    override suspend operator fun invoke(packageName: String): DomainResult<Unit, AppError> {
+//        return browserStatsRepository.deleteBrowserStat(packageName)
+//    }
+//}
+//
+//class DeleteAllStatsUseCaseImpl @Inject constructor(
+//    private val browserStatsRepository: BrowserStatsRepository
+//) : DeleteAllStatsUseCase {
+//    override suspend operator fun invoke(): DomainResult<Unit, AppError> {
+//        return browserStatsRepository.deleteAllStats()
+//    }
+//}

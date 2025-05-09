@@ -165,6 +165,14 @@ abstract class UseCaseBindingModule {
     @Singleton
     abstract fun bindImportUriHistoryUseCase(impl: ImportUriHistoryUseCaseImpl): ImportUriHistoryUseCase
 
+//    @Binds
+//    @Singleton
+//    abstract fun bindGetDistinctHistoryHostsUseCase(impl: GetDistinctHistoryHostsUseCaseImpl): GetDistinctHistoryHostsUseCase
+//
+//    @Binds
+//    @Singleton
+//    abstract fun bindGetDistinctChosenBrowsersUseCase(impl: GetDistinctChosenBrowsersUseCaseImpl): GetDistinctChosenBrowsersUseCase
+
     @Binds
     @Singleton
     abstract fun bindGetFolderUseCase(impl: GetFolderUseCaseImpl): GetFolderUseCase
@@ -284,4 +292,12 @@ abstract class UseCaseBindingModule {
     @Binds
     @Singleton
     abstract fun bindHandleUncaughtUriUseCase(impl: HandleUncaughtUriUseCaseImpl): HandleUncaughtUriUseCase
+
+//    @Binds
+//    @Singleton
+//    abstract fun bindDeleteBrowserStatUseCase(impl: DeleteBrowserStatUseCaseImpl): DeleteBrowserStatUseCase
+//
+//    @Binds
+//    @Singleton
+//    abstract fun bindDeleteAllStatsUseCase(impl: DeleteAllStatsUseCaseImpl): DeleteAllStatsUseCase
 } 
