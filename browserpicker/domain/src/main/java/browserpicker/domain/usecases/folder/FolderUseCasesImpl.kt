@@ -1,21 +1,9 @@
-package browserpicker.domain.usecases.impl
+package browserpicker.domain.usecases.folder
 
 import browserpicker.core.results.DomainResult
 import browserpicker.core.results.AppError
 import browserpicker.domain.model.Folder
 import browserpicker.domain.model.FolderType
-import browserpicker.domain.usecases.folder.CreateFolderUseCase
-import browserpicker.domain.usecases.folder.DeleteFolderUseCase
-import browserpicker.domain.usecases.folder.EnsureDefaultFoldersExistUseCase
-import browserpicker.domain.usecases.folder.FindFolderByNameAndParentUseCase
-import browserpicker.domain.usecases.folder.GetAllFoldersByTypeUseCase
-import browserpicker.domain.usecases.folder.GetChildFoldersUseCase
-import browserpicker.domain.usecases.folder.GetFolderHierarchyUseCase
-import browserpicker.domain.usecases.folder.GetFolderUseCase
-import browserpicker.domain.usecases.folder.GetRootFoldersUseCase
-import browserpicker.domain.usecases.folder.MoveFolderUseCase
-import browserpicker.domain.usecases.folder.MoveHostRuleToFolderUseCase
-import browserpicker.domain.usecases.folder.UpdateFolderUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import javax.inject.Inject

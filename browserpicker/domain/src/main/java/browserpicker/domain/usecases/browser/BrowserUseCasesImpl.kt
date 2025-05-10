@@ -1,19 +1,10 @@
-package browserpicker.domain.usecases.impl
+package browserpicker.domain.usecases.browser
 
 import browserpicker.core.results.DomainResult
 import browserpicker.core.results.AppError
 import browserpicker.domain.model.BrowserAppInfo
 import browserpicker.domain.model.BrowserUsageStat
 import browserpicker.domain.model.query.*
-import browserpicker.domain.usecases.browser.ClearPreferredBrowserForHostUseCase
-import browserpicker.domain.usecases.browser.GetAvailableBrowsersUseCase
-import browserpicker.domain.usecases.browser.GetBrowserUsageStatUseCase
-import browserpicker.domain.usecases.browser.GetBrowserUsageStatsUseCase
-import browserpicker.domain.usecases.browser.GetMostFrequentlyUsedBrowserUseCase
-import browserpicker.domain.usecases.browser.GetMostRecentlyUsedBrowserUseCase
-import browserpicker.domain.usecases.browser.GetPreferredBrowserForHostUseCase
-import browserpicker.domain.usecases.browser.RecordBrowserUsageUseCase
-import browserpicker.domain.usecases.browser.SetPreferredBrowserForHostUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import javax.inject.Inject

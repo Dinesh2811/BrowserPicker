@@ -1,4 +1,4 @@
-package browserpicker.domain.usecases.impl
+package browserpicker.domain.usecases.uri.shared
 
 import browserpicker.core.results.DomainResult
 import browserpicker.core.results.AppError
@@ -6,12 +6,6 @@ import browserpicker.domain.model.query.*
 import browserpicker.domain.model.UriSource
 import browserpicker.domain.model.InteractionAction
 import browserpicker.domain.service.ParsedUri
-import browserpicker.domain.usecases.uri.shared.CleanupUriHistoryUseCase
-import browserpicker.domain.usecases.uri.shared.GetRecentUrisUseCase
-import browserpicker.domain.usecases.uri.shared.HandleUriUseCase
-import browserpicker.domain.usecases.uri.shared.RecordUriInteractionUseCase
-import browserpicker.domain.usecases.uri.shared.SearchUrisUseCase
-import browserpicker.domain.usecases.uri.shared.ValidateUriUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import javax.inject.Inject

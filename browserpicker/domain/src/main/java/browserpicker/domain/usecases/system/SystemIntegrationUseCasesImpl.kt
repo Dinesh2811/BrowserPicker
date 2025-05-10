@@ -1,17 +1,7 @@
-package browserpicker.domain.usecases.impl
+package browserpicker.domain.usecases.system
 
 import browserpicker.core.results.DomainResult
 import browserpicker.core.results.AppError
-import browserpicker.domain.usecases.system.BackupDataUseCase
-import browserpicker.domain.usecases.system.CheckDefaultBrowserStatusUseCase
-import browserpicker.domain.usecases.system.HandleUncaughtUriUseCase
-import browserpicker.domain.usecases.system.MonitorSystemBrowserChangesUseCase
-import browserpicker.domain.usecases.system.MonitorUriClipboardUseCase
-import browserpicker.domain.usecases.system.OpenBrowserPreferencesUseCase
-import browserpicker.domain.usecases.system.OpenUriInBrowserUseCase
-import browserpicker.domain.usecases.system.RestoreDataUseCase
-import browserpicker.domain.usecases.system.SetAsDefaultBrowserUseCase
-import browserpicker.domain.usecases.system.ShareUriUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import javax.inject.Inject
