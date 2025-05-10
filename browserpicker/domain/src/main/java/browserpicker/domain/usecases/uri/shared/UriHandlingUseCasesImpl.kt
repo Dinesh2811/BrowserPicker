@@ -5,6 +5,7 @@ import browserpicker.core.results.AppError
 import browserpicker.domain.model.query.*
 import browserpicker.domain.model.UriSource
 import browserpicker.domain.model.InteractionAction
+import browserpicker.domain.model.UriRecord
 import browserpicker.domain.service.ParsedUri
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -41,14 +42,7 @@ class RecordUriInteractionUseCaseImpl @Inject constructor(): RecordUriInteractio
 }
 
 class GetRecentUrisUseCaseImpl @Inject constructor(): GetRecentUrisUseCase {
-    override operator fun invoke(limit: Int): Flow<DomainResult<List<ParsedUri>, AppError>> {
-        // TODO: Implement logic
-        return emptyFlow()
-    }
-}
-
-class SearchUrisUseCaseImpl @Inject constructor(): SearchUrisUseCase {
-    override operator fun invoke(query: String): Flow<DomainResult<List<ParsedUri>, AppError>> {
+    override operator fun invoke(limit: Int): Flow<DomainResult<List<UriRecord>, AppError>> {
         // TODO: Implement logic
         return emptyFlow()
     }

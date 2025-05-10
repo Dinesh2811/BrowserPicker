@@ -97,50 +97,6 @@ class ClearHostStatusUseCaseImpl @Inject constructor(): ClearHostStatusUseCase {
     }
 }
 
-/*
-class RemoveHostRuleFromFolderUseCaseImpl @Inject constructor(
-    private val hostRuleRepository: HostRuleRepository
-) : RemoveHostRuleFromFolderUseCase {
-
-    override suspend fun invoke(hostRuleId: Long): DomainResult<Unit, AppError> {
-        // Fetch the host rule by ID
-        val getResult = hostRuleRepository.getHostRuleById(hostRuleId)
-
-        return when (getResult) {
-            is DomainResult.Success -> {
-                val hostRule = getResult.data
-                if (hostRule == null) {
-                    DomainResult.Failure(AppError.DataNotFound("Host rule with ID $hostRuleId not found."))
-                } else {
-                    // If a folderId exists, remove it. If not, do nothing.
-                    if (hostRule.folderId != null) {
-                        // Create a new HostRule instance with folderId set to null
-                        val updatedHostRule = hostRule.copy(folderId = null)
-
-                        // Save the updated host rule within the suspend context
-                        // Note: saveHostRule identifies by host, not ID. This relies on the repository's saveHostRule handling updates correctly based on existing host.
-                        hostRuleRepository.saveHostRule(
-                            host = updatedHostRule.host,
-                            status = updatedHostRule.uriStatus,
-                            folderId = updatedHostRule.folderId,
-                            preferredBrowser = updatedHostRule.preferredBrowserPackage,
-                            isPreferenceEnabled = updatedHostRule.isPreferenceEnabled
-                        ).mapSuccess { Unit } // mapSuccess to convert Long result to Unit
-                    } else {
-                        // Host rule already not in a folder, return success.
-                        DomainResult.Success(Unit)
-                    }
-                }
-            }
-            is DomainResult.Failure -> {
-                // Pass the failure from the fetch operation
-                DomainResult.Failure(getResult.error)
-            }
-        }
-    }
-}
- */
-
 class UpdateHostRuleStatusUseCaseImpl @Inject constructor(
     private val hostRuleRepository: HostRuleRepository,
     private val folderRepository: FolderRepository // Potentially needed to validate folder existence

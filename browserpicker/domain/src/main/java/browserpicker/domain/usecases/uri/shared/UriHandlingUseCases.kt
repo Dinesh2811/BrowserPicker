@@ -5,6 +5,7 @@ import browserpicker.core.results.AppError
 import browserpicker.domain.model.query.*
 import browserpicker.domain.model.UriSource
 import browserpicker.domain.model.InteractionAction
+import browserpicker.domain.model.UriRecord
 import browserpicker.domain.service.ParsedUri
 import kotlinx.coroutines.flow.Flow
 
@@ -41,14 +42,7 @@ interface GetRecentUrisUseCase {
     /**
      * Gets a flow of recently handled URIs
      */
-    operator fun invoke(limit: Int = 10): Flow<DomainResult<List<ParsedUri>, AppError>>
-}
-
-interface SearchUrisUseCase {
-    /**
-     * Searches for URIs by query string
-     */
-    operator fun invoke(query: String): Flow<DomainResult<List<ParsedUri>, AppError>>
+    operator fun invoke(limit: Int = 10): Flow<DomainResult<List<UriRecord>, AppError>>
 }
 
 interface CleanupUriHistoryUseCase {

@@ -60,7 +60,6 @@ import browserpicker.domain.usecases.system.RestoreDataUseCase
 import browserpicker.domain.usecases.uri.host.SaveHostRuleUseCase
 import browserpicker.domain.usecases.analytics.SearchFoldersUseCase
 import browserpicker.domain.usecases.analytics.SearchHostRulesUseCase
-import browserpicker.domain.usecases.uri.shared.SearchUrisUseCase
 import browserpicker.domain.usecases.system.SetAsDefaultBrowserUseCase
 import browserpicker.domain.usecases.browser.SetPreferredBrowserForHostUseCase
 import browserpicker.domain.usecases.system.ShareUriUseCase
@@ -74,7 +73,6 @@ class UriHandlingUseCasesImpl @Inject constructor(
     override val validateUriUseCase: ValidateUriUseCase,
     override val recordUriInteractionUseCase: RecordUriInteractionUseCase,
     override val getRecentUrisUseCase: GetRecentUrisUseCase,
-    override val searchUrisUseCase: SearchUrisUseCase,
     override val cleanupUriHistoryUseCase: CleanupUriHistoryUseCase,
 ): UriHandlingUseCases
 
@@ -89,8 +87,6 @@ class BrowserUseCasesImpl @Inject constructor(
     override val getBrowserUsageStatUseCase: GetBrowserUsageStatUseCase,
     override val getMostFrequentlyUsedBrowserUseCase: GetMostFrequentlyUsedBrowserUseCase,
     override val getMostRecentlyUsedBrowserUseCase: GetMostRecentlyUsedBrowserUseCase,
-//    override val deleteBrowserStatUseCase: DeleteBrowserStatUseCase,
-//    override val deleteAllStatsUseCase: DeleteAllStatsUseCase,
 ): BrowserUseCases
 
 @Singleton
@@ -120,8 +116,6 @@ class UriHistoryUseCasesImpl @Inject constructor(
     override val getUriFilterOptionsUseCase: GetUriFilterOptionsUseCase,
     override val exportUriHistoryUseCase: ExportUriHistoryUseCase,
     override val importUriHistoryUseCase: ImportUriHistoryUseCase,
-//    override val getDistinctHistoryHostsUseCase: GetDistinctHistoryHostsUseCase,
-//    override val getDistinctChosenBrowsersUseCase: GetDistinctChosenBrowsersUseCase,
 ): UriHistoryUseCases
 
 @Singleton

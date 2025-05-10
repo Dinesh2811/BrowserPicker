@@ -88,14 +88,6 @@ interface ClearHostStatusUseCase {
      */
     suspend operator fun invoke(host: String): DomainResult<Unit, AppError>
 }
-/*
-interface RemoveHostRuleFromFolderUseCase {
-    /**
-     * Removes a host rule from its associated folder
-     */
-    suspend operator fun invoke(hostRuleId: Long): DomainResult<Unit, AppError>
-}
- */
 
 interface UpdateHostRuleStatusUseCase {
     /**

@@ -7,6 +7,7 @@ import androidx.paging.cachedIn
 import browserpicker.core.results.DomainResult
 import browserpicker.domain.di.SearchAndAnalyticsUseCases
 import browserpicker.domain.di.UriHandlingUseCases
+import browserpicker.domain.di.UriHistoryUseCases
 import browserpicker.domain.model.Folder
 import browserpicker.domain.model.FolderType
 import browserpicker.domain.model.HostRule
@@ -24,6 +25,7 @@ import browserpicker.domain.model.query.*
 class SearchViewModel @Inject constructor(
     private val searchAndAnalyticsUseCases: SearchAndAnalyticsUseCases,
     private val uriHandlingUseCases: UriHandlingUseCases,
+    private val uriHistoryUseCases: UriHistoryUseCases,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
@@ -108,18 +110,19 @@ class SearchViewModel @Inject constructor(
     }
 
     private suspend fun searchUris(query: String) {
-//        searchAndAnalyticsUseCases.searchUrisUseCase(query)
-        uriHandlingUseCases.searchUrisUseCase(query)
-            .collect { result ->
-                when (result) {
-                    is DomainResult.Success -> {
-                        _searchResults.update { it.copy(uris = result.data) }
-                    }
-                    is DomainResult.Failure -> {
-                        _uiState.update { it.copy(error = result.error.message) }
-                    }
-                }
-            }
+////        searchAndAnalyticsUseCases.searchUrisUseCase(query)
+////        uriHistoryUseCases.getPagedUriHistoryUseCase()
+//        uriHandlingUseCases.searchUrisUseCase(query)
+//            .collect { result ->
+//                when (result) {
+//                    is DomainResult.Success -> {
+//                        _searchResults.update { it.copy(uris = result.data) }
+//                    }
+//                    is DomainResult.Failure -> {
+//                        _uiState.update { it.copy(error = result.error.message) }
+//                    }
+//                }
+//            }
     }
 
     private suspend fun searchFolders(query: String) {

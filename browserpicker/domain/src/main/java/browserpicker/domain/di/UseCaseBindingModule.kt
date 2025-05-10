@@ -59,7 +59,6 @@ import browserpicker.domain.usecases.folder.MoveFolderUseCase
 import browserpicker.domain.usecases.folder.MoveHostRuleToFolderUseCase
 import browserpicker.domain.usecases.uri.shared.RecordUriInteractionUseCase
 import browserpicker.domain.usecases.uri.host.SaveHostRuleUseCase
-import browserpicker.domain.usecases.uri.shared.SearchUrisUseCase
 import browserpicker.domain.usecases.folder.UpdateFolderUseCase
 import browserpicker.domain.usecases.uri.shared.ValidateUriUseCase
 import browserpicker.domain.usecases.browser.RecordBrowserUsageUseCase
@@ -126,7 +125,6 @@ import browserpicker.domain.usecases.system.RestoreDataUseCaseImpl
 import browserpicker.domain.usecases.uri.host.SaveHostRuleUseCaseImpl
 import browserpicker.domain.usecases.analytics.SearchFoldersUseCaseImpl
 import browserpicker.domain.usecases.analytics.SearchHostRulesUseCaseImpl
-import browserpicker.domain.usecases.uri.shared.SearchUrisUseCaseImpl
 import browserpicker.domain.usecases.system.SetAsDefaultBrowserUseCaseImpl
 import browserpicker.domain.usecases.browser.SetPreferredBrowserForHostUseCaseImpl
 import browserpicker.domain.usecases.system.ShareUriUseCaseImpl
@@ -157,10 +155,6 @@ abstract class UseCaseBindingModule {
     @Binds
     @Singleton
     abstract fun bindGetRecentUrisUseCase(impl: GetRecentUrisUseCaseImpl): GetRecentUrisUseCase
-
-    @Binds
-    @Singleton
-    abstract fun bindSearchUrisUseCase(impl: SearchUrisUseCaseImpl): SearchUrisUseCase
 
     @Binds
     @Singleton

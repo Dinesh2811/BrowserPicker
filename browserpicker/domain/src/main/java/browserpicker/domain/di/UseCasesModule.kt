@@ -46,7 +46,6 @@ import browserpicker.domain.usecases.system.OpenUriInBrowserUseCase
 import browserpicker.domain.usecases.uri.shared.RecordUriInteractionUseCase
 import browserpicker.domain.usecases.system.RestoreDataUseCase
 import browserpicker.domain.usecases.uri.host.SaveHostRuleUseCase
-import browserpicker.domain.usecases.uri.shared.SearchUrisUseCase
 import browserpicker.domain.usecases.system.SetAsDefaultBrowserUseCase
 import browserpicker.domain.usecases.system.ShareUriUseCase
 import browserpicker.domain.usecases.folder.UpdateFolderUseCase
@@ -123,7 +122,6 @@ interface UriHandlingUseCases {
     val validateUriUseCase: ValidateUriUseCase
     val recordUriInteractionUseCase: RecordUriInteractionUseCase
     val getRecentUrisUseCase: GetRecentUrisUseCase
-    val searchUrisUseCase: SearchUrisUseCase
     val cleanupUriHistoryUseCase: CleanupUriHistoryUseCase
 }
 
@@ -140,8 +138,6 @@ interface BrowserUseCases {
     val getBrowserUsageStatUseCase: GetBrowserUsageStatUseCase
     val getMostFrequentlyUsedBrowserUseCase: GetMostFrequentlyUsedBrowserUseCase
     val getMostRecentlyUsedBrowserUseCase: GetMostRecentlyUsedBrowserUseCase
-//    val deleteBrowserStatUseCase: DeleteBrowserStatUseCase
-//    val deleteAllStatsUseCase: DeleteAllStatsUseCase
 }
 
 /**

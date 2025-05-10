@@ -150,7 +150,7 @@ class ManualUriEntryViewModel @Inject constructor(
                         is DomainResult.Success -> {
                             _uiState.update { it.copy(
                                 isLoadingRecent = false,
-                                recentUris = result.data.map { parsedUri -> parsedUri.originalString }
+                                recentUris = result.data.map { it.uriString }
                             )}
                         }
                         is DomainResult.Failure -> {

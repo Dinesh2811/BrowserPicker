@@ -87,21 +87,3 @@ class ImportUriHistoryUseCaseImpl @Inject constructor(): ImportUriHistoryUseCase
         return DomainResult.Failure(AppError.UnknownError("Not implemented"))
     }
 }
-//
-//class GetDistinctHistoryHostsUseCaseImpl @Inject constructor(
-//    private val uriHistoryRepository: UriHistoryRepository
-//) : GetDistinctHistoryHostsUseCase {
-//    override operator fun invoke(): Flow<DomainResult<List<String>, AppError>> {
-//        return uriHistoryRepository.getDistinctHosts()
-//            .catchUnexpected()
-//    }
-//}
-//
-//class GetDistinctChosenBrowsersUseCaseImpl @Inject constructor(
-//    private val uriHistoryRepository: UriHistoryRepository
-//) : GetDistinctChosenBrowsersUseCase {
-//    override operator fun invoke(): Flow<DomainResult<List<String?>, AppError>> {
-//        return uriHistoryRepository.getDistinctChosenBrowsers()
-//            .catchUnexpected()
-//    }
-//}
