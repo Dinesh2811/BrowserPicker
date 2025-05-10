@@ -30,10 +30,10 @@ class GetHostRuleByIdUseCaseImpl @Inject constructor(): GetHostRuleByIdUseCase {
 
 class SaveHostRuleUseCaseImpl @Inject constructor(): SaveHostRuleUseCase {
     override suspend operator fun invoke(
-        host: String, 
-        status: UriStatus, 
-        folderId: Long?, 
-        preferredBrowserPackage: String?, 
+        host: String,
+        status: UriStatus,
+        folderId: Long?,
+        preferredBrowserPackage: String?,
         isPreferenceEnabled: Boolean
     ): DomainResult<Long, AppError> {
         // TODO: Implement logic
