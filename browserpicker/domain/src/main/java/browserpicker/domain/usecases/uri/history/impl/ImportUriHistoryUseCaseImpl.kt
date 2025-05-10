@@ -2,10 +2,50 @@ package browserpicker.domain.usecases.uri.history.impl
 
 import browserpicker.core.results.AppError
 import browserpicker.core.results.DomainResult
+import browserpicker.domain.di.JsonModule.KOTLIN_SERIALIZATION_JSON_CONFIG
+import browserpicker.domain.model.UriRecord
 import browserpicker.domain.repository.UriHistoryRepository
 import browserpicker.domain.usecases.uri.history.ImportUriHistoryUseCase
+import kotlinx.serialization.json.Json
+import java.io.File
 import javax.inject.Inject
+import javax.inject.Named
 
+class ImportUriHistoryUseCaseImpl @Inject constructor(
+    private val uriHistoryRepository: UriHistoryRepository,
+    @Named(KOTLIN_SERIALIZATION_JSON_CONFIG) private val json: Json
+) : ImportUriHistoryUseCase {
+    override suspend fun invoke(filePath: String): DomainResult<Int, AppError> {
+        return try {
+            val jsonString = File(filePath).readText()
+            val records = json.decodeFromString<List<UriRecord>>(jsonString)
+
+            var successCount = 0
+            for (record in records) {
+                // We need to insert each record individually
+                // In a real implementation, consider batch operations if the repository supports them
+                val result = uriHistoryRepository.addUriRecord(
+                    uriString = record.uriString,
+                    host = record.host,
+                    source = record.uriSource,
+                    action = record.interactionAction,
+                    chosenBrowser = record.chosenBrowserPackage,
+                    associatedHostRuleId = record.associatedHostRuleId
+                )
+
+                if (result is DomainResult.Success) {
+                    successCount++
+                }
+            }
+
+            DomainResult.Success(successCount)
+        } catch (e: Exception) {
+            DomainResult.Failure(AppError.UnknownError("Failed to import URI history: ${e.message}", e))
+        }
+    }
+}
+
+/*
 class ImportUriHistoryUseCaseImpl @Inject constructor(
     private val uriHistoryRepository: UriHistoryRepository,
 //    private val importer: UriHistoryImporter
@@ -62,3 +102,5 @@ class ImportUriHistoryUseCaseImpl @Inject constructor(
 //        )
 //    }
 }
+
+ */

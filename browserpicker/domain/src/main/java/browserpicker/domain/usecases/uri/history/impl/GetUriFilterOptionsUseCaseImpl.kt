@@ -12,33 +12,39 @@ import javax.inject.Inject
 
 class GetUriFilterOptionsUseCaseImpl @Inject constructor(
     private val uriHistoryRepository: UriHistoryRepository,
-    private val hostRuleRepository: HostRuleRepository,
-): GetUriFilterOptionsUseCase {
-    override operator fun invoke(): Flow<DomainResult<FilterOptions, AppError>> {
+    private val hostRuleRepository: HostRuleRepository
+) : GetUriFilterOptionsUseCase {
+    override fun invoke(): Flow<DomainResult<FilterOptions, AppError>> {
         return combine(
             uriHistoryRepository.getDistinctHosts(),
-            uriHistoryRepository.getDistinctChosenBrowsers(),
-            hostRuleRepository.getDistinctRuleHosts()
-        ) { historyHostsResult, chosenBrowsersResult, ruleHostsResult ->
-            val historyHosts = historyHostsResult.getOrNull() ?: emptyList()
-            val chosenBrowsers = chosenBrowsersResult.getOrNull() ?: emptyList()
-            val ruleHosts = ruleHostsResult.getOrNull() ?: emptyList()
+            hostRuleRepository.getDistinctRuleHosts(),
+            uriHistoryRepository.getDistinctChosenBrowsers()
+        ) { historyHostsResult, ruleHostsResult, chosenBrowsersResult ->
+            when {
+                historyHostsResult is DomainResult.Failure ->
+                    DomainResult.Failure(historyHostsResult.error)
+                ruleHostsResult is DomainResult.Failure ->
+                    DomainResult.Failure(ruleHostsResult.error)
+                chosenBrowsersResult is DomainResult.Failure ->
+                    DomainResult.Failure(chosenBrowsersResult.error)
+                else -> {
+                    val historyHosts = (historyHostsResult as DomainResult.Success).data
+                    val ruleHosts = (ruleHostsResult as DomainResult.Success).data
+                    val chosenBrowsers = (chosenBrowsersResult as DomainResult.Success).data
 
-            // If any of the results failed, propagate the first encountered error.
-            // A more sophisticated error handling could combine errors if needed.
-            listOf(historyHostsResult, chosenBrowsersResult, ruleHostsResult)
-                .firstOrNull { it.isFailure }?.let {
-                    @Suppress("UNCHECKED_CAST")
-                    return@combine it as DomainResult<FilterOptions, AppError> // Propagate failure
+                    listOf(historyHostsResult, chosenBrowsersResult, ruleHostsResult)
+                        .firstOrNull { it.isFailure }?.let {
+                            @Suppress("UNCHECKED_CAST")
+                            return@combine it as DomainResult<FilterOptions, AppError> // Propagate failure
+                        }
+
+                    DomainResult.Success(FilterOptions(
+                        distinctHistoryHosts = historyHosts,
+                        distinctRuleHosts = ruleHosts,
+                        distinctChosenBrowsers = chosenBrowsers
+                    ))
                 }
-
-            DomainResult.Success(
-                FilterOptions(
-                    distinctHistoryHosts = historyHosts,
-                    distinctChosenBrowsers = chosenBrowsers,
-                    distinctRuleHosts = ruleHosts
-                )
-            )
+            }
         }
     }
 }
