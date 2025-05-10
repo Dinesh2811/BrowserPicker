@@ -274,26 +274,26 @@ class BookmarksViewModel @Inject constructor(
     }
 
     fun moveFolder(folderId: Long, newParentFolderId: Long?) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            
-            when (val result = folderUseCases.moveFolderUseCase(folderId, newParentFolderId)) {
-                is DomainResult.Success -> {
-                    _uiState.update { it.copy(
-                        isLoading = false,
-                        folderMoved = true
-                    )}
-                    // Refresh current folder contents
-                    _selectedFolderId.value?.let { loadCurrentFolder(it) }
-                }
-                is DomainResult.Failure -> {
-                    _uiState.update { it.copy(
-                        isLoading = false,
-                        error = result.error.message
-                    )}
-                }
-            }
-        }
+//        viewModelScope.launch {
+//            _uiState.update { it.copy(isLoading = true) }
+//
+//            when (val result = folderUseCases.moveFolderUseCase(folderId, newParentFolderId)) {
+//                is DomainResult.Success -> {
+//                    _uiState.update { it.copy(
+//                        isLoading = false,
+//                        folderMoved = true
+//                    )}
+//                    // Refresh current folder contents
+//                    _selectedFolderId.value?.let { loadCurrentFolder(it) }
+//                }
+//                is DomainResult.Failure -> {
+//                    _uiState.update { it.copy(
+//                        isLoading = false,
+//                        error = result.error.message
+//                    )}
+//                }
+//            }
+//        }
     }
 
     fun deleteBookmark(hostRuleId: Long) {

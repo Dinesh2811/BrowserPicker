@@ -66,12 +66,12 @@ class DeleteFolderUseCaseImpl @Inject constructor(): DeleteFolderUseCase {
     }
 }
 
-class MoveFolderUseCaseImpl @Inject constructor(): MoveFolderUseCase {
-    override suspend operator fun invoke(folderId: Long, newParentFolderId: Long?): DomainResult<Unit, AppError> {
-        // TODO: Implement logic
-        return DomainResult.Failure(AppError.UnknownError("Not implemented"))
-    }
-}
+//class MoveFolderUseCaseImpl @Inject constructor(): MoveFolderUseCase {
+//    override suspend operator fun invoke(folderId: Long, newParentFolderId: Long?): DomainResult<Unit, AppError> {
+//        // TODO: Implement logic
+//        return DomainResult.Failure(AppError.UnknownError("Not implemented"))
+//    }
+//}
 
 class MoveHostRuleToFolderUseCaseImpl @Inject constructor(): MoveHostRuleToFolderUseCase {
     override suspend operator fun invoke(hostRuleId: Long, destinationFolderId: Long?): DomainResult<Unit, AppError> {

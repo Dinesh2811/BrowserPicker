@@ -37,8 +37,7 @@ import browserpicker.domain.usecases.uri.shared.HandleUriUseCase
 import browserpicker.domain.usecases.uri.history.ImportUriHistoryUseCase
 import browserpicker.domain.usecases.system.MonitorSystemBrowserChangesUseCase
 import browserpicker.domain.usecases.system.MonitorUriClipboardUseCase
-import browserpicker.domain.usecases.folder.MoveFolderUseCase
-import browserpicker.domain.usecases.folder.MoveHostRuleToFolderUseCase
+import browserpicker.domain.usecases.folder.*
 import browserpicker.domain.usecases.system.OpenBrowserPreferencesUseCase
 import browserpicker.domain.usecases.system.OpenUriInBrowserUseCase
 import browserpicker.domain.usecases.uri.shared.RecordUriInteractionUseCase
@@ -186,7 +185,7 @@ interface FolderUseCases {
     val createFolderUseCase: CreateFolderUseCase
     val updateFolderUseCase: UpdateFolderUseCase
     val deleteFolderUseCase: DeleteFolderUseCase
-    val moveFolderUseCase: MoveFolderUseCase
+//    val moveFolderUseCase: MoveFolderUseCase
     val moveHostRuleToFolderUseCase: MoveHostRuleToFolderUseCase
     val getFolderHierarchyUseCase: GetFolderHierarchyUseCase
     val ensureDefaultFoldersExistUseCase: EnsureDefaultFoldersExistUseCase

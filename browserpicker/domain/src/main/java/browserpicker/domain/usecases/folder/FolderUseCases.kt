@@ -62,12 +62,12 @@ interface DeleteFolderUseCase {
     suspend operator fun invoke(folderId: Long, forceCascade: Boolean = false): DomainResult<Unit, AppError>
 }
 
-interface MoveFolderUseCase {
-    /**
-     * Moves a folder to a new parent folder
-     */
-    suspend operator fun invoke(folderId: Long, newParentFolderId: Long?): DomainResult<Unit, AppError>
-}
+//interface MoveFolderUseCase {
+//    /**
+//     * Moves a folder to a new parent folder
+//     */
+//    suspend operator fun invoke(folderId: Long, newParentFolderId: Long?): DomainResult<Unit, AppError>
+//}
 
 interface MoveHostRuleToFolderUseCase {
     /**

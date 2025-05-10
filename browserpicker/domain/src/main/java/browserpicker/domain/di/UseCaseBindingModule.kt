@@ -52,8 +52,7 @@ import browserpicker.domain.usecases.analytics.GetMostVisitedHostsUseCase
 import browserpicker.domain.usecases.browser.GetPreferredBrowserForHostUseCase
 import browserpicker.domain.usecases.analytics.GetTopActionsByHostUseCase
 import browserpicker.domain.usecases.uri.shared.HandleUriUseCase
-import browserpicker.domain.usecases.folder.MoveFolderUseCase
-import browserpicker.domain.usecases.folder.MoveHostRuleToFolderUseCase
+import browserpicker.domain.usecases.folder.*
 import browserpicker.domain.usecases.uri.shared.RecordUriInteractionUseCase
 import browserpicker.domain.usecases.uri.host.SaveHostRuleUseCase
 import browserpicker.domain.usecases.folder.UpdateFolderUseCase
@@ -111,8 +110,7 @@ import browserpicker.domain.usecases.uri.shared.HandleUriUseCaseImpl
 import browserpicker.domain.usecases.uri.history.ImportUriHistoryUseCaseImpl
 import browserpicker.domain.usecases.system.MonitorSystemBrowserChangesUseCaseImpl
 import browserpicker.domain.usecases.system.MonitorUriClipboardUseCaseImpl
-import browserpicker.domain.usecases.folder.MoveFolderUseCaseImpl
-import browserpicker.domain.usecases.folder.MoveHostRuleToFolderUseCaseImpl
+import browserpicker.domain.usecases.folder.*
 import browserpicker.domain.usecases.system.OpenBrowserPreferencesUseCaseImpl
 import browserpicker.domain.usecases.system.OpenUriInBrowserUseCaseImpl
 import browserpicker.domain.usecases.browser.RecordBrowserUsageUseCaseImpl
@@ -318,9 +316,9 @@ abstract class UseCaseBindingModule {
     @Singleton
     abstract fun bindDeleteFolderUseCase(impl: DeleteFolderUseCaseImpl): DeleteFolderUseCase
 
-    @Binds
-    @Singleton
-    abstract fun bindMoveFolderUseCase(impl: MoveFolderUseCaseImpl): MoveFolderUseCase
+//    @Binds
+//    @Singleton
+//    abstract fun bindMoveFolderUseCase(impl: MoveFolderUseCaseImpl): MoveFolderUseCase
 
     @Binds
     @Singleton
