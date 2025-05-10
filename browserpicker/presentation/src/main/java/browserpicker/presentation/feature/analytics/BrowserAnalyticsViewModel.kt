@@ -8,7 +8,7 @@ import browserpicker.domain.di.SearchAndAnalyticsUseCases
 import browserpicker.domain.model.BrowserUsageStat
 import browserpicker.domain.model.*
 import browserpicker.domain.model.query.*
-import browserpicker.domain.usecases.BrowserUsageReport
+import browserpicker.domain.usecases.analytics.BrowserUsageReport
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch

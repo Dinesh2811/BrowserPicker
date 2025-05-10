@@ -1,4 +1,4 @@
-package browserpicker.domain.usecases
+package browserpicker.domain.usecases.analytics
 
 import androidx.compose.runtime.Immutable
 import androidx.paging.PagingConfig

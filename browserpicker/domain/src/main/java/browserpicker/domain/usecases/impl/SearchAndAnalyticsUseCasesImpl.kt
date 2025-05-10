@@ -14,16 +14,16 @@ import kotlinx.datetime.Instant
 import javax.inject.Inject
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import browserpicker.domain.usecases.AnalyzeBrowserUsageTrendsUseCase
-import browserpicker.domain.usecases.AnalyzeUriTrendsUseCase
-import browserpicker.domain.usecases.BrowserUsageReport
-import browserpicker.domain.usecases.GenerateBrowserUsageReportUseCase
-import browserpicker.domain.usecases.GenerateHistoryReportUseCase
-import browserpicker.domain.usecases.GetMostVisitedHostsUseCase
-import browserpicker.domain.usecases.GetTopActionsByHostUseCase
-import browserpicker.domain.usecases.SearchFoldersUseCase
-import browserpicker.domain.usecases.SearchHostRulesUseCase
-import browserpicker.domain.usecases.UriHistoryReport
+import browserpicker.domain.usecases.analytics.AnalyzeBrowserUsageTrendsUseCase
+import browserpicker.domain.usecases.analytics.AnalyzeUriTrendsUseCase
+import browserpicker.domain.usecases.analytics.BrowserUsageReport
+import browserpicker.domain.usecases.analytics.GenerateBrowserUsageReportUseCase
+import browserpicker.domain.usecases.analytics.GenerateHistoryReportUseCase
+import browserpicker.domain.usecases.analytics.GetMostVisitedHostsUseCase
+import browserpicker.domain.usecases.analytics.GetTopActionsByHostUseCase
+import browserpicker.domain.usecases.analytics.SearchFoldersUseCase
+import browserpicker.domain.usecases.analytics.SearchHostRulesUseCase
+import browserpicker.domain.usecases.analytics.UriHistoryReport
 
 class AnalyzeUriTrendsUseCaseImpl @Inject constructor(): AnalyzeUriTrendsUseCase {
     override operator fun invoke(timeRange: Pair<Instant, Instant>?): Flow<DomainResult<Map<String, List<DateCount>>, AppError>> {

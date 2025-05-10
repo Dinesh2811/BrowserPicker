@@ -1,4 +1,4 @@
-package browserpicker.domain.usecases
+package browserpicker.domain.usecases.folder
 
 import browserpicker.core.results.DomainResult
 import browserpicker.core.results.AppError

@@ -6,7 +6,7 @@ import browserpicker.core.results.DomainResult
 import browserpicker.domain.di.SearchAndAnalyticsUseCases
 import browserpicker.domain.model.DateCount
 import browserpicker.domain.model.GroupCount
-import browserpicker.domain.usecases.UriHistoryReport
+import browserpicker.domain.usecases.analytics.UriHistoryReport
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
