@@ -1,6 +1,7 @@
 package browserpicker.domain.di
 
 import browserpicker.domain.usecases.analytics.AnalyzeBrowserUsageTrendsUseCase
+import browserpicker.domain.usecases.analytics.AnalyzeUriStatusChangesUseCase
 import browserpicker.domain.usecases.analytics.AnalyzeUriTrendsUseCase
 import browserpicker.domain.usecases.system.BackupDataUseCase
 import browserpicker.domain.usecases.system.CheckDefaultBrowserStatusUseCase
@@ -65,6 +66,7 @@ import browserpicker.domain.usecases.analytics.GetTopActionsByHostUseCase
 import browserpicker.domain.usecases.browser.RecordBrowserUsageUseCase
 import browserpicker.domain.usecases.analytics.SearchFoldersUseCase
 import browserpicker.domain.usecases.analytics.SearchHostRulesUseCase
+import browserpicker.domain.usecases.analytics.TrackUriActionUseCase
 import browserpicker.domain.usecases.browser.SetPreferredBrowserForHostUseCase
 import javax.inject.Singleton
 
@@ -200,6 +202,8 @@ interface SearchAndAnalyticsUseCases {
     val getTopActionsByHostUseCase: GetTopActionsByHostUseCase
     val searchHostRulesUseCase: SearchHostRulesUseCase
     val searchFoldersUseCase: SearchFoldersUseCase
+    val trackUriActionUseCase: TrackUriActionUseCase
+    val analyzeUriStatusChangesUseCase: AnalyzeUriStatusChangesUseCase
     val generateHistoryReportUseCase: GenerateHistoryReportUseCase
     val generateBrowserUsageReportUseCase: GenerateBrowserUsageReportUseCase
 }

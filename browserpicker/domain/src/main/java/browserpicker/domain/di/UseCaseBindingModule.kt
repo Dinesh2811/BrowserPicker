@@ -63,6 +63,8 @@ import browserpicker.domain.usecases.analytics.SearchFoldersUseCase
 import browserpicker.domain.usecases.analytics.SearchHostRulesUseCase
 import browserpicker.domain.usecases.browser.SetPreferredBrowserForHostUseCase
 import browserpicker.domain.usecases.analytics.AnalyzeBrowserUsageTrendsUseCaseImpl
+import browserpicker.domain.usecases.analytics.AnalyzeUriStatusChangesUseCase
+import browserpicker.domain.usecases.analytics.AnalyzeUriStatusChangesUseCaseImpl
 import browserpicker.domain.usecases.analytics.AnalyzeUriTrendsUseCaseImpl
 import browserpicker.domain.usecases.system.BackupDataUseCaseImpl
 import browserpicker.domain.usecases.system.CheckDefaultBrowserStatusUseCaseImpl
@@ -119,6 +121,8 @@ import browserpicker.domain.usecases.system.RestoreDataUseCaseImpl
 import browserpicker.domain.usecases.uri.host.SaveHostRuleUseCaseImpl
 import browserpicker.domain.usecases.analytics.SearchFoldersUseCaseImpl
 import browserpicker.domain.usecases.analytics.SearchHostRulesUseCaseImpl
+import browserpicker.domain.usecases.analytics.TrackUriActionUseCase
+import browserpicker.domain.usecases.analytics.TrackUriActionUseCaseImpl
 import browserpicker.domain.usecases.system.SetAsDefaultBrowserUseCaseImpl
 import browserpicker.domain.usecases.browser.SetPreferredBrowserForHostUseCaseImpl
 import browserpicker.domain.usecases.system.ShareUriUseCaseImpl
@@ -353,6 +357,14 @@ abstract class UseCaseBindingModule {
     @Binds
     @Singleton
     abstract fun bindSearchFoldersUseCase(impl: SearchFoldersUseCaseImpl): SearchFoldersUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindTrackUriActionUseCase(impl: TrackUriActionUseCaseImpl): TrackUriActionUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindAnalyzeUriStatusChangesUseCase(impl: AnalyzeUriStatusChangesUseCaseImpl): AnalyzeUriStatusChangesUseCase
 
     @Binds
     @Singleton

@@ -62,6 +62,20 @@ class SearchFoldersUseCaseImpl @Inject constructor(): SearchFoldersUseCase {
     }
 }
 
+class TrackUriActionUseCaseImpl @Inject constructor(): TrackUriActionUseCase {
+    override suspend fun invoke(uriString: String, action: InteractionAction, associatedHostRuleId: Long?): DomainResult<Unit, AppError> {
+        TODO("Not yet implemented")
+    }
+}
+
+
+class AnalyzeUriStatusChangesUseCaseImpl @Inject constructor(): AnalyzeUriStatusChangesUseCase {
+    override fun invoke(timeRange: Pair<Instant, Instant>?): Flow<DomainResult<Map<String, List<DateCount>>, AppError>> {
+        TODO("Not yet implemented")
+    }
+}
+
+
 class GenerateHistoryReportUseCaseImpl @Inject constructor(): GenerateHistoryReportUseCase {
     override suspend operator fun invoke(
         timeRange: Pair<Instant, Instant>?,

@@ -1,6 +1,7 @@
 package browserpicker.domain.di
 
 import browserpicker.domain.usecases.analytics.AnalyzeBrowserUsageTrendsUseCase
+import browserpicker.domain.usecases.analytics.AnalyzeUriStatusChangesUseCase
 import browserpicker.domain.usecases.analytics.AnalyzeUriTrendsUseCase
 import browserpicker.domain.usecases.system.BackupDataUseCase
 import browserpicker.domain.usecases.system.CheckDefaultBrowserStatusUseCase
@@ -57,6 +58,7 @@ import browserpicker.domain.usecases.system.RestoreDataUseCase
 import browserpicker.domain.usecases.uri.host.SaveHostRuleUseCase
 import browserpicker.domain.usecases.analytics.SearchFoldersUseCase
 import browserpicker.domain.usecases.analytics.SearchHostRulesUseCase
+import browserpicker.domain.usecases.analytics.TrackUriActionUseCase
 import browserpicker.domain.usecases.system.SetAsDefaultBrowserUseCase
 import browserpicker.domain.usecases.browser.SetPreferredBrowserForHostUseCase
 import browserpicker.domain.usecases.system.ShareUriUseCase
@@ -136,6 +138,8 @@ class SearchAndAnalyticsUseCasesImpl @Inject constructor(
     override val getTopActionsByHostUseCase: GetTopActionsByHostUseCase,
     override val searchHostRulesUseCase: SearchHostRulesUseCase,
     override val searchFoldersUseCase: SearchFoldersUseCase,
+    override val trackUriActionUseCase: TrackUriActionUseCase,
+    override val analyzeUriStatusChangesUseCase: AnalyzeUriStatusChangesUseCase,
     override val generateHistoryReportUseCase: GenerateHistoryReportUseCase,
     override val generateBrowserUsageReportUseCase: GenerateBrowserUsageReportUseCase,
 ): SearchAndAnalyticsUseCases
