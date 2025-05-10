@@ -343,29 +343,29 @@ class BlockedUrisViewModel @Inject constructor(
     }
 
     fun blockNewHost(host: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            
-            val currentFolderId = _selectedFolderId.value
-            
-            when (val result = hostRuleUseCases.blockHostUseCase(host, currentFolderId)) {
-                is DomainResult.Success -> {
-                    _uiState.update { it.copy(
-                        isLoading = false,
-                        hostBlocked = true,
-                        newHostRuleId = result.data
-                    )}
-                    // Refresh current folder contents
-                    currentFolderId?.let { loadCurrentFolder(it) }
-                }
-                is DomainResult.Failure -> {
-                    _uiState.update { it.copy(
-                        isLoading = false,
-                        error = result.error.message
-                    )}
-                }
-            }
-        }
+//        viewModelScope.launch {
+//            _uiState.update { it.copy(isLoading = true) }
+//
+//            val currentFolderId = _selectedFolderId.value
+//
+//            when (val result = hostRuleUseCases.blockHostUseCase(host, currentFolderId)) {
+//                is DomainResult.Success -> {
+//                    _uiState.update { it.copy(
+//                        isLoading = false,
+//                        hostBlocked = true,
+//                        newHostRuleId = result.data
+//                    )}
+//                    // Refresh current folder contents
+//                    currentFolderId?.let { loadCurrentFolder(it) }
+//                }
+//                is DomainResult.Failure -> {
+//                    _uiState.update { it.copy(
+//                        isLoading = false,
+//                        error = result.error.message
+//                    )}
+//                }
+//            }
+//        }
     }
 
     fun clearError() {

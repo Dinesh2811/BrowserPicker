@@ -34,10 +34,6 @@ class MainViewModel @Inject constructor(
         return browserUseCases.getAvailableBrowsersUseCase()
     }
 
-    suspend fun bookmarkHost(host: String, folderId: Long? = null): DomainResult<Long, AppError> {
-        return hostRuleUseCases.bookmarkHostUseCase(host, folderId)
-    }
-
     fun getPagedHistory(query: UriHistoryQuery): Flow<PagingData<UriRecord>> {
         return uriHistoryUseCases.getPagedUriHistoryUseCase(query)
     }

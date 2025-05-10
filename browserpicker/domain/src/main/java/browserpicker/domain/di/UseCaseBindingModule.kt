@@ -3,8 +3,6 @@ package browserpicker.domain.di
 import browserpicker.domain.usecases.analytics.AnalyzeBrowserUsageTrendsUseCase
 import browserpicker.domain.usecases.analytics.AnalyzeUriTrendsUseCase
 import browserpicker.domain.usecases.system.BackupDataUseCase
-import browserpicker.domain.usecases.uri.host.BlockHostUseCase
-import browserpicker.domain.usecases.uri.host.BookmarkHostUseCase
 import browserpicker.domain.usecases.system.CheckDefaultBrowserStatusUseCase
 import browserpicker.domain.usecases.uri.shared.CleanupUriHistoryUseCase
 import browserpicker.domain.usecases.uri.host.ClearHostStatusUseCase
@@ -28,7 +26,6 @@ import browserpicker.domain.usecases.uri.host.GetHostRulesByStatusUseCase
 import browserpicker.domain.usecases.uri.history.GetPagedUriHistoryUseCase
 import browserpicker.domain.usecases.uri.shared.GetRecentUrisUseCase
 import browserpicker.domain.usecases.folder.GetRootFoldersUseCase
-import browserpicker.domain.usecases.uri.host.GetRootHostRulesByStatusUseCase
 import browserpicker.domain.usecases.uri.history.GetUriFilterOptionsUseCase
 import browserpicker.domain.usecases.uri.history.GetUriHistoryCountUseCase
 import browserpicker.domain.usecases.uri.history.GetUriHistoryDateCountsUseCase
@@ -68,8 +65,6 @@ import browserpicker.domain.usecases.browser.SetPreferredBrowserForHostUseCase
 import browserpicker.domain.usecases.analytics.AnalyzeBrowserUsageTrendsUseCaseImpl
 import browserpicker.domain.usecases.analytics.AnalyzeUriTrendsUseCaseImpl
 import browserpicker.domain.usecases.system.BackupDataUseCaseImpl
-import browserpicker.domain.usecases.uri.host.BlockHostUseCaseImpl
-import browserpicker.domain.usecases.uri.host.BookmarkHostUseCaseImpl
 import browserpicker.domain.usecases.system.CheckDefaultBrowserStatusUseCaseImpl
 import browserpicker.domain.usecases.uri.shared.CleanupUriHistoryUseCaseImpl
 import browserpicker.domain.usecases.uri.host.ClearHostStatusUseCaseImpl
@@ -103,7 +98,6 @@ import browserpicker.domain.usecases.uri.history.GetPagedUriHistoryUseCaseImpl
 import browserpicker.domain.usecases.browser.GetPreferredBrowserForHostUseCaseImpl
 import browserpicker.domain.usecases.uri.shared.GetRecentUrisUseCaseImpl
 import browserpicker.domain.usecases.folder.GetRootFoldersUseCaseImpl
-import browserpicker.domain.usecases.uri.host.GetRootHostRulesByStatusUseCaseImpl
 import browserpicker.domain.usecases.analytics.GetTopActionsByHostUseCaseImpl
 import browserpicker.domain.usecases.uri.history.GetUriFilterOptionsUseCaseImpl
 import browserpicker.domain.usecases.uri.history.GetUriHistoryCountUseCaseImpl
@@ -224,17 +218,17 @@ abstract class UseCaseBindingModule {
     @Singleton
     abstract fun bindGetHostRulesByFolderUseCase(impl: GetHostRulesByFolderUseCaseImpl): GetHostRulesByFolderUseCase
 
-    @Binds
-    @Singleton
-    abstract fun bindGetRootHostRulesByStatusUseCase(impl: GetRootHostRulesByStatusUseCaseImpl): GetRootHostRulesByStatusUseCase
-
-    @Binds
-    @Singleton
-    abstract fun bindBookmarkHostUseCase(impl: BookmarkHostUseCaseImpl): BookmarkHostUseCase
-
-    @Binds
-    @Singleton
-    abstract fun bindBlockHostUseCase(impl: BlockHostUseCaseImpl): BlockHostUseCase
+//    @Binds
+//    @Singleton
+//    abstract fun bindGetRootHostRulesByStatusUseCase(impl: GetRootHostRulesByStatusUseCaseImpl): GetRootHostRulesByStatusUseCase
+//
+//    @Binds
+//    @Singleton
+//    abstract fun bindBookmarkHostUseCase(impl: BookmarkHostUseCaseImpl): BookmarkHostUseCase
+//
+//    @Binds
+//    @Singleton
+//    abstract fun bindBlockHostUseCase(impl: BlockHostUseCaseImpl): BlockHostUseCase
 
     @Binds
     @Singleton

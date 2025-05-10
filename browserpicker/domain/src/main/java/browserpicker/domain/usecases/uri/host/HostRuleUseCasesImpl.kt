@@ -69,26 +69,26 @@ class GetHostRulesByFolderUseCaseImpl @Inject constructor(): GetHostRulesByFolde
     }
 }
 
-class GetRootHostRulesByStatusUseCaseImpl @Inject constructor(): GetRootHostRulesByStatusUseCase {
-    override operator fun invoke(status: UriStatus): Flow<DomainResult<List<HostRule>, AppError>> {
-        // TODO: Implement logic
-        return emptyFlow()
-    }
-}
-
-class BookmarkHostUseCaseImpl @Inject constructor(): BookmarkHostUseCase {
-    override suspend operator fun invoke(host: String, folderId: Long?): DomainResult<Long, AppError> {
-        // TODO: Implement logic
-        return DomainResult.Failure(AppError.UnknownError("Not implemented"))
-    }
-}
-
-class BlockHostUseCaseImpl @Inject constructor(): BlockHostUseCase {
-    override suspend operator fun invoke(host: String, folderId: Long?): DomainResult<Long, AppError> {
-        // TODO: Implement logic
-        return DomainResult.Failure(AppError.UnknownError("Not implemented"))
-    }
-}
+//class GetRootHostRulesByStatusUseCaseImpl @Inject constructor(): GetRootHostRulesByStatusUseCase {
+//    override operator fun invoke(status: UriStatus): Flow<DomainResult<List<HostRule>, AppError>> {
+//        // TODO: Implement logic
+//        return emptyFlow()
+//    }
+//}
+//
+//class BookmarkHostUseCaseImpl @Inject constructor(): BookmarkHostUseCase {
+//    override suspend operator fun invoke(host: String, folderId: Long?): DomainResult<Long, AppError> {
+//        // TODO: Implement logic
+//        return DomainResult.Failure(AppError.UnknownError("Not implemented"))
+//    }
+//}
+//
+//class BlockHostUseCaseImpl @Inject constructor(): BlockHostUseCase {
+//    override suspend operator fun invoke(host: String, folderId: Long?): DomainResult<Long, AppError> {
+//        // TODO: Implement logic
+//        return DomainResult.Failure(AppError.UnknownError("Not implemented"))
+//    }
+//}
 
 class ClearHostStatusUseCaseImpl @Inject constructor(): ClearHostStatusUseCase {
     override suspend operator fun invoke(host: String): DomainResult<Unit, AppError> {

@@ -3,8 +3,6 @@ package browserpicker.domain.di
 import browserpicker.domain.usecases.analytics.AnalyzeBrowserUsageTrendsUseCase
 import browserpicker.domain.usecases.analytics.AnalyzeUriTrendsUseCase
 import browserpicker.domain.usecases.system.BackupDataUseCase
-import browserpicker.domain.usecases.uri.host.BlockHostUseCase
-import browserpicker.domain.usecases.uri.host.BookmarkHostUseCase
 import browserpicker.domain.usecases.system.CheckDefaultBrowserStatusUseCase
 import browserpicker.domain.usecases.uri.shared.CleanupUriHistoryUseCase
 import browserpicker.domain.usecases.uri.host.ClearHostStatusUseCase
@@ -28,7 +26,6 @@ import browserpicker.domain.usecases.uri.host.GetHostRulesByStatusUseCase
 import browserpicker.domain.usecases.uri.history.GetPagedUriHistoryUseCase
 import browserpicker.domain.usecases.uri.shared.GetRecentUrisUseCase
 import browserpicker.domain.usecases.folder.GetRootFoldersUseCase
-import browserpicker.domain.usecases.uri.host.GetRootHostRulesByStatusUseCase
 import browserpicker.domain.usecases.uri.history.GetUriFilterOptionsUseCase
 import browserpicker.domain.usecases.uri.history.GetUriHistoryCountUseCase
 import browserpicker.domain.usecases.uri.history.GetUriHistoryDateCountsUseCase
@@ -151,9 +148,9 @@ interface HostRuleUseCases {
     val getAllHostRulesUseCase: GetAllHostRulesUseCase
     val getHostRulesByStatusUseCase: GetHostRulesByStatusUseCase
     val getHostRulesByFolderUseCase: GetHostRulesByFolderUseCase
-    val getRootHostRulesByStatusUseCase: GetRootHostRulesByStatusUseCase
-    val bookmarkHostUseCase: BookmarkHostUseCase
-    val blockHostUseCase: BlockHostUseCase
+//    val getRootHostRulesByStatusUseCase: GetRootHostRulesByStatusUseCase
+//    val bookmarkHostUseCase: BookmarkHostUseCase
+//    val blockHostUseCase: BlockHostUseCase
     val clearHostStatusUseCase: ClearHostStatusUseCase
 }
 

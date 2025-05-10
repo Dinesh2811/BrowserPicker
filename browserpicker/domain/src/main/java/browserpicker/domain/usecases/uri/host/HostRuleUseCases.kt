@@ -61,26 +61,26 @@ interface GetHostRulesByFolderUseCase {
     operator fun invoke(folderId: Long): Flow<DomainResult<List<HostRule>, AppError>>
 }
 
-interface GetRootHostRulesByStatusUseCase {
-    /**
-     * Gets host rules that are not in any folder, filtered by status
-     */
-    operator fun invoke(status: UriStatus): Flow<DomainResult<List<HostRule>, AppError>>
-}
-
-interface BookmarkHostUseCase {
-    /**
-     * Bookmarks a host and optionally assigns it to a folder
-     */
-    suspend operator fun invoke(host: String, folderId: Long? = null): DomainResult<Long, AppError>
-}
-
-interface BlockHostUseCase {
-    /**
-     * Blocks a host and optionally assigns it to a folder
-     */
-    suspend operator fun invoke(host: String, folderId: Long? = null): DomainResult<Long, AppError>
-}
+//interface GetRootHostRulesByStatusUseCase {
+//    /**
+//     * Gets host rules that are not in any folder, filtered by status
+//     */
+//    operator fun invoke(status: UriStatus): Flow<DomainResult<List<HostRule>, AppError>>
+//}
+//
+//interface BookmarkHostUseCase {
+//    /**
+//     * Bookmarks a host and optionally assigns it to a folder
+//     */
+//    suspend operator fun invoke(host: String, folderId: Long? = null): DomainResult<Long, AppError>
+//}
+//
+//interface BlockHostUseCase {
+//    /**
+//     * Blocks a host and optionally assigns it to a folder
+//     */
+//    suspend operator fun invoke(host: String, folderId: Long? = null): DomainResult<Long, AppError>
+//}
 
 interface ClearHostStatusUseCase {
     /**
