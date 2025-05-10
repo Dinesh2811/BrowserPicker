@@ -67,6 +67,7 @@ import browserpicker.domain.usecases.analytics.SearchFoldersUseCase
 import browserpicker.domain.usecases.analytics.SearchHostRulesUseCase
 import browserpicker.domain.usecases.analytics.TrackUriActionUseCase
 import browserpicker.domain.usecases.browser.SetPreferredBrowserForHostUseCase
+import browserpicker.domain.usecases.uri.host.CheckUriStatusUseCase
 import javax.inject.Singleton
 
 /**
@@ -148,6 +149,7 @@ interface HostRuleUseCases {
     val deleteHostRuleUseCase: DeleteHostRuleUseCase
     val getAllHostRulesUseCase: GetAllHostRulesUseCase
     val getHostRulesByStatusUseCase: GetHostRulesByStatusUseCase
+    val checkUriStatusUseCase: CheckUriStatusUseCase
     val getHostRulesByFolderUseCase: GetHostRulesByFolderUseCase
 //    val getRootHostRulesByStatusUseCase: GetRootHostRulesByStatusUseCase
 //    val bookmarkHostUseCase: BookmarkHostUseCase

@@ -62,6 +62,7 @@ import browserpicker.domain.usecases.system.SetAsDefaultBrowserUseCase
 import browserpicker.domain.usecases.browser.SetPreferredBrowserForHostUseCase
 import browserpicker.domain.usecases.system.ShareUriUseCase
 import browserpicker.domain.usecases.folder.UpdateFolderUseCase
+import browserpicker.domain.usecases.uri.host.CheckUriStatusUseCase
 import browserpicker.domain.usecases.uri.shared.ValidateUriUseCase
 import javax.inject.*
 
@@ -95,6 +96,7 @@ class HostRuleUseCasesImpl @Inject constructor(
     override val deleteHostRuleUseCase: DeleteHostRuleUseCase,
     override val getAllHostRulesUseCase: GetAllHostRulesUseCase,
     override val getHostRulesByStatusUseCase: GetHostRulesByStatusUseCase,
+    override val checkUriStatusUseCase: CheckUriStatusUseCase,
     override val getHostRulesByFolderUseCase: GetHostRulesByFolderUseCase,
     override val clearHostStatusUseCase: ClearHostStatusUseCase,
 ): HostRuleUseCases

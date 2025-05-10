@@ -125,6 +125,8 @@ import browserpicker.domain.usecases.system.SetAsDefaultBrowserUseCaseImpl
 import browserpicker.domain.usecases.browser.SetPreferredBrowserForHostUseCaseImpl
 import browserpicker.domain.usecases.system.ShareUriUseCaseImpl
 import browserpicker.domain.usecases.folder.UpdateFolderUseCaseImpl
+import browserpicker.domain.usecases.uri.host.CheckUriStatusUseCase
+import browserpicker.domain.usecases.uri.host.CheckUriStatusUseCaseImpl
 import browserpicker.domain.usecases.uri.shared.ValidateUriUseCaseImpl
 import dagger.Binds
 import dagger.Module
@@ -215,6 +217,10 @@ abstract class UseCaseBindingModule {
     @Binds
     @Singleton
     abstract fun bindGetHostRulesByStatusUseCase(impl: GetHostRulesByStatusUseCaseImpl): GetHostRulesByStatusUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindCheckUriStatusUseCase(impl: CheckUriStatusUseCaseImpl): CheckUriStatusUseCase
 
     @Binds
     @Singleton

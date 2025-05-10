@@ -54,6 +54,13 @@ interface GetHostRulesByStatusUseCase {
     operator fun invoke(status: UriStatus): Flow<DomainResult<List<HostRule>, AppError>>
 }
 
+interface CheckUriStatusUseCase {
+    /**
+     * Checks the bookmarked/blocked status for a given host
+     */
+    suspend operator fun invoke(host: String): Flow<DomainResult<UriStatus?, AppError>>
+}
+
 interface GetHostRulesByFolderUseCase {
     /**
      * Gets host rules in a specific folder
@@ -79,9 +86,4 @@ interface UpdateHostRuleStatusUseCase {
         preferredBrowserPackage: String? = null,
         isPreferenceEnabled: Boolean = true
     ): DomainResult<Unit, AppError>
-}
-
-interface CheckUriStatusUseCase {
-    suspend operator fun invoke(host: String): Flow<DomainResult<UriStatus?, AppError>>
-    // Explanation: This allows checking if a URI is bookmarked, blocked, or none, enforcing block precedence in the implementation.
 }

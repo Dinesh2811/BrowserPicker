@@ -62,6 +62,12 @@ class GetHostRulesByStatusUseCaseImpl @Inject constructor(): GetHostRulesByStatu
     }
 }
 
+class CheckUriStatusUseCaseImpl @Inject constructor(): CheckUriStatusUseCase {
+    override suspend fun invoke(host: String): Flow<DomainResult<UriStatus?, AppError>> {
+        TODO("Not yet implemented")
+    }
+}
+
 class GetHostRulesByFolderUseCaseImpl @Inject constructor(): GetHostRulesByFolderUseCase {
     override operator fun invoke(folderId: Long): Flow<DomainResult<List<HostRule>, AppError>> {
         // TODO: Implement logic
