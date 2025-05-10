@@ -69,6 +69,20 @@ interface SearchFoldersUseCase {
     ): Flow<DomainResult<List<Folder>, AppError>>
 }
 
+interface TrackUriActionUseCase {
+    /**
+     * Tracks actions performed on a URI, such as bookmarking, blocking, or preference changes.
+     */
+    suspend operator fun invoke(uriString: String, action: InteractionAction, associatedHostRuleId: Long? = null): DomainResult<Unit, AppError>
+}
+
+interface AnalyzeUriStatusChangesUseCase {
+    /**
+     * Analyzes trends in URI status changes (e.g., from bookmarked to blocked) over a specified time range.
+     */
+    operator fun invoke(timeRange: Pair<Instant, Instant>? = null): Flow<DomainResult<Map<String, List<DateCount>>, AppError>>
+}
+
 interface GenerateHistoryReportUseCase {
     /**
      * Generates a comprehensive report of URI history activity
@@ -89,20 +103,6 @@ interface GenerateBrowserUsageReportUseCase {
         exportToFile: Boolean = false,
         filePath: String? = null
     ): DomainResult<BrowserUsageReport, AppError>
-}
-
-interface TrackUriActionUseCase {
-    /**
-     * Tracks actions performed on a URI, such as bookmarking, blocking, or preference changes.
-     */
-    suspend operator fun invoke(uriString: String, action: InteractionAction, associatedHostRuleId: Long? = null): DomainResult<Unit, AppError>
-}
-
-interface AnalyzeUriStatusChangesUseCase {
-    /**
-     * Analyzes trends in URI status changes (e.g., from bookmarked to blocked) over a specified time range.
-     */
-    operator fun invoke(timeRange: Pair<Instant, Instant>? = null): Flow<DomainResult<Map<String, List<DateCount>>, AppError>>
 }
 
 @Immutable

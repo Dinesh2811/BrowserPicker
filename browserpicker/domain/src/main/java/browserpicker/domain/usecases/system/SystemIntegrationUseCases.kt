@@ -72,4 +72,4 @@ interface HandleUncaughtUriUseCase {
      * Processes URIs not caught by intent filters (e.g. from share intents)
      */
     suspend operator fun invoke(data: String): DomainResult<Boolean, AppError>
-} 
+}

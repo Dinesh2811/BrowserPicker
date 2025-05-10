@@ -72,26 +72,3 @@ interface GetMostRecentlyUsedBrowserUseCase {
      */
     operator fun invoke(): Flow<DomainResult<BrowserAppInfo?, AppError>>
 }
-//
-//interface DeleteBrowserStatUseCase {
-//    /**
-//     * Deletes the usage statistics for a specific browser.
-//     */
-//    suspend operator fun invoke(packageName: String): DomainResult<Unit, AppError>
-//}
-//
-//interface DeleteAllStatsUseCase {
-//    /**
-//     * Deletes all browser usage statistics.
-//     */
-//    suspend operator fun invoke(): DomainResult<Unit, AppError>
-//}
-
-/*
-interface GetBrowserInfoUseCase {
-    /**
-     * Gets detailed information for a specific browser by its package name
-     */
-    suspend operator fun invoke(packageName: String): DomainResult<BrowserAppInfo?, AppError>
-}
- */
