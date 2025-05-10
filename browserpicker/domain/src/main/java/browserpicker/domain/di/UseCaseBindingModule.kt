@@ -69,7 +69,7 @@ import browserpicker.domain.usecases.system.BackupDataUseCaseImpl
 import browserpicker.domain.usecases.system.CheckDefaultBrowserStatusUseCaseImpl
 import browserpicker.domain.usecases.uri.shared.impl.CleanupUriHistoryUseCaseImpl
 import browserpicker.domain.usecases.uri.host.impl.ClearHostStatusUseCaseImpl
-import browserpicker.domain.usecases.browser.ClearPreferredBrowserForHostUseCaseImpl
+import browserpicker.domain.usecases.browser.impl.ClearPreferredBrowserForHostUseCaseImpl
 import browserpicker.domain.usecases.folder.impl.CreateFolderUseCaseImpl
 import browserpicker.domain.usecases.uri.history.impl.DeleteAllUriHistoryUseCaseImpl
 import browserpicker.domain.usecases.folder.impl.DeleteFolderUseCaseImpl
@@ -82,9 +82,9 @@ import browserpicker.domain.usecases.analytics.GenerateBrowserUsageReportUseCase
 import browserpicker.domain.usecases.analytics.GenerateHistoryReportUseCaseImpl
 import browserpicker.domain.usecases.folder.impl.GetAllFoldersByTypeUseCaseImpl
 import browserpicker.domain.usecases.uri.host.impl.GetAllHostRulesUseCaseImpl
-import browserpicker.domain.usecases.browser.GetAvailableBrowsersUseCaseImpl
-import browserpicker.domain.usecases.browser.GetBrowserUsageStatUseCaseImpl
-import browserpicker.domain.usecases.browser.GetBrowserUsageStatsUseCaseImpl
+import browserpicker.domain.usecases.browser.impl.GetAvailableBrowsersUseCaseImpl
+import browserpicker.domain.usecases.browser.impl.GetBrowserUsageStatUseCaseImpl
+import browserpicker.domain.usecases.browser.impl.GetBrowserUsageStatsUseCaseImpl
 import browserpicker.domain.usecases.folder.impl.GetChildFoldersUseCaseImpl
 import browserpicker.domain.usecases.folder.impl.GetFolderHierarchyUseCaseImpl
 import browserpicker.domain.usecases.folder.impl.GetFolderUseCaseImpl
@@ -92,11 +92,11 @@ import browserpicker.domain.usecases.uri.host.impl.GetHostRuleByIdUseCaseImpl
 import browserpicker.domain.usecases.uri.host.impl.GetHostRuleUseCaseImpl
 import browserpicker.domain.usecases.uri.host.impl.GetHostRulesByFolderUseCaseImpl
 import browserpicker.domain.usecases.uri.host.impl.GetHostRulesByStatusUseCaseImpl
-import browserpicker.domain.usecases.browser.GetMostFrequentlyUsedBrowserUseCaseImpl
-import browserpicker.domain.usecases.browser.GetMostRecentlyUsedBrowserUseCaseImpl
+import browserpicker.domain.usecases.browser.impl.GetMostFrequentlyUsedBrowserUseCaseImpl
+import browserpicker.domain.usecases.browser.impl.GetMostRecentlyUsedBrowserUseCaseImpl
 import browserpicker.domain.usecases.analytics.GetMostVisitedHostsUseCaseImpl
 import browserpicker.domain.usecases.uri.history.impl.GetPagedUriHistoryUseCaseImpl
-import browserpicker.domain.usecases.browser.GetPreferredBrowserForHostUseCaseImpl
+import browserpicker.domain.usecases.browser.impl.GetPreferredBrowserForHostUseCaseImpl
 import browserpicker.domain.usecases.uri.shared.impl.GetRecentUrisUseCaseImpl
 import browserpicker.domain.usecases.folder.impl.GetRootFoldersUseCaseImpl
 import browserpicker.domain.usecases.analytics.GetTopActionsByHostUseCaseImpl
@@ -112,7 +112,7 @@ import browserpicker.domain.usecases.system.MonitorSystemBrowserChangesUseCaseIm
 import browserpicker.domain.usecases.system.MonitorUriClipboardUseCaseImpl
 import browserpicker.domain.usecases.system.OpenBrowserPreferencesUseCaseImpl
 import browserpicker.domain.usecases.system.OpenUriInBrowserUseCaseImpl
-import browserpicker.domain.usecases.browser.RecordBrowserUsageUseCaseImpl
+import browserpicker.domain.usecases.browser.impl.RecordBrowserUsageUseCaseImpl
 import browserpicker.domain.usecases.uri.shared.impl.RecordUriInteractionUseCaseImpl
 import browserpicker.domain.usecases.system.RestoreDataUseCaseImpl
 import browserpicker.domain.usecases.uri.host.impl.SaveHostRuleUseCaseImpl
@@ -121,7 +121,7 @@ import browserpicker.domain.usecases.analytics.SearchHostRulesUseCaseImpl
 import browserpicker.domain.usecases.analytics.TrackUriActionUseCase
 import browserpicker.domain.usecases.analytics.TrackUriActionUseCaseImpl
 import browserpicker.domain.usecases.system.SetAsDefaultBrowserUseCaseImpl
-import browserpicker.domain.usecases.browser.SetPreferredBrowserForHostUseCaseImpl
+import browserpicker.domain.usecases.browser.impl.SetPreferredBrowserForHostUseCaseImpl
 import browserpicker.domain.usecases.folder.impl.MoveHostRuleToFolderUseCaseImpl
 import browserpicker.domain.usecases.system.ShareUriUseCaseImpl
 import browserpicker.domain.usecases.folder.impl.UpdateFolderUseCaseImpl
