@@ -13,7 +13,7 @@ import javax.inject.Named
 
 class ImportUriHistoryUseCaseImpl @Inject constructor(
     private val uriHistoryRepository: UriHistoryRepository,
-    @Named(KOTLIN_SERIALIZATION_JSON_CONFIG) private val json: Json
+    private val json: Json
 ) : ImportUriHistoryUseCase {
     override suspend fun invoke(filePath: String): DomainResult<Int, AppError> {
         return try {

@@ -3,10 +3,12 @@ package browserpicker.data.local.di
 import browserpicker.data.local.repository.BrowserStatsRepositoryImpl
 import browserpicker.data.local.repository.FolderRepositoryImpl
 import browserpicker.data.local.repository.HostRuleRepositoryImpl
+import browserpicker.data.local.repository.SystemRepositoryImpl
 import browserpicker.data.local.repository.UriHistoryRepositoryImpl
 import browserpicker.domain.repository.BrowserStatsRepository
 import browserpicker.domain.repository.FolderRepository
 import browserpicker.domain.repository.HostRuleRepository
+import browserpicker.domain.repository.SystemRepository
 import browserpicker.domain.repository.UriHistoryRepository
 import dagger.Binds
 import dagger.Module
@@ -32,4 +34,8 @@ abstract class BrowserPickerRepositoryModule {
     @Binds
     @Singleton
     abstract fun bindBrowserStatsRepository(repositoryImpl: BrowserStatsRepositoryImpl): BrowserStatsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSystemRepository(repositoryImpl: SystemRepositoryImpl): SystemRepository
 }

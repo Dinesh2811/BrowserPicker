@@ -20,7 +20,7 @@ object JsonModule {
 //    @OptIn(ExperimentalSerializationApi::class)
     @Provides
     @Singleton
-    @Named(KOTLIN_SERIALIZATION_JSON_CONFIG)
+//    @Named(KOTLIN_SERIALIZATION_JSON_CONFIG)
     fun provideJson(): Json {
         return Json {
             ignoreUnknownKeys = true

@@ -17,7 +17,7 @@ import javax.inject.Named
 
 class ExportUriHistoryUseCaseImpl @Inject constructor(
     private val uriHistoryRepository: UriHistoryRepository,
-    @Named(KOTLIN_SERIALIZATION_JSON_CONFIG) private val json: Json
+    private val json: Json
 ) : ExportUriHistoryUseCase {
     override suspend fun invoke(filePath: String, query: UriHistoryQuery): DomainResult<Int, AppError> {
         return try {
