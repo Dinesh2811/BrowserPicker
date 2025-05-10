@@ -88,4 +88,4 @@ interface EnsureDefaultFoldersExistUseCase {
      * Ensures that the default bookmark and block root folders exist
      */
     suspend operator fun invoke(): DomainResult<Unit, AppError>
-} 
+}

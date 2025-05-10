@@ -123,4 +123,4 @@ data class BrowserUsageReport(
     val mostUsed: BrowserUsageStat?,
     val mostRecent: BrowserUsageStat?,
     val dailyUsage: Map<String, List<DateCount>>
-) 
+)
