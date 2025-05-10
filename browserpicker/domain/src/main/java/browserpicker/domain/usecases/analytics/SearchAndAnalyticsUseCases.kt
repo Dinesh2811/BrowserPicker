@@ -91,6 +91,20 @@ interface GenerateBrowserUsageReportUseCase {
     ): DomainResult<BrowserUsageReport, AppError>
 }
 
+interface TrackUriActionUseCase {
+    /**
+     * Tracks actions performed on a URI, such as bookmarking, blocking, or preference changes.
+     */
+    suspend operator fun invoke(uriString: String, action: InteractionAction, associatedHostRuleId: Long? = null): DomainResult<Unit, AppError>
+}
+
+interface AnalyzeUriStatusChangesUseCase {
+    /**
+     * Analyzes trends in URI status changes (e.g., from bookmarked to blocked) over a specified time range.
+     */
+    operator fun invoke(timeRange: Pair<Instant, Instant>? = null): Flow<DomainResult<Map<String, List<DateCount>>, AppError>>
+}
+
 @Immutable
 data class UriHistoryReport(
     val totalRecords: Long,

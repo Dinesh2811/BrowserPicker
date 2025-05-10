@@ -86,3 +86,12 @@ interface GetMostRecentlyUsedBrowserUseCase {
 //     */
 //    suspend operator fun invoke(): DomainResult<Unit, AppError>
 //}
+
+/*
+interface GetBrowserInfoUseCase {
+    /**
+     * Gets detailed information for a specific browser by its package name
+     */
+    suspend operator fun invoke(packageName: String): DomainResult<BrowserAppInfo?, AppError>
+}
+ */

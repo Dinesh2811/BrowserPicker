@@ -56,4 +56,4 @@ interface CleanupUriHistoryUseCase {
      * Removes URIs older than the specified number of days
      */
     suspend operator fun invoke(olderThanDays: Int): DomainResult<Int, AppError>
-} 
+}

@@ -16,6 +16,7 @@ interface GetPagedUriHistoryUseCase {
      * Gets paged URI history records based on query parameters
      */
     operator fun invoke(
+        /* folderId: Long, */
         query: UriHistoryQuery = UriHistoryQuery.DEFAULT,
         pagingConfig: PagingConfig = PagingDefaults.DEFAULT_PAGING_CONFIG
     ): Flow<PagingData<UriRecord>>

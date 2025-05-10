@@ -87,4 +87,30 @@ interface ClearHostStatusUseCase {
      * Clears bookmarked/blocked status for a host
      */
     suspend operator fun invoke(host: String): DomainResult<Unit, AppError>
-} 
+}
+/*
+interface RemoveHostRuleFromFolderUseCase {
+    /**
+     * Removes a host rule from its associated folder
+     */
+    suspend operator fun invoke(hostRuleId: Long): DomainResult<Unit, AppError>
+}
+ */
+
+interface UpdateHostRuleStatusUseCase {
+    /**
+     * Updates the status of a host rule and handles related folder/preference logic
+     */
+    suspend operator fun invoke(
+        hostRuleId: Long,
+        newStatus: UriStatus,
+        folderId: Long? = null,
+        preferredBrowserPackage: String? = null,
+        isPreferenceEnabled: Boolean = true
+    ): DomainResult<Unit, AppError>
+}
+
+interface CheckUriStatusUseCase {
+    suspend operator fun invoke(host: String): Flow<DomainResult<UriStatus?, AppError>>
+    // Explanation: This allows checking if a URI is bookmarked, blocked, or none, enforcing block precedence in the implementation.
+}
