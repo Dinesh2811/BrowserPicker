@@ -67,7 +67,7 @@ import browserpicker.domain.usecases.analytics.AnalyzeUriStatusChangesUseCaseImp
 import browserpicker.domain.usecases.analytics.AnalyzeUriTrendsUseCaseImpl
 import browserpicker.domain.usecases.system.BackupDataUseCaseImpl
 import browserpicker.domain.usecases.system.CheckDefaultBrowserStatusUseCaseImpl
-import browserpicker.domain.usecases.uri.shared.CleanupUriHistoryUseCaseImpl
+import browserpicker.domain.usecases.uri.shared.impl.CleanupUriHistoryUseCaseImpl
 import browserpicker.domain.usecases.uri.host.impl.ClearHostStatusUseCaseImpl
 import browserpicker.domain.usecases.browser.ClearPreferredBrowserForHostUseCaseImpl
 import browserpicker.domain.usecases.folder.impl.CreateFolderUseCaseImpl
@@ -97,7 +97,7 @@ import browserpicker.domain.usecases.browser.GetMostRecentlyUsedBrowserUseCaseIm
 import browserpicker.domain.usecases.analytics.GetMostVisitedHostsUseCaseImpl
 import browserpicker.domain.usecases.uri.history.impl.GetPagedUriHistoryUseCaseImpl
 import browserpicker.domain.usecases.browser.GetPreferredBrowserForHostUseCaseImpl
-import browserpicker.domain.usecases.uri.shared.GetRecentUrisUseCaseImpl
+import browserpicker.domain.usecases.uri.shared.impl.GetRecentUrisUseCaseImpl
 import browserpicker.domain.usecases.folder.impl.GetRootFoldersUseCaseImpl
 import browserpicker.domain.usecases.analytics.GetTopActionsByHostUseCaseImpl
 import browserpicker.domain.usecases.uri.history.impl.GetUriFilterOptionsUseCaseImpl
@@ -106,14 +106,14 @@ import browserpicker.domain.usecases.uri.history.impl.GetUriHistoryDateCountsUse
 import browserpicker.domain.usecases.uri.history.impl.GetUriHistoryGroupCountsUseCaseImpl
 import browserpicker.domain.usecases.uri.history.impl.GetUriRecordByIdUseCaseImpl
 import browserpicker.domain.usecases.system.HandleUncaughtUriUseCaseImpl
-import browserpicker.domain.usecases.uri.shared.HandleUriUseCaseImpl
+import browserpicker.domain.usecases.uri.shared.impl.HandleUriUseCaseImpl
 import browserpicker.domain.usecases.uri.history.impl.ImportUriHistoryUseCaseImpl
 import browserpicker.domain.usecases.system.MonitorSystemBrowserChangesUseCaseImpl
 import browserpicker.domain.usecases.system.MonitorUriClipboardUseCaseImpl
 import browserpicker.domain.usecases.system.OpenBrowserPreferencesUseCaseImpl
 import browserpicker.domain.usecases.system.OpenUriInBrowserUseCaseImpl
 import browserpicker.domain.usecases.browser.RecordBrowserUsageUseCaseImpl
-import browserpicker.domain.usecases.uri.shared.RecordUriInteractionUseCaseImpl
+import browserpicker.domain.usecases.uri.shared.impl.RecordUriInteractionUseCaseImpl
 import browserpicker.domain.usecases.system.RestoreDataUseCaseImpl
 import browserpicker.domain.usecases.uri.host.impl.SaveHostRuleUseCaseImpl
 import browserpicker.domain.usecases.analytics.SearchFoldersUseCaseImpl
@@ -127,7 +127,7 @@ import browserpicker.domain.usecases.system.ShareUriUseCaseImpl
 import browserpicker.domain.usecases.folder.impl.UpdateFolderUseCaseImpl
 import browserpicker.domain.usecases.uri.host.CheckUriStatusUseCase
 import browserpicker.domain.usecases.uri.host.impl.CheckUriStatusUseCaseImpl
-import browserpicker.domain.usecases.uri.shared.ValidateUriUseCaseImpl
+import browserpicker.domain.usecases.uri.shared.impl.ValidateUriUseCaseImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
