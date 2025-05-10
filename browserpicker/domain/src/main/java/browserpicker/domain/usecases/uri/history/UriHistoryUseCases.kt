@@ -1,4 +1,4 @@
-package browserpicker.domain.usecases.uri
+package browserpicker.domain.usecases.uri.history
 
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData

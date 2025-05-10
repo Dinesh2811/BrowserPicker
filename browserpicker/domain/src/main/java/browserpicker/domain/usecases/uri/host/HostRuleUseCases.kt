@@ -1,4 +1,4 @@
-package browserpicker.domain.usecases.uri
+package browserpicker.domain.usecases.uri.host
 
 import browserpicker.core.results.DomainResult
 import browserpicker.core.results.AppError
