@@ -1,12 +1,12 @@
 package browserpicker.presentation.feature.analytics
 
 import androidx.compose.runtime.Immutable
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import browserpicker.core.di.DefaultDispatcher
 import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
 import browserpicker.core.di.MainDispatcher
+import browserpicker.core.results.DomainResult
 import browserpicker.domain.model.BrowserAppInfo
 import browserpicker.domain.model.BrowserUsageStat
 import browserpicker.domain.model.DateCount
@@ -24,17 +24,12 @@ import browserpicker.presentation.toUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.*
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Represents the analytics filter options for browsers
@@ -44,8 +39,12 @@ data class BrowserAnalyticsFilterOptions(
     val timeRange: Pair<Instant, Instant>? = null,
     val sortField: BrowserStatSortField = BrowserStatSortField.USAGE_COUNT,
     val sortOrder: SortOrder = SortOrder.DESC,
-    val selectedBrowsers: Set<String> = emptySet(),
-)
+    val selectedBrowsers: Set<String> = emptySet()
+) {
+    companion object {
+        val DEFAULT = BrowserAnalyticsFilterOptions()
+    }
+}
 
 /**
  * Represents the complete UI state for browser analytics
@@ -57,11 +56,15 @@ data class BrowserAnalyticsUiState(
     val mostFrequentBrowser: UiState<BrowserAppInfo?> = UiState.Loading,
     val mostRecentBrowser: UiState<BrowserAppInfo?> = UiState.Loading,
     val availableBrowsers: UiState<List<BrowserAppInfo>> = UiState.Loading,
-    val filterOptions: BrowserAnalyticsFilterOptions = BrowserAnalyticsFilterOptions(),
+    val filterOptions: BrowserAnalyticsFilterOptions = BrowserAnalyticsFilterOptions.DEFAULT,
     val fullReport: UiState<BrowserUsageReport> = UiState.Loading,
     val isGeneratingReport: Boolean = false,
 )
 
+/**
+ * ViewModel responsible for browser analytics data management and presentation.
+ * Handles loading, filtering, and reporting of browser usage statistics.
+ */
 @HiltViewModel
 class BrowserAnalyticsViewModel @Inject constructor(
     private val instantProvider: InstantProvider,
@@ -73,13 +76,13 @@ class BrowserAnalyticsViewModel @Inject constructor(
     private val getMostFrequentlyUsedBrowserUseCase: GetMostFrequentlyUsedBrowserUseCase,
     private val getMostRecentlyUsedBrowserUseCase: GetMostRecentlyUsedBrowserUseCase,
     private val getAvailableBrowsersUseCase: GetAvailableBrowsersUseCase,
-    private val generateBrowserUsageReportUseCase: GenerateBrowserUsageReportUseCase,
+    private val generateBrowserUsageReportUseCase: GenerateBrowserUsageReportUseCase
 ): ViewModel() {
 
     private val _state = MutableStateFlow(BrowserAnalyticsUiState())
     val state: StateFlow<BrowserAnalyticsUiState> = _state.asStateFlow()
 
-    private val _filterOptions = MutableStateFlow(BrowserAnalyticsFilterOptions())
+    private val _filterOptions = MutableStateFlow(BrowserAnalyticsFilterOptions.DEFAULT)
 
     init {
         loadInitialData()
@@ -90,10 +93,14 @@ class BrowserAnalyticsViewModel @Inject constructor(
         // Load most frequently used browser
         viewModelScope.launch {
             getMostFrequentlyUsedBrowserUseCase()
+                .flowOn(ioDispatcher)
                 .toUiState()
+                .catch { error ->
+                    _state.update { it.copy(mostFrequentBrowser = UiState.Error("Failed to load most frequent browser: ${error.message}", error)) }
+                }
                 .stateIn(
                     viewModelScope,
-                    SharingStarted.WhileSubscribed(5000),
+                    SharingStarted.WhileSubscribed(5000.milliseconds),
                     UiState.Loading
                 )
                 .collect { uiState ->
@@ -104,10 +111,14 @@ class BrowserAnalyticsViewModel @Inject constructor(
         // Load most recently used browser
         viewModelScope.launch {
             getMostRecentlyUsedBrowserUseCase()
+                .flowOn(ioDispatcher)
                 .toUiState()
+                .catch { error ->
+                    _state.update { it.copy(mostRecentBrowser = UiState.Error("Failed to load most recent browser: ${error.message}", error)) }
+                }
                 .stateIn(
                     viewModelScope,
-                    SharingStarted.WhileSubscribed(5000),
+                    SharingStarted.WhileSubscribed(5000.milliseconds),
                     UiState.Loading
                 )
                 .collect { uiState ->
@@ -118,10 +129,14 @@ class BrowserAnalyticsViewModel @Inject constructor(
         // Load available browsers
         viewModelScope.launch {
             getAvailableBrowsersUseCase()
+                .flowOn(ioDispatcher)
                 .toUiState()
+                .catch { error ->
+                    _state.update { it.copy(availableBrowsers = UiState.Error("Failed to load available browsers: ${error.message}", error)) }
+                }
                 .stateIn(
                     viewModelScope,
-                    SharingStarted.WhileSubscribed(5000),
+                    SharingStarted.WhileSubscribed(5000.milliseconds),
                     UiState.Loading
                 )
                 .collect { uiState ->
@@ -129,111 +144,146 @@ class BrowserAnalyticsViewModel @Inject constructor(
                 }
         }
 
-        // Observe filter options and load filtered data
+        // Observe filter options and load filtered usage stats
         viewModelScope.launch {
             _filterOptions
+                .onStart { _state.update { it.copy(usageStats = UiState.Loading) } }
+                .distinctUntilChanged()
                 .flatMapLatest { filterOptions ->
                     getBrowserUsageStatsUseCase(
                         sortBy = filterOptions.sortField,
                         sortOrder = filterOptions.sortOrder
-                    ).toUiState()
-                }
-                .collect { uiState ->
-                    // Apply filtering on Success state
-                    val filteredState = when (uiState) {
-                        is UiState.Success -> {
-                            val selectedBrowsers = _filterOptions.value.selectedBrowsers
-                            if (selectedBrowsers.isEmpty()) {
-                                uiState
-                            } else {
-                                UiState.Success(
-                                    uiState.data.filter { stat ->
-                                        selectedBrowsers.contains(stat.browserPackageName)
+                    )
+                        .flowOn(ioDispatcher)
+                        .map { result ->
+                            // Apply browser filtering if needed
+                            when (result) {
+                                is DomainResult.Success -> {
+                                    val selectedBrowsers = filterOptions.selectedBrowsers
+                                    val filteredData = if (selectedBrowsers.isEmpty()) {
+                                        result.data
+                                    } else {
+                                        result.data.filter { stat ->
+                                            selectedBrowsers.contains(stat.browserPackageName)
+                                        }
                                     }
-                                )
+                                    DomainResult.Success(filteredData)
+                                }
+                                is DomainResult.Failure -> result
                             }
                         }
-
-                        else -> uiState
-                    }
-
-                    _state.update { it.copy(usageStats = filteredState) }
+                        .toUiState()
+                }
+                .catch { error ->
+                    _state.update { it.copy(usageStats = UiState.Error("Failed to load browser usage stats: ${error.message}", error)) }
+                }
+                .flowOn(defaultDispatcher)
+                .collect { uiState ->
+                    _state.update { it.copy(usageStats = uiState, filterOptions = _filterOptions.value) }
                 }
         }
 
-        // Load trend data
+        // Load and filter trend data based on filter options
         viewModelScope.launch {
             _filterOptions
+                .onStart { _state.update { it.copy(trendData = UiState.Loading) } }
+                .distinctUntilChanged()
                 .flatMapLatest { filterOptions ->
                     analyzeBrowserUsageTrendsUseCase(
                         timeRange = filterOptions.timeRange
-                    ).toUiState()
-                }
-                .collect { uiState ->
-                    // Apply filtering on Success state
-                    val filteredState = when (uiState) {
-                        is UiState.Success -> {
-                            val selectedBrowsers = _filterOptions.value.selectedBrowsers
-                            if (selectedBrowsers.isEmpty()) {
-                                uiState
-                            } else {
-                                UiState.Success(
-                                    uiState.data.filterKeys { browserPackage ->
-                                        selectedBrowsers.contains(browserPackage)
+                    )
+                        .flowOn(ioDispatcher)
+                        .map { result ->
+                            // Apply browser filtering if needed
+                            when (result) {
+                                is DomainResult.Success -> {
+                                    val selectedBrowsers = filterOptions.selectedBrowsers
+                                    val filteredData = if (selectedBrowsers.isEmpty()) {
+                                        result.data
+                                    } else {
+                                        result.data.filterKeys { browserPackage ->
+                                            selectedBrowsers.contains(browserPackage)
+                                        }
                                     }
-                                )
+                                    DomainResult.Success(filteredData)
+                                }
+                                is DomainResult.Failure -> result
                             }
                         }
-
-                        else -> uiState
-                    }
-
-                    _state.update { it.copy(trendData = filteredState) }
+                        .toUiState()
+                }
+                .catch { error ->
+                    _state.update { it.copy(trendData = UiState.Error("Failed to load browser trend data: ${error.message}", error)) }
+                }
+                .flowOn(defaultDispatcher)
+                .collect { uiState ->
+                    _state.update { it.copy(trendData = uiState) }
                 }
         }
     }
 
     /**
      * Updates the time range filter for analytics data
+     * @param from Start date for time range filtering, null for no start constraint
+     * @param to End date for time range filtering, defaults to current time
      */
-    fun updateTimeRange(from: Instant?, to: Instant? = Clock.System.now()) {
-        if (from == null && to == null) {
-            _filterOptions.update { it.copy(timeRange = null) }
-        } else if (from != null && to != null && from <= to) {
-            _filterOptions.update { it.copy(timeRange = Pair(from, to)) }
+    fun updateTimeRange(from: Instant?, to: Instant? = instantProvider.now()) {
+        viewModelScope.launch {
+            withContext(defaultDispatcher) {
+                if (from == null && to == null) {
+                    _filterOptions.update { it.copy(timeRange = null) }
+                } else if (from != null && to != null && from <= to) {
+                    _filterOptions.update { it.copy(timeRange = Pair(from, to)) }
+                }
+            }
         }
     }
 
     /**
      * Sets the sort field and order for browser statistics
+     * @param field Sort field (usage count, last used timestamp)
+     * @param order Sort direction (ascending, descending)
      */
     fun setSortingOptions(field: BrowserStatSortField, order: SortOrder) {
-        _filterOptions.update {
-            it.copy(sortField = field, sortOrder = order)
+        viewModelScope.launch {
+            withContext(defaultDispatcher) {
+                _filterOptions.update {
+                    it.copy(sortField = field, sortOrder = order)
+                }
+            }
         }
     }
 
     /**
      * Updates the selected browsers for filtering
+     * @param selectedPackageNames Set of package names to filter by
      */
     fun updateSelectedBrowsers(selectedPackageNames: Set<String>) {
-        _filterOptions.update {
-            it.copy(selectedBrowsers = selectedPackageNames)
+        viewModelScope.launch {
+            withContext(defaultDispatcher) {
+                _filterOptions.update {
+                    it.copy(selectedBrowsers = selectedPackageNames)
+                }
+            }
         }
     }
 
     /**
      * Generates a comprehensive browser usage report
+     * @param exportToFile Whether to export report to a file
+     * @param filePath Optional file path for export
      */
     fun generateReport(exportToFile: Boolean = false, filePath: String? = null) {
         viewModelScope.launch {
             _state.update { it.copy(isGeneratingReport = true) }
 
-            val result = generateBrowserUsageReportUseCase(
-                timeRange = _filterOptions.value.timeRange,
-                exportToFile = exportToFile,
-                filePath = filePath
-            )
+            val result = withContext(ioDispatcher) {
+                generateBrowserUsageReportUseCase(
+                    timeRange = _filterOptions.value.timeRange,
+                    exportToFile = exportToFile,
+                    filePath = filePath
+                )
+            }
 
             _state.update {
                 it.copy(
@@ -248,265 +298,29 @@ class BrowserAnalyticsViewModel @Inject constructor(
      * Resets all filters to default values
      */
     fun resetFilters() {
-        _filterOptions.update {
-            BrowserAnalyticsFilterOptions()
-        }
-    }
-}
-
-/*
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import browserpicker.core.results.DomainResult
-import browserpicker.domain.di.BrowserUseCases
-import browserpicker.domain.di.SearchAndAnalyticsUseCases
-import browserpicker.domain.model.BrowserUsageStat
-import browserpicker.domain.model.*
-import browserpicker.domain.model.query.*
-import browserpicker.domain.usecases.analytics.BrowserUsageReport
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
-import javax.inject.Inject
-
-@HiltViewModel
-class BrowserAnalyticsViewModel @Inject constructor(
-    private val browserUseCases: BrowserUseCases,
-    private val searchAndAnalyticsUseCases: SearchAndAnalyticsUseCases
-) : ViewModel() {
-
-    private val _uiState = MutableStateFlow(BrowserAnalyticsUiState())
-    val uiState: StateFlow<BrowserAnalyticsUiState> = _uiState.asStateFlow()
-
-    private val _browserStats = MutableStateFlow<List<BrowserUsageStat>>(emptyList())
-    val browserStats: StateFlow<List<BrowserUsageStat>> = _browserStats.asStateFlow()
-
-    private val _mostFrequentlyUsedBrowser = MutableStateFlow<String?>(null)
-    val mostFrequentlyUsedBrowser: StateFlow<String?> = _mostFrequentlyUsedBrowser.asStateFlow()
-
-    private val _mostRecentlyUsedBrowser = MutableStateFlow<String?>(null)
-    val mostRecentlyUsedBrowser: StateFlow<String?> = _mostRecentlyUsedBrowser.asStateFlow()
-
-    private val _usageTrends = MutableStateFlow<Map<String, List<DateCount>>>(emptyMap())
-    val usageTrends: StateFlow<Map<String, List<DateCount>>> = _usageTrends.asStateFlow()
-
-    private val _timeRange = MutableStateFlow<Pair<Instant, Instant>?>(null)
-    val timeRange: StateFlow<Pair<Instant, Instant>?> = _timeRange.asStateFlow()
-
-    private val _sortConfig = MutableStateFlow(SortConfig(BrowserStatSortField.USAGE_COUNT, SortOrder.DESC))
-    val sortConfig: StateFlow<SortConfig> = _sortConfig.asStateFlow()
-
-    init {
-        loadBrowserStats()
-        loadMostFrequentlyUsedBrowser()
-        loadMostRecentlyUsedBrowser()
-        loadUsageTrends()
-    }
-
-    private fun loadBrowserStats() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            
-            _sortConfig
-                .flatMapLatest { sortConfig ->
-                    browserUseCases.getBrowserUsageStatsUseCase(sortConfig.field, sortConfig.order)
-                }
-                .collect { result ->
-                    when (result) {
-                        is DomainResult.Success -> {
-                            _browserStats.value = result.data
-                            _uiState.update { it.copy(isLoading = false) }
-                        }
-                        is DomainResult.Failure -> {
-                            _uiState.update { it.copy(
-                                isLoading = false,
-                                error = result.error.message
-                            )}
-                        }
-                    }
-                }
-        }
-    }
-
-    private fun loadMostFrequentlyUsedBrowser() {
-        viewModelScope.launch {
-            browserUseCases.getMostFrequentlyUsedBrowserUseCase()
-                .collect { result ->
-                    if (result is DomainResult.Success) {
-                        result.data?.let {
-                            _mostFrequentlyUsedBrowser.value = it.packageName
-                        }
-                    }
-                }
-        }
-    }
-
-    private fun loadMostRecentlyUsedBrowser() {
-        viewModelScope.launch {
-            browserUseCases.getMostRecentlyUsedBrowserUseCase()
-                .collect { result ->
-                    if (result is DomainResult.Success) {
-                        result.data?.let {
-                            _mostRecentlyUsedBrowser.value = it.packageName
-                        }
-                    }
-                }
-        }
-    }
-
-    private fun loadUsageTrends() {
-        viewModelScope.launch {
-            _timeRange
-                .flatMapLatest { range ->
-                    searchAndAnalyticsUseCases.analyzeBrowserUsageTrendsUseCase(range)
-                }
-                .collect { result ->
-                    when (result) {
-                        is DomainResult.Success -> {
-                            _usageTrends.value = result.data
-                        }
-                        is DomainResult.Failure -> {
-                            _uiState.update { it.copy(error = result.error.message) }
-                        }
-                    }
-                }
-        }
-    }
-
-    fun updateTimeRange(range: Pair<Instant, Instant>?) {
-        _timeRange.value = range
-    }
-
-    fun updateSortConfig(field: BrowserStatSortField, order: SortOrder) {
-        _sortConfig.value = SortConfig(field, order)
-    }
-
-    fun generateBrowserUsageReport(exportToFile: Boolean = false, filePath: String? = null) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, reportGenerating = true) }
-            
-            when (val result = searchAndAnalyticsUseCases.generateBrowserUsageReportUseCase(
-                timeRange = _timeRange.value,
-                exportToFile = exportToFile,
-                filePath = filePath
-            )) {
-                is DomainResult.Success -> {
-                    _uiState.update { it.copy(
-                        isLoading = false,
-                        reportGenerating = false,
-                        reportGenerated = true,
-                        report = result.data
-                    )}
-                }
-                is DomainResult.Failure -> {
-                    _uiState.update { it.copy(
-                        isLoading = false,
-                        reportGenerating = false,
-                        error = result.error.message
-                    )}
+            withContext(defaultDispatcher) {
+                _filterOptions.update {
+                    BrowserAnalyticsFilterOptions.DEFAULT
                 }
             }
         }
     }
 
-    fun clearBrowserStats(packageName: String) {
-//        viewModelScope.launch {
-//            _uiState.update { it.copy(isLoading = true) }
-//
-//            when (val result = browserUseCases.getBrowserUsageStatUseCase(packageName).first()) {
-//                is DomainResult.Success -> {
-//                    // Browser stats found, delete them
-//                    val deleteResult = browserUseCases.deleteBrowserStatUseCase(packageName)
-//                    if (deleteResult is DomainResult.Success) {
-//                        _uiState.update { it.copy(
-//                            isLoading = false,
-//                            statDeleted = true
-//                        )}
-//                        // Reload stats
-//                        loadBrowserStats()
-//                        loadMostFrequentlyUsedBrowser()
-//                        loadMostRecentlyUsedBrowser()
-//                        loadUsageTrends()
-//                    } else {
-//                        _uiState.update { it.copy(
-//                            isLoading = false,
-//                            error = (deleteResult as DomainResult.Failure).error.message
-//                        )}
-//                    }
-//                }
-//                is DomainResult.Failure -> {
-//                    _uiState.update { it.copy(
-//                        isLoading = false,
-//                        error = result.error.message
-//                    )}
-//                }
-//            }
-//        }
-    }
-
-    fun clearAllBrowserStats() {
-//        viewModelScope.launch {
-//            _uiState.update { it.copy(isLoading = true, showClearConfirmation = false) }
-//
-//            when (val result = browserUseCases.deleteAllStatsUseCase()) {
-//                is DomainResult.Success -> {
-//                    _uiState.update { it.copy(
-//                        isLoading = false,
-//                        allStatsCleared = true
-//                    )}
-//                    // Reload stats
-//                    loadBrowserStats()
-//                    loadMostFrequentlyUsedBrowser()
-//                    loadMostRecentlyUsedBrowser()
-//                    loadUsageTrends()
-//                }
-//                is DomainResult.Failure -> {
-//                    _uiState.update { it.copy(
-//                        isLoading = false,
-//                        error = result.error.message
-//                    )}
-//                }
-//            }
-//        }
-    }
-
-    fun showClearConfirmation() {
-        _uiState.update { it.copy(showClearConfirmation = true) }
-    }
-
-    fun dismissClearConfirmation() {
-        _uiState.update { it.copy(showClearConfirmation = false) }
-    }
-
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
-    }
-
-    fun resetActionStates() {
-        _uiState.update { it.copy(
-            statDeleted = false,
-            allStatsCleared = false,
-            reportGenerated = false,
-            report = null
-        )}
+    /**
+     * Refreshes all data sources
+     */
+    fun refreshData() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    usageStats = UiState.Loading,
+                    trendData = UiState.Loading,
+                    mostFrequentBrowser = UiState.Loading,
+                    mostRecentBrowser = UiState.Loading
+                )
+            }
+            loadInitialData()
+        }
     }
 }
-
-data class SortConfig(
-    val field: BrowserStatSortField,
-    val order: SortOrder
-)
-
-data class BrowserAnalyticsUiState(
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val statDeleted: Boolean = false,
-    val allStatsCleared: Boolean = false,
-    val showClearConfirmation: Boolean = false,
-    val reportGenerating: Boolean = false,
-    val reportGenerated: Boolean = false,
-    val report: BrowserUsageReport? = null
-)
-
- */
