@@ -65,6 +65,7 @@ data class BrowserAnalyticsUiState(
  * ViewModel responsible for browser analytics data management and presentation.
  * Handles loading, filtering, and reporting of browser usage statistics.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class BrowserAnalyticsViewModel @Inject constructor(
     private val instantProvider: InstantProvider,
@@ -92,136 +93,15 @@ class BrowserAnalyticsViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun loadInitialData() {
-        // Load most frequently used browser
-        viewModelScope.launch {
-            getMostFrequentlyUsedBrowserUseCase()
-                .flowOn(ioDispatcher)
-                .toUiState()
-                .catch { unexpectedError ->
-                    emit(UiState.Error("Failed to load most frequent browser due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
-                }
-                .stateIn(
-                    viewModelScope,
-                    SharingStarted.WhileSubscribed(5000.milliseconds),
-                    UiState.Loading
-                )
-                .collect { uiState ->
-                    _state.update { it.copy(mostFrequentBrowser = uiState) }
-                }
-        }
-
-        // Load most recently used browser
-        viewModelScope.launch {
-            getMostRecentlyUsedBrowserUseCase()
-                .flowOn(ioDispatcher)
-                .toUiState()
-                .catch { unexpectedError ->
-                    emit(UiState.Error("Failed to load most recent browser due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
-                }
-                .stateIn(
-                    viewModelScope,
-                    SharingStarted.WhileSubscribed(5000.milliseconds),
-                    UiState.Loading
-                )
-                .collect { uiState ->
-                    _state.update { it.copy(mostRecentBrowser = uiState) }
-                }
-        }
-
-        // Load available browsers
-        viewModelScope.launch {
-            getAvailableBrowsersUseCase()
-                .flowOn(ioDispatcher)
-                .toUiState()
-                .catch { unexpectedError ->
-                    emit(UiState.Error("Failed to load available browsers due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
-                }
-                .stateIn(
-                    viewModelScope,
-                    SharingStarted.WhileSubscribed(5000.milliseconds),
-                    UiState.Loading
-                )
-                .collect { uiState ->
-                    _state.update { it.copy(availableBrowsers = uiState) }
-                }
-        }
+        loadMostFrequentBrowser()
+        loadMostRecentBrowser()
+        loadAvailableBrowsers()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeFilterAndRefreshTriggers() {
-        // Observe filter options and refresh trigger for usage stats
-        viewModelScope.launch {
-            combine(_filterOptions, _refreshTrigger) { options, _ -> options }
-                .onStart { _state.update { it.copy(usageStats = UiState.Loading) } }
-                .distinctUntilChanged()
-                .flatMapLatest { filterOptions ->
-                    getBrowserUsageStatsUseCase(
-                        sortBy = filterOptions.sortField,
-                        sortOrder = filterOptions.sortOrder
-                    )
-                        .flowOn(ioDispatcher)
-                        .map { result ->
-                            when (result) {
-                                is DomainResult.Success -> {
-                                    val selectedBrowsers = filterOptions.selectedBrowsers
-                                    val filteredData = if (selectedBrowsers.isEmpty()) {
-                                        result.data
-                                    } else {
-                                        result.data.filter { stat ->
-                                            selectedBrowsers.contains(stat.browserPackageName)
-                                        }
-                                    }
-                                    DomainResult.Success(filteredData)
-                                }
-                                is DomainResult.Failure -> result
-                            }
-                        }
-                        .toUiState()
-                        .catch { unexpectedError ->
-                            emit(UiState.Error("Failed to load browser usage stats due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
-                        }
-                }
-                .flowOn(defaultDispatcher)
-                .collect { uiState ->
-                    _state.update { it.copy(usageStats = uiState, filterOptions = _filterOptions.value) }
-                }
-        }
-
-        viewModelScope.launch {
-            combine(_filterOptions, _refreshTrigger) { options, _ -> options }
-                .onStart { _state.update { it.copy(trendData = UiState.Loading) } }
-                .distinctUntilChanged() // Process only if actual filter options change
-                .flatMapLatest { filterOptions ->
-                    analyzeBrowserUsageTrendsUseCase(
-                        timeRange = filterOptions.timeRange
-                    )
-                        .flowOn(ioDispatcher)
-                        .map { result ->
-                            when (result) {
-                                is DomainResult.Success -> {
-                                    val selectedBrowsers = filterOptions.selectedBrowsers
-                                    val filteredData = if (selectedBrowsers.isEmpty()) {
-                                        result.data
-                                    } else {
-                                        result.data.filterKeys { browserPackage ->
-                                            selectedBrowsers.contains(browserPackage)
-                                        }
-                                    }
-                                    DomainResult.Success(filteredData)
-                                }
-                                is DomainResult.Failure -> result
-                            }
-                        }
-                        .toUiState()
-                        .catch { unexpectedError ->
-                            emit(UiState.Error("Failed to load browser trend data due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
-                        }
-                }
-                .flowOn(defaultDispatcher) // Run collection part on default dispatcher
-                .collect { uiState ->
-                    _state.update { it.copy(trendData = uiState) }
-                }
-        }
+        getBrowserUsageStats()
+        analyzeBrowserUsageTrends()
     }
 
     /**
@@ -326,6 +206,140 @@ class BrowserAnalyticsViewModel @Inject constructor(
             }
             loadInitialData()
             _refreshTrigger.update { it + 1 }
+        }
+    }
+
+    private fun loadMostFrequentBrowser() {
+        viewModelScope.launch {
+            getMostFrequentlyUsedBrowserUseCase()
+                .flowOn(ioDispatcher)
+                .toUiState()
+                .catch { unexpectedError ->
+                    emit(UiState.Error("Failed to load most frequent browser due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
+                }
+                .stateIn(
+                    viewModelScope,
+                    SharingStarted.WhileSubscribed(5000.milliseconds),
+                    UiState.Loading
+                )
+                .collect { uiState ->
+                    _state.update { it.copy(mostFrequentBrowser = uiState) }
+                }
+        }
+    }
+
+    private fun loadMostRecentBrowser() {
+        viewModelScope.launch {
+            getMostRecentlyUsedBrowserUseCase()
+                .flowOn(ioDispatcher)
+                .toUiState()
+                .catch { unexpectedError ->
+                    emit(UiState.Error("Failed to load most recent browser due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
+                }
+                .stateIn(
+                    viewModelScope,
+                    SharingStarted.WhileSubscribed(5000.milliseconds),
+                    UiState.Loading
+                )
+                .collect { uiState ->
+                    _state.update { it.copy(mostRecentBrowser = uiState) }
+                }
+        }
+    }
+
+    private fun loadAvailableBrowsers() {
+        viewModelScope.launch {
+            getAvailableBrowsersUseCase()
+                .flowOn(ioDispatcher)
+                .toUiState()
+                .catch { unexpectedError ->
+                    emit(UiState.Error("Failed to load available browsers due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
+                }
+                .stateIn(
+                    viewModelScope,
+                    SharingStarted.WhileSubscribed(5000.milliseconds),
+                    UiState.Loading
+                )
+                .collect { uiState ->
+                    _state.update { it.copy(availableBrowsers = uiState) }
+                }
+        }
+    }
+
+    private fun getBrowserUsageStats() {
+        viewModelScope.launch {
+            combine(_filterOptions, _refreshTrigger) { options, _ -> options }
+                .onStart { _state.update { it.copy(usageStats = UiState.Loading) } }
+                .distinctUntilChanged()
+                .flatMapLatest { filterOptions ->
+                    getBrowserUsageStatsUseCase(
+                        sortBy = filterOptions.sortField,
+                        sortOrder = filterOptions.sortOrder
+                    )
+                        .flowOn(ioDispatcher)
+                        .map { result ->
+                            when (result) {
+                                is DomainResult.Success -> {
+                                    val selectedBrowsers = filterOptions.selectedBrowsers
+                                    val filteredData = if (selectedBrowsers.isEmpty()) {
+                                        result.data
+                                    } else {
+                                        result.data.filter { stat ->
+                                            selectedBrowsers.contains(stat.browserPackageName)
+                                        }
+                                    }
+                                    DomainResult.Success(filteredData)
+                                }
+                                is DomainResult.Failure -> result
+                            }
+                        }
+                        .toUiState()
+                        .catch { unexpectedError ->
+                            emit(UiState.Error("Failed to load browser usage stats due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
+                        }
+                }
+                .flowOn(defaultDispatcher)
+                .collect { uiState ->
+                    _state.update { it.copy(usageStats = uiState, filterOptions = _filterOptions.value) }
+                }
+        }
+    }
+
+    private fun analyzeBrowserUsageTrends() {
+        viewModelScope.launch {
+            combine(_filterOptions, _refreshTrigger) { options, _ -> options }
+                .onStart { _state.update { it.copy(trendData = UiState.Loading) } }
+                .distinctUntilChanged() // Process only if actual filter options change
+                .flatMapLatest { filterOptions ->
+                    analyzeBrowserUsageTrendsUseCase(
+                        timeRange = filterOptions.timeRange
+                    )
+                        .flowOn(ioDispatcher)
+                        .map { result ->
+                            when (result) {
+                                is DomainResult.Success -> {
+                                    val selectedBrowsers = filterOptions.selectedBrowsers
+                                    val filteredData = if (selectedBrowsers.isEmpty()) {
+                                        result.data
+                                    } else {
+                                        result.data.filterKeys { browserPackage ->
+                                            selectedBrowsers.contains(browserPackage)
+                                        }
+                                    }
+                                    DomainResult.Success(filteredData)
+                                }
+                                is DomainResult.Failure -> result
+                            }
+                        }
+                        .toUiState()
+                        .catch { unexpectedError ->
+                            emit(UiState.Error("Failed to load browser trend data due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
+                        }
+                }
+                .flowOn(defaultDispatcher) // Run collection part on default dispatcher
+                .collect { uiState ->
+                    _state.update { it.copy(trendData = uiState) }
+                }
         }
     }
 }
