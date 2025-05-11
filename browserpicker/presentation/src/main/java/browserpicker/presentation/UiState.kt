@@ -1,8 +1,10 @@
 package browserpicker.presentation
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.mutableStateOf
 import browserpicker.core.results.AppError
 import browserpicker.core.results.DomainResult
+import browserpicker.presentation.UiState.Success
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
@@ -46,6 +48,15 @@ sealed interface UiState<out T> {
     }
 
     /**
+     * Maps the success data to another type using the provided transform function that returns UiState
+     */
+    fun <R> flatMap(transform: (T) -> UiState<R>): UiState<R> = when (this) {
+        is Loading -> Loading
+        is Error -> this
+        is Success -> transform(data)
+    }
+
+    /**
      * Applies the provided action if this is a success state
      */
     fun onSuccess(action: (T) -> Unit): UiState<T> {
@@ -86,6 +97,15 @@ sealed interface UiState<out T> {
     }
 
     /**
+     * Returns the success data or throws an exception if this is not a success state
+     */
+    fun getOrThrow(): T = when (this) {
+        is Success -> data
+        is Loading -> throw IllegalStateException("No data available - state is Loading")
+        is Error -> throw IllegalStateException("No data available - state is Error: $message", cause)
+    }
+
+    /**
      * Folds the UiState into a single result by applying the provided functions
      * based on the current state.
      */
@@ -97,6 +117,24 @@ sealed interface UiState<out T> {
         is Loading -> onLoading()
         is Success -> onSuccess(data)
         is Error -> onError(message, cause)
+    }
+
+    /**
+     * Returns true if the state is Success and the data is not null.
+     * This is particularly useful for checking nullable data in a Success state.
+     */
+    fun isSuccessAndData(): Boolean = this is Success && this.data != null
+
+    /**
+     * Returns the data if the state is Success, otherwise throws an IllegalStateException.
+     * Use this with caution and only when you are certain the state must be Success.
+     */
+    fun dataOrThrow(): T {
+        return when (this) {
+            is Success -> data
+            is Loading -> throw IllegalStateException("Attempted to access data on a Loading state")
+            is Error -> throw IllegalStateException("Attempted to access data on an Error state: ${message}", cause)
+        }
     }
 }
 
@@ -174,6 +212,49 @@ fun <T> List<Flow<UiState<T>>>.combineToListUiState(): Flow<UiState<List<T>>> {
                 // This case should ideally not be reached
                 UiState.Error("Unexpected state combination in combineToListUiState")
             }
+        }
+    }
+}
+
+/**
+ * Combines two individual UiState instances into a single UiState containing a Pair of their data.
+ * The resulting state is Loading if either source is Loading.
+ * The resulting state is Error if either source is Error.
+ * The resulting state is Success only if both sources are Success.
+ */
+fun <T1, T2> UiState<T1>.combineWith(other: UiState<T2>): UiState<Pair<T1, T2>> {
+    return when {
+        this is UiState.Loading || other is UiState.Loading -> UiState.Loading
+        this is UiState.Error -> this
+        other is UiState.Error -> other
+        this is UiState.Success && other is UiState.Success -> UiState.Success(Pair(this.data, other.data))
+        else -> {
+            UiState.Error("Unexpected state combination: $this and $other")
+        }
+    }
+}
+
+/**
+ * Combines a list of individual UiState instances into a single UiState containing a List of their data.
+ * The resulting state is Loading if any source is Loading.
+ * The resulting state is Error if any source is Error (the first error encountered will be propagated).
+ * The resulting state is Success only if all sources are Success.
+ */
+fun <T> List<UiState<T>>.combineToListUiState(): UiState<List<T>> {
+    return when {
+        any { it.isLoading } -> UiState.Loading
+        any { it.isError } -> {
+            @Suppress("UNCHECKED_CAST") // Safe cast because we already checked with any { it.isError }
+            val firstError = first { it.isError } as UiState.Error
+            UiState.Error(firstError.message, firstError.cause)
+        }
+        all { it.isSuccess } -> {
+            @Suppress("UNCHECKED_CAST") // Safe cast because we already checked with all { it.isSuccess }
+            val dataList = map { (it as UiState.Success).data }
+            UiState.Success(dataList)
+        }
+        else -> {
+            UiState.Error("Unexpected state combination in combineToListUiState")
         }
     }
 }
