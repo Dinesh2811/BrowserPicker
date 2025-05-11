@@ -7,6 +7,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import browserpicker.presentation.analytics.UriAnalyticsViewModel
 
 /**
  * Main navigation routes for the Browser Picker app
@@ -23,7 +24,8 @@ object NavRoutes {
     const val HOST_RULE_DETAILS = "host_rule_details"
     const val SEARCH = "search"
     const val SETTINGS = "settings"
-    
+    const val URI_ANALYTICS = "uriAnalytics"
+
     // Routes with parameters
     const val FOLDER_DETAILS_WITH_ID = "folder_details/{folderId}/{folderType}"
     const val HOST_RULE_DETAILS_WITH_ID = "host_rule_details/{hostRuleId}"
@@ -137,5 +139,10 @@ fun BrowserPickerNavHost(
         composable(NavRoutes.SETTINGS) {
             // SettingsScreen(navController)
         }
+
+        // URI analytics screen
+        composable(NavRoutes.URI_ANALYTICS) {
+            // UriAnalyticsScreen(navController)
+        }
     }
-} 
+}
