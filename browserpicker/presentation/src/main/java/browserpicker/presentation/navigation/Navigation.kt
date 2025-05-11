@@ -7,6 +7,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import browserpicker.presentation.analytics.BrowserAnalyticsScreen
 import browserpicker.presentation.analytics.UriAnalyticsScreen
 import browserpicker.presentation.analytics.UriAnalyticsViewModel
 import browserpicker.presentation.blockedurls.BlockedUrlsScreen
@@ -31,7 +32,6 @@ object NavRoutes {
     const val BOOKMARKS = "bookmarks"
     const val BLOCKED_URLS = "blocked_urls"
     const val FOLDER_DETAILS = "folder_details"
-    const val ANALYTICS = "analytics"
     const val BROWSER_STATS = "browser_stats"
     const val HOST_RULE_DETAILS = "host_rule_details"
     const val SEARCH = "search"
@@ -127,14 +127,9 @@ fun BrowserPickerNavHost(
             UriDetailsScreen(navController, uriRecordId)
         }
 
-        // Analytics screen
-        composable(NavRoutes.ANALYTICS) {
-            // AnalyticsScreen(navController)
-        }
-
-        // Browser stats screen
+        // Browser Analytics screen
         composable(NavRoutes.BROWSER_STATS) {
-            // BrowserStatsScreen(navController)
+            BrowserAnalyticsScreen(navController)
         }
 
         // Host rule details screen
