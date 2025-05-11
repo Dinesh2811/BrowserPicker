@@ -68,6 +68,7 @@ import browserpicker.domain.usecases.analytics.SearchHostRulesUseCase
 import browserpicker.domain.usecases.analytics.TrackUriActionUseCase
 import browserpicker.domain.usecases.browser.SetPreferredBrowserForHostUseCase
 import browserpicker.domain.usecases.uri.host.CheckUriStatusUseCase
+import browserpicker.domain.usecases.uri.host.UpdateHostRuleStatusUseCase
 import javax.inject.Singleton
 
 /**
@@ -151,10 +152,11 @@ interface HostRuleUseCases {
     val getHostRulesByStatusUseCase: GetHostRulesByStatusUseCase
     val checkUriStatusUseCase: CheckUriStatusUseCase
     val getHostRulesByFolderUseCase: GetHostRulesByFolderUseCase
-//    val getRootHostRulesByStatusUseCase: GetRootHostRulesByStatusUseCase
+    //    val getRootHostRulesByStatusUseCase: GetRootHostRulesByStatusUseCase
 //    val bookmarkHostUseCase: BookmarkHostUseCase
 //    val blockHostUseCase: BlockHostUseCase
     val clearHostStatusUseCase: ClearHostStatusUseCase
+    val updateHostRuleStatusUseCase: UpdateHostRuleStatusUseCase
 }
 
 /**
@@ -187,7 +189,7 @@ interface FolderUseCases {
     val createFolderUseCase: CreateFolderUseCase
     val updateFolderUseCase: UpdateFolderUseCase
     val deleteFolderUseCase: DeleteFolderUseCase
-//    val moveFolderUseCase: MoveFolderUseCase
+    //    val moveFolderUseCase: MoveFolderUseCase
     val moveHostRuleToFolderUseCase: MoveHostRuleToFolderUseCase
     val getFolderHierarchyUseCase: GetFolderHierarchyUseCase
     val ensureDefaultFoldersExistUseCase: EnsureDefaultFoldersExistUseCase
@@ -223,4 +225,4 @@ interface SystemIntegrationUseCases {
     val restoreDataUseCase: RestoreDataUseCase
     val monitorSystemBrowserChangesUseCase: MonitorSystemBrowserChangesUseCase
     val handleUncaughtUriUseCase: HandleUncaughtUriUseCase
-} 
+}

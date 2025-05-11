@@ -126,7 +126,9 @@ import browserpicker.domain.usecases.folder.impl.MoveHostRuleToFolderUseCaseImpl
 import browserpicker.domain.usecases.system.impl.ShareUriUseCaseImpl
 import browserpicker.domain.usecases.folder.impl.UpdateFolderUseCaseImpl
 import browserpicker.domain.usecases.uri.host.CheckUriStatusUseCase
+import browserpicker.domain.usecases.uri.host.UpdateHostRuleStatusUseCase
 import browserpicker.domain.usecases.uri.host.impl.CheckUriStatusUseCaseImpl
+import browserpicker.domain.usecases.uri.host.impl.UpdateHostRuleStatusUseCaseImpl
 import browserpicker.domain.usecases.uri.shared.impl.ValidateUriUseCaseImpl
 import dagger.Binds
 import dagger.Module
@@ -241,6 +243,10 @@ abstract class UseCaseBindingModule {
     @Binds
     @Singleton
     abstract fun bindClearHostStatusUseCase(impl: ClearHostStatusUseCaseImpl): ClearHostStatusUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindUpdateHostRuleStatusUseCase(impl: UpdateHostRuleStatusUseCaseImpl): UpdateHostRuleStatusUseCase
 
     @Binds
     @Singleton
@@ -425,4 +431,4 @@ abstract class UseCaseBindingModule {
 //    @Binds
 //    @Singleton
 //    abstract fun bindDeleteAllStatsUseCase(impl: DeleteAllStatsUseCaseImpl): DeleteAllStatsUseCase
-} 
+}
