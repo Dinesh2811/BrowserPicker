@@ -2,12 +2,8 @@ package browserpicker.presentation.details
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.ContentAlpha
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,20 +13,22 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import browserpicker.domain.model.Folder
 import browserpicker.domain.model.FolderType
 import browserpicker.domain.model.HostRule
+import browserpicker.domain.model.UriStatus
 import browserpicker.presentation.common.components.EmptyStateView
 import browserpicker.presentation.common.components.LoadingIndicator
 import browserpicker.presentation.navigation.NavRoutes
 
 /**
- * Folder Details Screen - Displays the contents of a specific folder.
+ * Folder Details Screen - Shows details and contents of a folder.
  *
  * This screen displays:
- * - The name of the current folder in the top bar.
- * - A list of child folders within the current folder.
- * - A list of host rules (bookmarks or blocked URLs) within the current folder.
- * - Navigation back to the parent folder or the root list.
+ * - Folder name and type
+ * - Child folders within this folder
+ * - Host rules contained in the folder
+ * - Options to edit folder properties
+ * - Options to delete the folder
+ * - Options to move items to different folders
  *
- * Used by: BookmarksScreen, BlockedUrlsScreen, SearchScreen
  * Uses: FolderDetailsViewModel
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,126 +36,260 @@ import browserpicker.presentation.navigation.NavRoutes
 fun FolderDetailsScreen(
     navController: androidx.navigation.NavController,
     folderId: Long,
-    folderType: Int, // Pass as Int and convert in ViewModel if necessary, or pass FolderType if feasible
+    folderType: Int,
     viewModel: FolderDetailsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val currentFolder by viewModel.currentFolder.collectAsState(initial = null)
+    val folder by viewModel.folder.collectAsState(initial = null)
     val childFolders by viewModel.childFolders.collectAsState(initial = emptyList())
-    val hostRules by viewModel.hostRulesInFolder.collectAsState(initial = emptyList())
-    val folderHierarchy: List<Folder> = emptyList()
+    val hostRules by viewModel.hostRules.collectAsState(initial = emptyList())
+
+    var showEditNameDialog by remember { mutableStateOf(false) }
+    var showDeleteFolderDialog by remember { mutableStateOf(false) }
+    var showMoveItemDialog by remember { mutableStateOf<Long?>(null) } // Host rule ID or null
+
+    // Effect to handle deletion
+    LaunchedEffect(uiState.isDeleted) {
+        if (uiState.isDeleted) {
+            // Navigate back after deletion
+            navController.navigateUp()
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(currentFolder?.name ?: "Folder") },
+                title = { Text(folder?.name ?: "Folder Details") },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
+                },
+                actions = {
+                    // Edit action
+                    IconButton(onClick = { showEditNameDialog = true }) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                    }
+
+                    // Delete action
+                    IconButton(onClick = { showDeleteFolderDialog = true }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    }
                 }
-                // Actions like Add Folder/Host Rule could go here
             )
+        },
+        floatingActionButton = {
+            if (folder != null) {
+                FloatingActionButton(
+                    onClick = {
+                        // Create new item in folder logic would go here
+                        // This could open a dialog to create a new folder or add a host rule
+                    }
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Item")
+                }
+            }
         }
     ) { innerPadding ->
-        when {
-            uiState.isLoading -> {
-                LoadingIndicator(message = "Loading folder contents...")
-            }
-            uiState.error != null -> {
-                // Error view
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text("Error: ${uiState.error}")
-                    Button(onClick = {
-                        // Retry loading
-                        viewModel.loadFolderContents() // Assuming a load function exists or trigger via state change
-                    }) {
-                        Text("Retry")
-                    }
+        if (uiState.isLoading) {
+            LoadingIndicator(message = "Loading folder details...")
+        } else if (uiState.error != null) {
+            // Error view
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text("Error: ${uiState.error}")
+                Button(onClick = { navController.navigateUp() }) {
+                    Text("Go Back")
                 }
             }
-            childFolders.isEmpty() && hostRules.isEmpty() -> {
-                // Empty state
-                EmptyStateView(message = "This folder is empty")
-            }
-            else -> {
-                // Main content: List of subfolders and host rules
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    // Folder hierarchy breadcrumb (optional but good UX)
-                    item {
-                        FolderHierarchyBreadcrumb(
-                            hierarchy = folderHierarchy,
-                            onFolderClick = { clickedFolderId ->
-                                // Navigate to the clicked folder
-                                // navController.navigate("${NavRoutes.FOLDER_DETAILS}/${clickedFolderId}/${folderType}")
-                                // Alternatively, viewModel.selectFolder(clickedFolderId) if state-driven navigation
+        } else if (folder == null) {
+            // Folder not found
+            EmptyStateView(message = "Folder not found")
+        } else {
+            // Main content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Folder info card
+                Card {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            "Folder Information",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            "Name: ${folder?.name}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            "Type: ${formatFolderType(FolderType.fromValue(folderType))}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            "Items: ${childFolders.size + hostRules.size}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+
+                // Child folders section
+                if (childFolders.isNotEmpty()) {
+                    Text(
+                        "Sub-Folders",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    childFolders.forEach { childFolder ->
+                        FolderItem(
+                            folder = childFolder,
+                            onClick = {
+                                navController.navigate("${NavRoutes.FOLDER_DETAILS}/${childFolder.id}/${childFolder.type.value}")
                             }
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Divider()
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    // Child Folders section
-                    if (childFolders.isNotEmpty()) {
-                        item {
-                            Text("Folders", style = MaterialTheme.typography.titleMedium)
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                        items(childFolders) { folder ->
-                            FolderItem(
-                                folder = folder,
-                                onClick = {
-                                    // Navigate to child folder details
-                                    navController.navigate("${NavRoutes.FOLDER_DETAILS}/${folder.id}/${folder.type.value}")
-                                }
-                            )
-                            Divider()
-                        }
-                        item { Spacer(modifier = Modifier.height(16.dp)) }
-                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
 
-                    // Host Rules section
-                    if (hostRules.isNotEmpty()) {
-                        item {
-                            Text("Items", style = MaterialTheme.typography.titleMedium)
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                        items(hostRules) { hostRule ->
-                            // Reuse BookmarkItem/BlockedUrlItem or create a generic HostRuleItem
-                            HostRuleItem(
-                                hostRule = hostRule,
-                                onClick = {
-                                    // Navigate to host rule details
-                                    navController.navigate("${NavRoutes.HOST_RULE_DETAILS}/${hostRule.id}")
-                                }
-                            )
-                            Divider()
-                        }
+                // Host rules section
+                if (hostRules.isNotEmpty()) {
+                    Text(
+                        "Items in Folder",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    hostRules.forEach { hostRule ->
+                        HostRuleItem(
+                            hostRule = hostRule,
+                            onClick = {
+                                navController.navigate("${NavRoutes.HOST_RULE_DETAILS}/${hostRule.id}")
+                            },
+                            onMove = { showMoveItemDialog = hostRule.id },
+                            onDelete = { viewModel.deleteHostRule(hostRule.id) }
+                        )
                     }
+                }
+
+                // Empty state if no items
+                if (childFolders.isEmpty() && hostRules.isEmpty()) {
+                    EmptyStateView(message = "This folder is empty")
                 }
             }
         }
     }
+
+    // Edit folder name dialog
+    if (showEditNameDialog) {
+        var newName by remember { mutableStateOf(folder?.name ?: "") }
+
+        AlertDialog(
+            onDismissRequest = { showEditNameDialog = false },
+            title = { Text("Edit Folder Name") },
+            text = {
+                TextField(
+                    value = newName,
+                    onValueChange = { newName = it },
+                    label = { Text("Folder Name") }
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.updateFolderName(newName)
+                        showEditNameDialog = false
+                    },
+                    enabled = newName.isNotBlank()
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditNameDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Delete folder dialog
+    if (showDeleteFolderDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteFolderDialog = false },
+            title = { Text("Delete Folder") },
+            text = {
+                Text("Are you sure you want to delete this folder? This action cannot be undone.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteFolder(forceCascade = true)
+                        showDeleteFolderDialog = false
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteFolderDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Move item dialog
+    showMoveItemDialog?.let { hostRuleId ->
+        AlertDialog(
+            onDismissRequest = { showMoveItemDialog = null },
+            title = { Text("Move Item") },
+            text = {
+                Text("Move item functionality would be implemented here")
+                // This would include a folder picker component
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // TODO: Implement moving to selected folder
+                        showMoveItemDialog = null
+                    }
+                ) {
+                    Text("Move")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMoveItemDialog = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 /**
- * Displays a clickable folder item in a list.
- *
- * @param folder The folder to display.
- * @param onClick Callback when the folder is clicked.
+ * Folder item component
  */
 @Composable
 private fun FolderItem(
@@ -168,64 +300,78 @@ private fun FolderItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(Icons.Default.Folder, contentDescription = "Folder", modifier = Modifier.padding(end = 16.dp))
-        Text(folder.name, style = MaterialTheme.typography.bodyLarge)
+        Icon(
+            Icons.Default.Folder,
+            contentDescription = "Folder",
+            modifier = Modifier.padding(end = 16.dp)
+        )
+
+        Text(
+            folder.name,
+            style = MaterialTheme.typography.bodyLarge
+        )
     }
 }
 
 /**
- * Displays a clickable host rule item in a list.
- *
- * @param hostRule The host rule to display.
- * @param onClick Callback when the host rule is clicked.
+ * Host rule item component
  */
 @Composable
 private fun HostRuleItem(
     hostRule: HostRule,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onMove: () -> Unit,
+    onDelete: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // TODO: Add icon based on uriStatus (bookmark/blocked)
-        Text(hostRule.host, style = MaterialTheme.typography.bodyLarge)
-    }
-}
+        // Icon based on status
+        val icon = when(hostRule.uriStatus) {
+            UriStatus.BLOCKED -> Icons.Default.Block
+            UriStatus.BOOKMARKED -> Icons.Default.Star
+            else -> Icons.Default.ArrowForward
+        }
 
-/**
- * Displays the folder hierarchy as a breadcrumb trail.
- *
- * @param hierarchy The list of folders representing the path from root to the current folder.
- * @param onFolderClick Callback when a folder in the hierarchy is clicked.
- */
-@Composable
-private fun FolderHierarchyBreadcrumb(
-    hierarchy: List<Folder>,
-    onFolderClick: (folderId: Long) -> Unit
-) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        hierarchy.forEachIndexed { index, folder ->
-            Text(
-                folder.name,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.clickable { onFolderClick(folder.id) },
-                color = if (index == hierarchy.lastIndex) MaterialTheme.colorScheme.primary else LocalContentColor.current.copy(alpha = ContentAlpha.medium)
-            )
-            if (index < hierarchy.lastIndex) {
-                Text(">")
-            }
+        Icon(
+            icon,
+            contentDescription = null,
+            modifier = Modifier.padding(end = 16.dp)
+        )
+
+        // Host info
+        Text(
+            hostRule.host,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+
+        // Actions
+        IconButton(onClick = onMove) {
+            Icon(Icons.Default.FolderOpen, contentDescription = "Move")
+        }
+
+        IconButton(onClick = onDelete) {
+            Icon(Icons.Default.Delete, contentDescription = "Delete")
         }
     }
 }
 
-// Dummy function to simulate loading, replace with actual ViewModel logic call
-private fun FolderDetailsViewModel.loadFolderContents() {
-    // This would trigger the flows in the ViewModel
+/**
+ * Format folder type for display
+ */
+@Composable
+private fun formatFolderType(type: FolderType): String {
+    return when (type) {
+        FolderType.BOOKMARK -> "Bookmarks"
+        FolderType.BLOCK -> "Blocked URLs"
+        else -> "Unknown"
+    }
 }

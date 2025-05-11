@@ -3,14 +3,15 @@ package browserpicker.presentation.details
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import browserpicker.core.results.AppError
-import browserpicker.core.results.DomainResult
 import browserpicker.domain.model.Folder
 import browserpicker.domain.model.FolderType
 import browserpicker.domain.model.HostRule
+import browserpicker.domain.usecases.folder.DeleteFolderUseCase
 import browserpicker.domain.usecases.folder.GetChildFoldersUseCase
 import browserpicker.domain.usecases.folder.GetFolderUseCase
-import browserpicker.domain.usecases.folder.GetFolderHierarchyUseCase
+import browserpicker.domain.usecases.folder.MoveHostRuleToFolderUseCase
+import browserpicker.domain.usecases.folder.UpdateFolderUseCase
+import browserpicker.domain.usecases.uri.host.DeleteHostRuleUseCase
 import browserpicker.domain.usecases.uri.host.GetHostRulesByFolderUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -21,10 +22,12 @@ import javax.inject.Inject
  * ViewModel for the Folder Details screen.
  *
  * This ViewModel handles:
- * - Loading and displaying the details of a specific folder
- * - Displaying child folders within the current folder
- * - Displaying host rules within the current folder
- * - Navigating the folder hierarchy
+ * - Displaying folder information
+ * - Showing child folders
+ * - Showing host rules in the folder
+ * - Updating folder properties
+ * - Deleting the folder
+ * - Moving host rules to different folders
  *
  * Used by: FolderDetailsScreen
  */
@@ -34,58 +37,152 @@ class FolderDetailsViewModel @Inject constructor(
     private val getFolderUseCase: GetFolderUseCase,
     private val getChildFoldersUseCase: GetChildFoldersUseCase,
     private val getHostRulesByFolderUseCase: GetHostRulesByFolderUseCase,
-    private val getFolderHierarchyUseCase: GetFolderHierarchyUseCase
+    private val updateFolderUseCase: UpdateFolderUseCase,
+    private val deleteFolderUseCase: DeleteFolderUseCase,
+    private val deleteHostRuleUseCase: DeleteHostRuleUseCase,
+    private val moveHostRuleToFolderUseCase: MoveHostRuleToFolderUseCase
 ) : ViewModel() {
 
     private val folderId: Long = savedStateHandle.get<Long>("folderId") ?: -1L
-    private val folderType: Int = savedStateHandle.get<Int>("folderType") ?: -1
+    private val folderType: Int = savedStateHandle.get<Int>("folderType") ?: FolderType.BOOKMARK.value
 
     private val _uiState = MutableStateFlow(FolderDetailsUiState())
     val uiState: StateFlow<FolderDetailsUiState> = _uiState.asStateFlow()
 
     // Current folder details
-    val currentFolder: Flow<Folder?> = getFolderUseCase(folderId)
-        .map { result -> result.getOrNull() }
-        .onEach { folder ->
-            _uiState.value = _uiState.value.copy(currentFolder = folder)
+    val folder: Flow<Folder?> = flow {
+        if (folderId != -1L) {
+            getFolderUseCase(folderId)
+                .collect { result ->
+                    emit(result.getOrNull())
+                }
+        } else {
+            emit(null)
         }
+    }
 
-    // Child folders within the current folder
-    val childFolders: Flow<List<Folder>> = getChildFoldersUseCase(folderId)
-        .map { result -> result.getOrNull() ?: emptyList() }
+    // Child folders
+    val childFolders: Flow<List<Folder>> = flow {
+        if (folderId != -1L) {
+            getChildFoldersUseCase(folderId)
+                .collect { result ->
+                    emit(result.getOrNull() ?: emptyList())
+                }
+        } else {
+            emit(emptyList())
+        }
+    }
 
-    // Host rules within the current folder
-    val hostRulesInFolder: Flow<List<HostRule>> = getHostRulesByFolderUseCase(folderId)
-        .map { result -> result.getOrNull() ?: emptyList() }
-
-    // Folder hierarchy (breadcrumb)
-//    val folderHierarchy: List<Folder> = (getFolderHierarchyUseCase(folderId)).getOrNull()?: emptyList()
+    // Host rules in folder
+    val hostRules: Flow<List<HostRule>> = flow {
+        if (folderId != -1L) {
+            getHostRulesByFolderUseCase(folderId)
+                .collect { result ->
+                    emit(result.getOrNull() ?: emptyList())
+                }
+        } else {
+            emit(emptyList())
+        }
+    }
 
     init {
-        if (folderId == -1L || FolderType.fromValue(folderType) == FolderType.UNKNOWN) {
+        if (folderId != -1L) {
+            loadFolderInfo()
+        } else {
             _uiState.value = _uiState.value.copy(
-                error = "Invalid Folder ID or Type"
+                error = "Invalid Folder ID"
             )
         }
-        // Data loading is handled by the flows above
     }
 
     /**
-     * Navigate to a child folder.
-     * This would typically trigger a navigation event in the UI layer.
+     * Load folder info
      */
-    fun navigateToFolder(childFolderId: Long, childFolderType: FolderType) {
-        // This function is primarily for intent in the ViewModel
-        // The actual navigation would be triggered by observing childFolders in the UI
+    private fun loadFolderInfo() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+
+            folder.collect { folder ->
+                if (folder != null) {
+                    _uiState.value = _uiState.value.copy(
+                        folder = folder,
+                        isLoading = false
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        error = "Folder not found",
+                        isLoading = false
+                    )
+                }
+            }
+        }
     }
 
     /**
-     * Navigate back up the folder hierarchy.
-     * This would typically trigger a navigation event in the UI layer.
+     * Update folder name
      */
-    fun navigateUpFolder() {
-        // This function is primarily for intent in the ViewModel
-        // The actual navigation would be triggered by observing folderHierarchy in the UI
+    fun updateFolderName(name: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isUpdating = true)
+
+            val folder = _uiState.value.folder ?: return@launch
+            val updatedFolder = folder.copy(name = name)
+
+            val result = updateFolderUseCase(updatedFolder)
+
+            _uiState.value = _uiState.value.copy(
+                isUpdating = false,
+                updateSuccess = result.isSuccess,
+                error = if (result.isFailure) "Failed to update folder" else null
+            )
+        }
+    }
+
+    /**
+     * Delete the folder
+     */
+    fun deleteFolder(forceCascade: Boolean = false) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isDeleting = true)
+
+            val result = deleteFolderUseCase(folderId, forceCascade)
+
+            _uiState.value = _uiState.value.copy(
+                isDeleting = false,
+                isDeleted = result.isSuccess,
+                error = if (result.isFailure) "Failed to delete folder" else null
+            )
+        }
+    }
+
+    /**
+     * Delete a host rule
+     */
+    fun deleteHostRule(hostRuleId: Long) {
+        viewModelScope.launch {
+            val result = deleteHostRuleUseCase(hostRuleId)
+
+            if (result.isFailure) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Failed to delete host rule"
+                )
+            }
+        }
+    }
+
+    /**
+     * Move a host rule to another folder
+     */
+    fun moveHostRule(hostRuleId: Long, targetFolderId: Long?) {
+        viewModelScope.launch {
+            val result = moveHostRuleToFolderUseCase(hostRuleId, targetFolderId)
+
+            if (result.isFailure) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Failed to move host rule"
+                )
+            }
+        }
     }
 }
 
@@ -93,7 +190,12 @@ class FolderDetailsViewModel @Inject constructor(
  * UI state for the Folder Details screen
  */
 data class FolderDetailsUiState(
-    val currentFolder: Folder? = null,
-    val isLoading: Boolean = false, // Consider using loading state from flows
+    val folder: Folder? = null,
+    val hasChildFolders: Boolean = false,
+    val isUpdating: Boolean = false,
+    val updateSuccess: Boolean = false,
+    val isDeleting: Boolean = false,
+    val isDeleted: Boolean = false,
+    val isLoading: Boolean = false,
     val error: String? = null
 )

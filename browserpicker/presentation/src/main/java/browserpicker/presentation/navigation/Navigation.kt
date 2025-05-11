@@ -7,7 +7,19 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import browserpicker.presentation.analytics.UriAnalyticsScreen
 import browserpicker.presentation.analytics.UriAnalyticsViewModel
+import browserpicker.presentation.blockedurls.BlockedUrlsScreen
+import browserpicker.presentation.bookmarks.BookmarksScreen
+import browserpicker.presentation.browserpicker.BrowserPickerScreen
+import browserpicker.presentation.details.FolderDetailsScreen
+import browserpicker.presentation.details.HostRuleDetailsScreen
+import browserpicker.presentation.details.UriDetailsScreen
+import browserpicker.presentation.history.UriHistoryScreen
+import browserpicker.presentation.main.HomeScreen
+import browserpicker.presentation.onboarding.OnboardingScreen
+import browserpicker.presentation.search.SearchScreen
+import browserpicker.presentation.settings.SettingsScreen
 
 /**
  * Main navigation routes for the Browser Picker app
@@ -25,6 +37,7 @@ object NavRoutes {
     const val SEARCH = "search"
     const val SETTINGS = "settings"
     const val URI_ANALYTICS = "uriAnalytics"
+    const val ONBOARDING = "onboarding"
 
     // Routes with parameters
     const val FOLDER_DETAILS_WITH_ID = "folder_details/{folderId}/{folderType}"
@@ -53,38 +66,43 @@ fun BrowserPickerNavHost(
     ) {
         // Home screen
         composable(NavRoutes.HOME) {
-            // HomeScreen(navController)
+             HomeScreen(navController)
         }
-        
+
+        // Onboarding screen
+        composable(NavRoutes.ONBOARDING) {
+            OnboardingScreen(navController)
+        }
+
         // Browser Picker screen - Main functionality to pick browser for intercepted URIs
         composable(
             route = NavRoutes.BROWSER_PICKER,
             arguments = listOf(
-                navArgument("uriString") { 
-                    type = NavType.StringType 
+                navArgument("uriString") {
+                    type = NavType.StringType
                     nullable = true
                     defaultValue = null
                 }
             )
         ) {
-            // BrowserPickerScreen(navController)
+             BrowserPickerScreen(navController)
         }
-        
+
         // URI History screen
         composable(NavRoutes.URI_HISTORY) {
-            // UriHistoryScreen(navController)
+             UriHistoryScreen(navController)
         }
-        
+
         // Bookmarks screen
         composable(NavRoutes.BOOKMARKS) {
-            // BookmarksScreen(navController)
+             BookmarksScreen(navController)
         }
-        
+
         // Blocked URLs screen
         composable(NavRoutes.BLOCKED_URLS) {
-            // BlockedUrlsScreen(navController)
+             BlockedUrlsScreen(navController)
         }
-        
+
         // Folder details screen
         composable(
             route = NavRoutes.FOLDER_DETAILS_WITH_ID,
@@ -93,32 +111,11 @@ fun BrowserPickerNavHost(
                 navArgument("folderType") { type = NavType.IntType }
             )
         ) {
-            // val folderId = it.arguments?.getLong("folderId") ?: return@composable
-            // val folderType = it.arguments?.getInt("folderType") ?: return@composable
-            // FolderDetailsScreen(navController, folderId, folderType)
+            val folderId = it.arguments?.getLong("folderId") ?: return@composable
+            val folderType = it.arguments?.getInt("folderType") ?: return@composable
+            FolderDetailsScreen(navController, folderId, folderType)
         }
-        
-        // Analytics screen
-        composable(NavRoutes.ANALYTICS) {
-            // AnalyticsScreen(navController)
-        }
-        
-        // Browser stats screen
-        composable(NavRoutes.BROWSER_STATS) {
-            // BrowserStatsScreen(navController)
-        }
-        
-        // Host rule details screen
-        composable(
-            route = NavRoutes.HOST_RULE_DETAILS_WITH_ID,
-            arguments = listOf(
-                navArgument("hostRuleId") { type = NavType.LongType }
-            )
-        ) {
-            // val hostRuleId = it.arguments?.getLong("hostRuleId") ?: return@composable
-            // HostRuleDetailsScreen(navController, hostRuleId)
-        }
-        
+
         // URI details screen
         composable(
             route = NavRoutes.URI_DETAILS,
@@ -126,23 +123,44 @@ fun BrowserPickerNavHost(
                 navArgument("uriRecordId") { type = NavType.LongType }
             )
         ) {
-            // val uriRecordId = it.arguments?.getLong("uriRecordId") ?: return@composable
-            // UriDetailsScreen(navController, uriRecordId)
+            val uriRecordId = it.arguments?.getLong("uriRecordId") ?: return@composable
+            UriDetailsScreen(navController, uriRecordId)
         }
-        
+
+        // Analytics screen
+        composable(NavRoutes.ANALYTICS) {
+            // AnalyticsScreen(navController)
+        }
+
+        // Browser stats screen
+        composable(NavRoutes.BROWSER_STATS) {
+            // BrowserStatsScreen(navController)
+        }
+
+        // Host rule details screen
+        composable(
+            route = NavRoutes.HOST_RULE_DETAILS_WITH_ID,
+            arguments = listOf(
+                navArgument("hostRuleId") { type = NavType.LongType }
+            )
+        ) {
+            val hostRuleId = it.arguments?.getLong("hostRuleId") ?: return@composable
+            HostRuleDetailsScreen(navController, hostRuleId)
+        }
+
         // Search screen
         composable(NavRoutes.SEARCH) {
-            // SearchScreen(navController)
+             SearchScreen(navController)
         }
-        
+
         // Settings screen
         composable(NavRoutes.SETTINGS) {
-            // SettingsScreen(navController)
+             SettingsScreen(navController)
         }
 
         // URI analytics screen
         composable(NavRoutes.URI_ANALYTICS) {
-            // UriAnalyticsScreen(navController)
+             UriAnalyticsScreen(navController)
         }
     }
 }
