@@ -83,9 +83,11 @@ class BrowserAnalyticsViewModel @Inject constructor(
     val state: StateFlow<BrowserAnalyticsUiState> = _state.asStateFlow()
 
     private val _filterOptions = MutableStateFlow(BrowserAnalyticsFilterOptions.DEFAULT)
+    private val _refreshTrigger = MutableStateFlow(0)
 
     init {
         loadInitialData()
+        observeFilterAndRefreshTriggers()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -95,8 +97,8 @@ class BrowserAnalyticsViewModel @Inject constructor(
             getMostFrequentlyUsedBrowserUseCase()
                 .flowOn(ioDispatcher)
                 .toUiState()
-                .catch { error ->
-                    _state.update { it.copy(mostFrequentBrowser = UiState.Error("Failed to load most frequent browser: ${error.message}", error)) }
+                .catch { unexpectedError ->
+                    emit(UiState.Error("Failed to load most frequent browser due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
                 }
                 .stateIn(
                     viewModelScope,
@@ -113,8 +115,8 @@ class BrowserAnalyticsViewModel @Inject constructor(
             getMostRecentlyUsedBrowserUseCase()
                 .flowOn(ioDispatcher)
                 .toUiState()
-                .catch { error ->
-                    _state.update { it.copy(mostRecentBrowser = UiState.Error("Failed to load most recent browser: ${error.message}", error)) }
+                .catch { unexpectedError ->
+                    emit(UiState.Error("Failed to load most recent browser due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
                 }
                 .stateIn(
                     viewModelScope,
@@ -131,8 +133,8 @@ class BrowserAnalyticsViewModel @Inject constructor(
             getAvailableBrowsersUseCase()
                 .flowOn(ioDispatcher)
                 .toUiState()
-                .catch { error ->
-                    _state.update { it.copy(availableBrowsers = UiState.Error("Failed to load available browsers: ${error.message}", error)) }
+                .catch { unexpectedError ->
+                    emit(UiState.Error("Failed to load available browsers due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
                 }
                 .stateIn(
                     viewModelScope,
@@ -143,10 +145,13 @@ class BrowserAnalyticsViewModel @Inject constructor(
                     _state.update { it.copy(availableBrowsers = uiState) }
                 }
         }
+    }
 
-        // Observe filter options and load filtered usage stats
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeFilterAndRefreshTriggers() {
+        // Observe filter options and refresh trigger for usage stats
         viewModelScope.launch {
-            _filterOptions
+            combine(_filterOptions, _refreshTrigger) { options, _ -> options }
                 .onStart { _state.update { it.copy(usageStats = UiState.Loading) } }
                 .distinctUntilChanged()
                 .flatMapLatest { filterOptions ->
@@ -156,7 +161,6 @@ class BrowserAnalyticsViewModel @Inject constructor(
                     )
                         .flowOn(ioDispatcher)
                         .map { result ->
-                            // Apply browser filtering if needed
                             when (result) {
                                 is DomainResult.Success -> {
                                     val selectedBrowsers = filterOptions.selectedBrowsers
@@ -173,9 +177,9 @@ class BrowserAnalyticsViewModel @Inject constructor(
                             }
                         }
                         .toUiState()
-                }
-                .catch { error ->
-                    _state.update { it.copy(usageStats = UiState.Error("Failed to load browser usage stats: ${error.message}", error)) }
+                        .catch { unexpectedError ->
+                            emit(UiState.Error("Failed to load browser usage stats due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
+                        }
                 }
                 .flowOn(defaultDispatcher)
                 .collect { uiState ->
@@ -183,18 +187,16 @@ class BrowserAnalyticsViewModel @Inject constructor(
                 }
         }
 
-        // Load and filter trend data based on filter options
         viewModelScope.launch {
-            _filterOptions
+            combine(_filterOptions, _refreshTrigger) { options, _ -> options }
                 .onStart { _state.update { it.copy(trendData = UiState.Loading) } }
-                .distinctUntilChanged()
+                .distinctUntilChanged() // Process only if actual filter options change
                 .flatMapLatest { filterOptions ->
                     analyzeBrowserUsageTrendsUseCase(
                         timeRange = filterOptions.timeRange
                     )
                         .flowOn(ioDispatcher)
                         .map { result ->
-                            // Apply browser filtering if needed
                             when (result) {
                                 is DomainResult.Success -> {
                                     val selectedBrowsers = filterOptions.selectedBrowsers
@@ -211,11 +213,11 @@ class BrowserAnalyticsViewModel @Inject constructor(
                             }
                         }
                         .toUiState()
+                        .catch { unexpectedError ->
+                            emit(UiState.Error("Failed to load browser trend data due to an unexpected issue: ${unexpectedError.message}", unexpectedError))
+                        }
                 }
-                .catch { error ->
-                    _state.update { it.copy(trendData = UiState.Error("Failed to load browser trend data: ${error.message}", error)) }
-                }
-                .flowOn(defaultDispatcher)
+                .flowOn(defaultDispatcher) // Run collection part on default dispatcher
                 .collect { uiState ->
                     _state.update { it.copy(trendData = uiState) }
                 }
@@ -275,7 +277,7 @@ class BrowserAnalyticsViewModel @Inject constructor(
      */
     fun generateReport(exportToFile: Boolean = false, filePath: String? = null) {
         viewModelScope.launch {
-            _state.update { it.copy(isGeneratingReport = true) }
+            _state.update { it.copy(isGeneratingReport = true, fullReport = UiState.Loading) }
 
             val result = withContext(ioDispatcher) {
                 generateBrowserUsageReportUseCase(
@@ -317,10 +319,13 @@ class BrowserAnalyticsViewModel @Inject constructor(
                     usageStats = UiState.Loading,
                     trendData = UiState.Loading,
                     mostFrequentBrowser = UiState.Loading,
-                    mostRecentBrowser = UiState.Loading
+                    mostRecentBrowser = UiState.Loading,
+                    availableBrowsers = UiState.Loading,
+                    fullReport = if (it.fullReport !is UiState.Loading) UiState.Loading else it.fullReport
                 )
             }
             loadInitialData()
+            _refreshTrigger.update { it + 1 }
         }
     }
 }
