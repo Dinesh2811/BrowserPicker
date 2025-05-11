@@ -2,101 +2,181 @@ package browserpicker.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import browserpicker.domain.service.DomainError
-import browserpicker.domain.usecase.history.ClearUriHistoryUseCase
-import browserpicker.domain.usecase.stats.ClearBrowserStatsUseCase
-import browserpicker.presentation.common.MessageType
-import browserpicker.presentation.common.UserMessage
+import browserpicker.domain.usecases.system.BackupDataUseCase
+import browserpicker.domain.usecases.system.CheckDefaultBrowserStatusUseCase
+import browserpicker.domain.usecases.system.OpenBrowserPreferencesUseCase
+import browserpicker.domain.usecases.system.RestoreDataUseCase
+import browserpicker.domain.usecases.system.SetAsDefaultBrowserUseCase
+import browserpicker.domain.usecases.uri.history.DeleteAllUriHistoryUseCase
+import browserpicker.domain.usecases.uri.shared.CleanupUriHistoryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
+/**
+ * ViewModel for the Settings screen.
+ * 
+ * This ViewModel handles:
+ * - App preferences management
+ * - Default browser status
+ * - Data backup and restore
+ * - History cleanup
+ * - System integrations
+ * 
+ * Used by: SettingsScreen
+ */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val clearUriHistoryUseCase: ClearUriHistoryUseCase,
-    private val clearBrowserStatsUseCase: ClearBrowserStatsUseCase
-    // Inject Use Cases for other settings actions here
+    private val checkDefaultBrowserStatusUseCase: CheckDefaultBrowserStatusUseCase,
+    private val setAsDefaultBrowserUseCase: SetAsDefaultBrowserUseCase,
+    private val openBrowserPreferencesUseCase: OpenBrowserPreferencesUseCase,
+    private val backupDataUseCase: BackupDataUseCase,
+    private val restoreDataUseCase: RestoreDataUseCase,
+    private val cleanupUriHistoryUseCase: CleanupUriHistoryUseCase,
+    private val deleteAllUriHistoryUseCase: DeleteAllUriHistoryUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SettingsScreenState())
-    val uiState: StateFlow<SettingsScreenState> = _uiState.asStateFlow()
-
-    // --- User Actions Triggered from UI ---
-
-    fun onClearHistoryClick() {
-        _uiState.update { it.copy(dialogState = SettingsDialogState.ShowClearHistoryConfirmation) }
+    private val _uiState = MutableStateFlow(SettingsUiState())
+    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+    
+    init {
+        checkDefaultBrowserStatus()
     }
-
-    fun onClearStatsClick() {
-        _uiState.update { it.copy(dialogState = SettingsDialogState.ShowClearStatsConfirmation) }
-    }
-
-    // Add other settings actions here (e.g., onToggleClipboardSource, onExportDataClick)
-
-    // --- Dialog Actions ---
-
-    fun onConfirmClearHistory() {
+    
+    /**
+     * Check if this app is set as the default browser
+     */
+    private fun checkDefaultBrowserStatus() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, dialogState = SettingsDialogState.Hidden) } // Hide dialog immediately
-            clearUriHistoryUseCase(
-                onSuccess = {
-                    addMessage("URI history cleared successfully.")
-                    _uiState.update { it.copy(isLoading = false) }
-                },
-                onError = { error ->
-                    handleDomainError("Failed to clear history", error)
-                    _uiState.update { it.copy(isLoading = false) }
+            checkDefaultBrowserStatusUseCase()
+                .collect { result ->
+                    result.onSuccess { isDefault ->
+                        _uiState.value = _uiState.value.copy(
+                            isDefaultBrowser = isDefault
+                        )
+                    }
                 }
+        }
+    }
+    
+    /**
+     * Set this app as the default browser
+     */
+    fun setAsDefaultBrowser() {
+        viewModelScope.launch {
+            val result = setAsDefaultBrowserUseCase()
+            
+            result.onSuccess { isSet ->
+                _uiState.value = _uiState.value.copy(
+                    isDefaultBrowser = isSet
+                )
+            }
+        }
+    }
+    
+    /**
+     * Open system browser preferences
+     */
+    fun openBrowserPreferences() {
+        viewModelScope.launch {
+            openBrowserPreferencesUseCase()
+        }
+    }
+    
+    /**
+     * Backup app data
+     */
+    fun backupData(filePath: String, includeHistory: Boolean) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isProcessing = true)
+            
+            val result = backupDataUseCase(filePath, includeHistory)
+            
+            _uiState.value = _uiState.value.copy(
+                isProcessing = false,
+                lastOperation = if (result.isSuccess) "Backup successful" else "Backup failed}",
+                lastOperationSuccess = result.isSuccess
             )
         }
     }
-
-    fun onConfirmClearStats() {
+    
+    /**
+     * Restore app data
+     */
+    fun restoreData(filePath: String, clearExistingData: Boolean) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, dialogState = SettingsDialogState.Hidden) } // Hide dialog immediately
-            clearBrowserStatsUseCase(
-                onSuccess = {
-                    addMessage("Browser stats cleared successfully.")
-                    _uiState.update { it.copy(isLoading = false) }
-                },
-                onError = { error ->
-                    handleDomainError("Failed to clear browser stats", error)
-                    _uiState.update { it.copy(isLoading = false) }
-                }
+            _uiState.value = _uiState.value.copy(isProcessing = true)
+            
+            val result = restoreDataUseCase(filePath, clearExistingData)
+            
+            _uiState.value = _uiState.value.copy(
+                isProcessing = false,
+                lastOperation = if (result.isSuccess) "Restore successful" else "Restore failed}",
+                lastOperationSuccess = result.isSuccess
             )
         }
     }
-
-    fun onCancelDialog() {
-        _uiState.update { it.copy(dialogState = SettingsDialogState.Hidden) }
-    }
-
-
-    // --- Message Handling ---
-    fun clearMessage(id: Long) {
-        _uiState.update { state ->
-            state.copy(userMessages = state.userMessages.filterNot { it.id == id })
+    
+    /**
+     * Clean up old URI history
+     */
+    fun cleanupHistory(olderThanDays: Int) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isProcessing = true)
+            
+            val result = cleanupUriHistoryUseCase(olderThanDays)
+            
+            result.onSuccess { count ->
+                _uiState.value = _uiState.value.copy(
+                    isProcessing = false,
+                    lastOperation = "Cleaned up $count records",
+                    lastOperationSuccess = true
+                )
+            }.onFailure { error ->
+                _uiState.value = _uiState.value.copy(
+                    isProcessing = false,
+                    lastOperation = "Cleanup failed: ${error.message}",
+                    lastOperationSuccess = false
+                )
+            }
         }
     }
-
-    private fun addMessage(text: String, type: MessageType = MessageType.INFO) {
-        _uiState.update {
-            it.copy(userMessages = it.userMessages + UserMessage(message = text, type = type))
+    
+    /**
+     * Clear all URI history
+     */
+    fun clearAllHistory() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isProcessing = true)
+            
+            val result = deleteAllUriHistoryUseCase()
+            
+            result.onSuccess { count ->
+                _uiState.value = _uiState.value.copy(
+                    isProcessing = false,
+                    lastOperation = "Deleted $count records",
+                    lastOperationSuccess = true
+                )
+            }.onFailure { error ->
+                _uiState.value = _uiState.value.copy(
+                    isProcessing = false,
+                    lastOperation = "Delete failed: ${error.message}",
+                    lastOperationSuccess = false
+                )
+            }
         }
-    }
-
-    private fun handleDomainError(prefix: String, error: DomainError) {
-        Timber.e("$prefix: $error")
-        val message = when (error) {
-            is DomainError.Validation -> "$prefix: ${error.message}"
-            is DomainError.NotFound -> "$prefix: ${error.entityType} not found."
-            is DomainError.Conflict -> "$prefix: ${error.message}"
-            is DomainError.Database -> "$prefix: Database error."
-            is DomainError.Unexpected -> "$prefix: Unexpected error."
-            is DomainError.Custom -> "$prefix: ${error.message}"
-        }
-        addMessage(message, MessageType.ERROR)
     }
 }
+
+/**
+ * UI state for the Settings screen
+ */
+data class SettingsUiState(
+    val isDefaultBrowser: Boolean = false,
+    val isProcessing: Boolean = false,
+    val lastOperation: String? = null,
+    val lastOperationSuccess: Boolean = false
+) 

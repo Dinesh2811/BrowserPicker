@@ -1,218 +1,323 @@
 package browserpicker.presentation.settings
 
-// package browserpicker.presentation.settings
-
-import android.annotation.SuppressLint
-import android.content.Intent
-import android.provider.Settings
-import android.widget.Toast
-import androidx.compose.foundation.clickable
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import browserpicker.presentation.common.MessageType
-import browserpicker.presentation.common.UserMessage
-import kotlinx.coroutines.CoroutineScope
 
+/**
+ * Settings Screen - App configuration and preferences.
+ * 
+ * This screen displays:
+ * - Default browser status and control
+ * - Data backup and restore options
+ * - History cleaning options
+ * - App information and help
+ * - General preferences
+ * 
+ * It allows users to configure the behavior of the app and
+ * manage their data.
+ * 
+ * Uses: SettingsViewModel
+ */
 @OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter") // Content padding applied to Column
 @Composable
 fun SettingsScreen(
+    navController: androidx.navigation.NavController,
     viewModel: SettingsViewModel = hiltViewModel()
-    // snackbarHostState and coroutineScope might be passed from MainScreen Scaffold if using global Snackbar
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val snackbarHostState = remember { SnackbarHostState() } // Local Snackbar Host State
-
-    LaunchedEffect(state.userMessages) {
-        state.userMessages.firstOrNull()?.let { message ->
-            snackbarHostState.showSnackbar(
-                message = message.message,
-                duration = SnackbarDuration.Short // Or Long, Indefinite
-            )
-            viewModel.clearMessage(message.id) // Consume the message
+    val uiState by viewModel.uiState.collectAsState()
+    
+    var showBackupDialog by remember { mutableStateOf(false) }
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    var showCleanupDialog by remember { mutableStateOf(false) }
+    var showClearHistoryDialog by remember { mutableStateOf(false) }
+    
+    // File pickers
+    val backupFilePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: Uri? ->
+        uri?.let {
+            // Convert URI to file path and perform backup
+            // viewModel.backupData(filePath, includeHistory = true)
         }
     }
-
-    // We need a SnackbarHost state. It can be local to this screen, or managed by MainScreen.
-    // Let's use MainScreen's global one via the ViewModel's message list.
-
-    // Observe state.userMessages in MainScreen and show Snackbar there.
-
+    
+    val restoreFilePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            // Convert URI to file path and perform restore
+            // viewModel.restoreData(filePath, clearExistingData = false)
+        }
+    }
+    
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Settings") })
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
-        Column(modifier = Modifier
-            .padding(paddingValues)
-            .fillMaxSize()
-            .padding(16.dp) // Additional padding for content
+            TopAppBar(
+                title = { Text("Settings") }
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // --- General Settings Section ---
-            Text("General", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 8.dp))
-            Divider()
-
-            SettingsItem(
-                title = "Set Default Browser",
-                description = "Open system settings to choose the default browser app."
-            ) {
-                Toast.makeText(context, "ACTION_MANAGE_DEFAULT_APPS", Toast.LENGTH_SHORT).show()
-                // Action: Open system default apps settings
-//                val intent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS)
-//                // Or Settings.ACTION_HOME_SETTINGS for home app, need correct action for browser
-//                // The correct action is often found via documentation or trial/error on different Android versions
-//                // A common way is ACTION_MANAGE_APPLICATIONS_SETTINGS or ACTION_APPLICATION_DETAILS_SETTINGS
-//                // For default browser specifically: ACTION_MANAGE_DEFAULT_APPS might lead there, or user navigates.
-//                // Let's use a generic one that might be close or requires user navigation.
-//                // val intent = Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS) // Lists all apps
-//                // ACTION_MANAGE_DEFAULT_APPS is better if available and leads to default apps section.
-//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // Required if launching from non-Activity context
-//                runCatching { context.startActivity(intent) }
-//                    .onFailure { viewModel.addMessage("Could not open settings.", MessageType.ERROR) }
+            // Default browser section
+            Card {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        "Default Browser",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Text(
+                        if (uiState.isDefaultBrowser) "This app is set as your default browser" 
+                        else "This app is not your default browser",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Button(
+                        onClick = {
+                            if (uiState.isDefaultBrowser) {
+                                viewModel.openBrowserPreferences()
+                            } else {
+                                viewModel.setAsDefaultBrowser()
+                            }
+                        }
+                    ) {
+                        Text(
+                            if (uiState.isDefaultBrowser) "Change Default Browser" 
+                            else "Set as Default Browser"
+                        )
+                    }
+                }
             }
-            Divider()
-
-            // --- Data Management Section ---
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Data Management", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 8.dp))
-            Divider()
-
-            SettingsItem(
-                title = "Clear URI History",
-                description = "Delete all records of intercepted URIs and interactions."
-            ) {
-                viewModel.onClearHistoryClick()
+            
+            // Data management section
+            Card {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        "Data Management",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // Backup button
+                        Button(
+                            onClick = { showBackupDialog = true }
+                        ) {
+                            Text("Backup Data")
+                        }
+                        
+                        // Restore button
+                        Button(
+                            onClick = { showRestoreDialog = true }
+                        ) {
+                            Text("Restore Data")
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // Cleanup history button
+                        Button(
+                            onClick = { showCleanupDialog = true }
+                        ) {
+                            Text("Clean History")
+                        }
+                        
+                        // Clear history button
+                        Button(
+                            onClick = { showClearHistoryDialog = true }
+                        ) {
+                            Text("Clear All History")
+                        }
+                    }
+                    
+                    // Status message for operations
+                    if (uiState.lastOperation != null) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text(
+                            uiState.lastOperation?: "No operation performed yet",
+                            color = if (uiState.lastOperationSuccess) 
+                                MaterialTheme.colorScheme.primary 
+                            else 
+                                MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             }
-            Divider()
-
-            SettingsItem(
-                title = "Clear Browser Usage Stats",
-                description = "Reset all recorded browser usage counts and last used times."
-            ) {
-                viewModel.onClearStatsClick()
+            
+            // App information section
+            Card {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        "About",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Text(
+                        "Browser Picker v1.0",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
-            Divider()
-
-            // Add more settings sections/items here
-            // Spacer(modifier = Modifier.height(16.dp))
-            // Text("About", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 8.dp))
-            // Divider()
-            // SettingsItem(title = "App Version", description = "1.0.0") {} // Read from build config
-            // Divider()
         }
     }
-
-    // --- Confirmation Dialogs ---
-    when (state.dialogState) {
-        SettingsDialogState.ShowClearHistoryConfirmation -> {
-            ConfirmActionDialog(
-                title = "Confirm Clear History",
-                text = "Are you sure you want to permanently delete all URI history records? This action cannot be undone.",
-                confirmButtonText = "Clear History",
-                dismissButtonText = "Cancel",
-                onConfirm = { viewModel.onConfirmClearHistory() },
-                onDismiss = { viewModel.onCancelDialog() }
-            )
-        }
-        SettingsDialogState.ShowClearStatsConfirmation -> {
-            ConfirmActionDialog(
-                title = "Confirm Clear Stats",
-                text = "Are you sure you want to permanently delete all browser usage statistics? This action cannot be undone.",
-                confirmButtonText = "Clear Stats",
-                dismissButtonText = "Cancel",
-                onConfirm = { viewModel.onConfirmClearStats() },
-                onDismiss = { viewModel.onCancelDialog() }
-            )
-        }
-        SettingsDialogState.Hidden -> {
-            // No dialog shown
-        }
-    }
-
-    // Note: Loading indicator could be shown overlaying the screen based on state.isLoading
-    if (state.isLoading) {
-        // Dialog covering content or a progress indicator
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-    }
-}
-
-@Composable
-fun SettingsItem(
-    title: String,
-    description: String? = null,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp, horizontal = 0.dp), // Padding handled by parent column
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier
-            .weight(1f)
-            .padding(end = 8.dp)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
-            if (description != null) {
-                Text(description, style = MaterialTheme.typography.bodySmall)
+    
+    // Backup dialog
+    if (showBackupDialog) {
+        AlertDialog(
+            onDismissRequest = { showBackupDialog = false },
+            title = { Text("Backup Data") },
+            text = { Text("Do you want to include URI history in the backup?") },
+            confirmButton = {
+                TextButton(
+                    onClick = { 
+                        showBackupDialog = false
+                        backupFilePicker.launch("browser_picker_backup.json")
+                    }
+                ) {
+                    Text("Include History")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { 
+                        showBackupDialog = false
+                        // Backup without history
+                    }
+                ) {
+                    Text("Exclude History")
+                }
             }
-        }
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null // Decorative
         )
     }
-}
-
-@Composable
-fun ConfirmActionDialog(
-    title: String,
-    text: String,
-    confirmButtonText: String,
-    dismissButtonText: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(text) },
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                Text(confirmButtonText)
+    
+    // Restore dialog
+    if (showRestoreDialog) {
+        AlertDialog(
+            onDismissRequest = { showRestoreDialog = false },
+            title = { Text("Restore Data") },
+            text = { Text("Do you want to clear existing data before restoring?") },
+            confirmButton = {
+                TextButton(
+                    onClick = { 
+                        showRestoreDialog = false
+                        restoreFilePicker.launch(arrayOf("application/json"))
+                    }
+                ) {
+                    Text("Clear & Restore")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { 
+                        showRestoreDialog = false
+                        restoreFilePicker.launch(arrayOf("application/json"))
+                    }
+                ) {
+                    Text("Merge")
+                }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(dismissButtonText)
+        )
+    }
+    
+    // Cleanup dialog
+    if (showCleanupDialog) {
+        var cleanupDays by remember { mutableStateOf("30") }
+        
+        AlertDialog(
+            onDismissRequest = { showCleanupDialog = false },
+            title = { Text("Clean Up History") },
+            text = {
+                Column {
+                    Text("Remove URI records older than:")
+                    
+                    TextField(
+                        value = cleanupDays,
+                        onValueChange = { cleanupDays = it },
+                        label = { Text("Days") }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { 
+                        viewModel.cleanupHistory(cleanupDays.toIntOrNull() ?: 30)
+                        showCleanupDialog = false
+                    }
+                ) {
+                    Text("Clean")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCleanupDialog = false }) {
+                    Text("Cancel")
+                }
             }
-        }
-    )
-}
-
-// Placeholder for Settings destination in AppNavigation (already added in Segment 6)
-/*
-private fun NavGraphBuilder.addSettingsDestination(navController: NavHostController) {
-     composable<Settings> {
-         SettingsScreen(
-             viewModel = hiltViewModel()
-         )
-     }
-}
-*/
+        )
+    }
+    
+    // Clear history dialog
+    if (showClearHistoryDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearHistoryDialog = false },
+            title = { Text("Clear All History") },
+            text = { Text("Are you sure you want to delete all URI history? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = { 
+                        viewModel.clearAllHistory()
+                        showClearHistoryDialog = false
+                    }
+                ) {
+                    Text("Clear")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearHistoryDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+} 
