@@ -14,7 +14,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import browserpicker.domain.model.InteractionAction
 import browserpicker.domain.model.UriSource
 import browserpicker.presentation.common.components.LoadingIndicator
-import browserpicker.presentation.navigation.NavRoutes
+import browserpicker.presentation.navigation.BrowserPickerRoute
+import browserpicker.presentation.navigation.HostRuleDetailsRoute
 
 /**
  * URI Details Screen - Shows details of a specific URI record.
@@ -51,12 +52,11 @@ fun UriDetailsScreen(
         }
     }
 
-    // Effect to handle reprocessing
     LaunchedEffect(uiState.reprocessingComplete) {
         if (uiState.reprocessingComplete) {
-            // Navigate to browser picker with this URI
+            // Navigate to browser picker with this URI using type-safe navigation
             uiState.uriRecord?.uriString?.let { uri ->
-                navController.navigate(NavRoutes.BROWSER_PICKER + "?uriString=$uri")
+                navController.navigate(BrowserPickerRoute(uriString = uri)) // Use the serializable route object
             }
         }
     }
@@ -239,7 +239,8 @@ fun UriDetailsScreen(
                             uiState.hostRuleId?.let { hostRuleId ->
                                 Button(
                                     onClick = {
-                                        navController.navigate("${NavRoutes.HOST_RULE_DETAILS}/$hostRuleId")
+                                        // Navigate to host rule details using type-safe navigation
+                                        navController.navigate(HostRuleDetailsRoute(hostRuleId = hostRuleId)) // Use the serializable route object
                                     }
                                 ) {
                                     Text("Host Details")

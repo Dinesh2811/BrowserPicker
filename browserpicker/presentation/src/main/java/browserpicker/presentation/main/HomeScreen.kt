@@ -57,6 +57,10 @@ import androidx.navigation.NavController
 import browserpicker.domain.model.InteractionAction
 import browserpicker.domain.model.UriRecord
 import browserpicker.presentation.UiState
+import browserpicker.presentation.navigation.BookmarksRoute
+import browserpicker.presentation.navigation.SettingsRoute
+import browserpicker.presentation.navigation.UriAnalyticsRoute
+import browserpicker.presentation.navigation.UriHistoryRoute
 
 /**
  * Home screen content.
@@ -92,10 +96,11 @@ fun HomeScreen(
         // Quick Actions section
         item {
             QuickActionsSection(
-                onNavigateToHistory = { navController.navigate(NavItem.History.route) },
-                onNavigateToBookmarks = { navController.navigate(NavItem.Bookmarks.route) },
+                // Navigate using serializable route objects
+                onNavigateToHistory = { navController.navigate(UriHistoryRoute) },
+                onNavigateToBookmarks = { navController.navigate(BookmarksRoute) },
                 onNavigateToBlocked = { /* TODO: Navigate to blocked URLs screen */ },
-                onNavigateToSettings = { navController.navigate(NavItem.Settings.route) }
+                onNavigateToSettings = { navController.navigate(SettingsRoute) }
             )
         }
 
@@ -118,7 +123,7 @@ fun HomeScreen(
         item {
             BrowserStatsSummary(
                 mostFrequentBrowser = uiState.mostFrequentBrowser,
-                onNavigateToAnalytics = { navController.navigate(NavItem.Analytics.route) }
+                onNavigateToAnalytics = { navController.navigate(UriAnalyticsRoute) }
             )
         }
 

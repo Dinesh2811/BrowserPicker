@@ -1,5 +1,35 @@
 package browserpicker.presentation.blockedurls
 
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
+
+/**
+ * Blocked URLs Screen - Shows blocked hosts with folder organization.
+ *
+ * This screen displays:
+ * - Folder structure for blocked URLs
+ * - List of blocked hosts in the current folder
+ * - Options to create new folders
+ * - Options to move blocked URLs between folders
+ *
+ * It provides an organizational system for the user's blocked hosts,
+ * allowing them to maintain a structured collection of sites they want to block.
+ *
+ * Uses: BlockedUrlsViewModel
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BlockedUrlsScreen(
+    navController: androidx.navigation.NavController,
+    viewModel: BlockedUrlsViewModel = hiltViewModel()
+) {
+
+}
+
+/*
+package browserpicker.presentation.blockedurls
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -16,20 +46,19 @@ import browserpicker.domain.model.Folder
 import browserpicker.domain.model.HostRule
 import browserpicker.presentation.common.components.EmptyStateView
 import browserpicker.presentation.common.components.LoadingIndicator
-import browserpicker.presentation.navigation.NavRoutes
 
 /**
  * Blocked URLs Screen - Shows blocked hosts with folder organization.
- * 
+ *
  * This screen displays:
  * - Folder structure for blocked URLs
  * - List of blocked hosts in the current folder
  * - Options to create new folders
  * - Options to move blocked URLs between folders
- * 
+ *
  * It provides an organizational system for the user's blocked hosts,
  * allowing them to maintain a structured collection of sites they want to block.
- * 
+ *
  * Uses: BlockedUrlsViewModel
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,16 +71,16 @@ fun BlockedUrlsScreen(
     val currentFolder by viewModel.currentFolder.collectAsState(initial = null)
     val childFolders by viewModel.childFolders.collectAsState(initial = emptyList())
     val blockedUrls by viewModel.blockedUrlsInFolder.collectAsState(initial = emptyList())
-    
+
     var showCreateFolderDialog by remember { mutableStateOf(false) }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(currentFolder?.name ?: "Blocked URLs") },
                 navigationIcon = {
                     if (currentFolder != null) {
-                        IconButton(onClick = { 
+                        IconButton(onClick = {
                             // Navigate to parent folder or root
                             viewModel.selectFolder(currentFolder?.parentFolderId)
                         }) {
@@ -93,7 +122,7 @@ fun BlockedUrlsScreen(
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    
+
                     // Folder list
                     Column {
                         childFolders.forEach { folder ->
@@ -106,10 +135,10 @@ fun BlockedUrlsScreen(
                             )
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
                 }
-                
+
                 // Blocked URLs section
                 if (blockedUrls.isNotEmpty()) {
                     Text(
@@ -117,7 +146,7 @@ fun BlockedUrlsScreen(
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    
+
                     // Blocked URL list
                     Column {
                         blockedUrls.forEach { hostRule ->
@@ -137,7 +166,7 @@ fun BlockedUrlsScreen(
             }
         }
     }
-    
+
     // Create folder dialog
     if (showCreateFolderDialog) {
         CreateFolderDialog(
@@ -159,7 +188,7 @@ private fun CreateFolderDialog(
     onCreateFolder: (String) -> Unit
 ) {
     var folderName by remember { mutableStateOf("") }
-    
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Create Folder") },
@@ -232,4 +261,5 @@ private fun BlockedUrlItem(
             // Delete icon
         }
     }
-} 
+}
+ */

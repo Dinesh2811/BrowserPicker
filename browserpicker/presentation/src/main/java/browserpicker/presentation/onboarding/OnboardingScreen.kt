@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import browserpicker.presentation.navigation.NavRoutes
+import browserpicker.presentation.navigation.HomeRoute
 
 /**
  * Onboarding Screen - First-time user experience.
@@ -43,8 +43,8 @@ fun OnboardingScreen(
     // Effect to navigate to home after setup is complete
     LaunchedEffect(uiState.setupComplete) {
         if (uiState.setupComplete) {
-            navController.navigate(NavRoutes.HOME) {
-                popUpTo(NavRoutes.HOME) { inclusive = true }
+            navController.navigate(HomeRoute) { // Use the serializable route object
+                popUpTo(HomeRoute) { inclusive = true } // Use the serializable route object
             }
         }
     }

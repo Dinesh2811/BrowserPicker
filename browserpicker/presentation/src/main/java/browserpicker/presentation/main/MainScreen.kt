@@ -35,6 +35,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import browserpicker.domain.model.UriSource
+import browserpicker.presentation.analytics.BrowserAnalyticsScreen
+import browserpicker.presentation.bookmarks.BookmarksScreen
+import browserpicker.presentation.history.UriHistoryScreen
+import browserpicker.presentation.settings.SettingsScreen
+import browserpicker.presentation.navigation.BookmarksRoute
+import browserpicker.presentation.navigation.BrowserAnalyticsRoute
+import browserpicker.presentation.navigation.HomeRoute
+import browserpicker.presentation.navigation.SettingsRoute
+import browserpicker.presentation.navigation.UriHistoryRoute
+import kotlinx.serialization.Serializable
 
 /**
  * Main screen container for the app.
@@ -101,35 +111,31 @@ fun MainScreen(
         ) {
             NavHost(
                 navController = navController,
-                startDestination = NavItem.Home.route
+                startDestination = HomeRoute
             ) {
                 // Home screen
-                composable(NavItem.Home.route) {
+                composable<HomeRoute> {
                     HomeScreen(navController = navController)
                 }
 
                 // History screen
-                composable(NavItem.History.route) {
-                    // TODO: Implement HistoryScreen
-                    Text("History Screen")
+                composable<UriHistoryRoute> {
+                    UriHistoryScreen(navController = navController)
                 }
 
                 // Bookmarks screen
-                composable(NavItem.Bookmarks.route) {
-                    // TODO: Implement BookmarksScreen
-                    Text("Bookmarks Screen")
+                composable<BookmarksRoute> {
+                    BookmarksScreen(navController = navController)
                 }
 
                 // Analytics screen
-                composable(NavItem.Analytics.route) {
-                    // TODO: Implement AnalyticsScreen
-                    Text("Analytics Screen")
+                composable<BrowserAnalyticsRoute> {
+                    BrowserAnalyticsScreen(navController = navController)
                 }
 
                 // Settings screen
-                composable(NavItem.Settings.route) {
-                    // TODO: Implement SettingsScreen
-                    Text("Settings Screen")
+                composable<SettingsRoute> {
+                    SettingsScreen(navController = navController)
                 }
             }
         }
@@ -146,10 +152,13 @@ private fun MainBottomNavigation(
 ) {
     NavigationBar {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentDestination = navBackStackEntry?.destination
+//        val currentDestination = navBackStackEntry?.destination
+        val currentDestinationRoute = navBackStackEntry?.destination?.route
+
 
         items.forEach { item ->
-            val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+            // Check if the current destination's route string matches the qualified name of the NavItem's route object
+            val selected = currentDestinationRoute == item.routeObject::class.qualifiedName
 
             NavigationBarItem(
                 icon = {
@@ -167,16 +176,12 @@ private fun MainBottomNavigation(
                 },
                 selected = selected,
                 onClick = {
-                    if (currentDestination?.route != item.route) {
-                        navController.navigate(item.route) {
-                            // Pop up to the start destination of the graph to avoid
-                            // building up a large stack of destinations on the back stack
+                    if (currentDestinationRoute != item.routeObject::class.qualifiedName) {
+                        navController.navigate(item.routeObject) {
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
                             }
-                            // Avoid multiple copies of the same destination when reselecting the same item
                             launchSingleTop = true
-                            // Restore state when reselecting a previously selected item
                             restoreState = true
                         }
                     }
@@ -190,13 +195,13 @@ private fun MainBottomNavigation(
  * Navigation items for bottom navigation
  */
 sealed class NavItem(
-    val route: String,
+    val routeObject: @Serializable Any,
     val title: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector
 ) {
-    data object Home : NavItem("home", "Home", Icons.Filled.Home)
-    data object History : NavItem("history", "History", Icons.Filled.History)
-    data object Bookmarks : NavItem("bookmarks", "Bookmarks", Icons.Filled.Star)
-    data object Analytics : NavItem("analytics", "Analytics", Icons.Outlined.Analytics)
-    data object Settings : NavItem("settings", "Settings", Icons.Filled.Settings)
+    data object Home : NavItem(HomeRoute, "Home", Icons.Filled.Home)
+    data object History : NavItem(UriHistoryRoute, "History", Icons.Filled.History)
+    data object Bookmarks : NavItem(BookmarksRoute, "Bookmarks", Icons.Filled.Star)
+    data object Analytics : NavItem(BrowserAnalyticsRoute, "Analytics", Icons.Outlined.Analytics)
+    data object Settings : NavItem(SettingsRoute, "Settings", Icons.Filled.Settings)
 }

@@ -16,7 +16,8 @@ import browserpicker.domain.model.HostRule
 import browserpicker.domain.model.UriStatus
 import browserpicker.presentation.common.components.EmptyStateView
 import browserpicker.presentation.common.components.LoadingIndicator
-import browserpicker.presentation.navigation.NavRoutes
+import browserpicker.presentation.navigation.FolderDetailsRoute
+import browserpicker.presentation.navigation.HostRuleDetailsRoute
 
 /**
  * Folder Details Screen - Shows details and contents of a folder.
@@ -166,7 +167,8 @@ fun FolderDetailsScreen(
                         FolderItem(
                             folder = childFolder,
                             onClick = {
-                                navController.navigate("${NavRoutes.FOLDER_DETAILS}/${childFolder.id}/${childFolder.type.value}")
+                                // Navigate to folder using type-safe route
+                                navController.navigate(FolderDetailsRoute(folderId = childFolder.id, folderType = childFolder.type.value))
                             }
                         )
                     }
@@ -181,11 +183,13 @@ fun FolderDetailsScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
 
+
                     hostRules.forEach { hostRule ->
                         HostRuleItem(
                             hostRule = hostRule,
                             onClick = {
-                                navController.navigate("${NavRoutes.HOST_RULE_DETAILS}/${hostRule.id}")
+                                // Navigate to host rule details using type-safe route
+                                navController.navigate(HostRuleDetailsRoute(hostRuleId = hostRule.id))
                             },
                             onMove = { showMoveItemDialog = hostRule.id },
                             onDelete = { viewModel.deleteHostRule(hostRule.id) }

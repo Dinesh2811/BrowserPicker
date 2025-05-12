@@ -1,5 +1,36 @@
 package browserpicker.presentation.bookmarks
 
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
+
+/**
+ * Bookmarks Screen - Shows bookmarked hosts with folder organization.
+ *
+ * This screen displays:
+ * - Folder structure for bookmarks
+ * - List of bookmarked hosts in the current folder
+ * - Options to create new folders
+ * - Options to move bookmarks between folders
+ *
+ * It provides an organizational system for the user's bookmarked hosts,
+ * allowing them to maintain a structured collection of sites they frequently visit.
+ *
+ * Uses: BookmarksViewModel
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BookmarksScreen(
+    navController: androidx.navigation.NavController,
+    viewModel: BookmarksViewModel = hiltViewModel()
+) {
+
+}
+
+
+/*
+package browserpicker.presentation.bookmarks
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -20,16 +51,16 @@ import browserpicker.presentation.navigation.NavRoutes
 
 /**
  * Bookmarks Screen - Shows bookmarked hosts with folder organization.
- * 
+ *
  * This screen displays:
  * - Folder structure for bookmarks
  * - List of bookmarked hosts in the current folder
  * - Options to create new folders
  * - Options to move bookmarks between folders
- * 
+ *
  * It provides an organizational system for the user's bookmarked hosts,
  * allowing them to maintain a structured collection of sites they frequently visit.
- * 
+ *
  * Uses: BookmarksViewModel
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,16 +73,16 @@ fun BookmarksScreen(
     val currentFolder by viewModel.currentFolder.collectAsState(initial = null)
     val childFolders by viewModel.childFolders.collectAsState(initial = emptyList())
     val bookmarks by viewModel.bookmarksInFolder.collectAsState(initial = emptyList())
-    
+
     var showCreateFolderDialog by remember { mutableStateOf(false) }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(currentFolder?.name ?: "Bookmarks") },
                 navigationIcon = {
                     if (currentFolder != null) {
-                        IconButton(onClick = { 
+                        IconButton(onClick = {
                             // Navigate to parent folder or root
                             viewModel.selectFolder(currentFolder?.parentFolderId)
                         }) {
@@ -93,7 +124,7 @@ fun BookmarksScreen(
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    
+
                     // Folder list
                     Column {
                         childFolders.forEach { folder ->
@@ -106,10 +137,10 @@ fun BookmarksScreen(
                             )
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
                 }
-                
+
                 // Bookmarks section
                 if (bookmarks.isNotEmpty()) {
                     Text(
@@ -117,7 +148,7 @@ fun BookmarksScreen(
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    
+
                     // Bookmark list
                     Column {
                         bookmarks.forEach { hostRule ->
@@ -137,7 +168,7 @@ fun BookmarksScreen(
             }
         }
     }
-    
+
     // Create folder dialog
     if (showCreateFolderDialog) {
         CreateFolderDialog(
@@ -159,7 +190,7 @@ private fun CreateFolderDialog(
     onCreateFolder: (String) -> Unit
 ) {
     var folderName by remember { mutableStateOf("") }
-    
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Create Folder") },
@@ -232,4 +263,5 @@ private fun BookmarkItem(
             // Delete icon
         }
     }
-} 
+}
+ */

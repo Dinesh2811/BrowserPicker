@@ -20,7 +20,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import browserpicker.domain.model.Folder
 import browserpicker.domain.model.HostRule
 import browserpicker.presentation.common.components.EmptyStateView
-import browserpicker.presentation.navigation.NavRoutes
+import browserpicker.presentation.navigation.FolderDetailsRoute
 
 /**
  * Search Screen - Global search across the app.
@@ -162,12 +162,13 @@ fun SearchScreen(
                                 modifier = Modifier.padding(16.dp)
                             )
                         }
-                        
+
                         items(folderResults) { folder ->
                             FolderResultItem(
                                 folder = folder,
                                 onClick = {
-                                    navController.navigate("${NavRoutes.FOLDER_DETAILS}/${folder.id}/${folder.type.value}")
+                                    // Navigate to folder details using type-safe route
+                                    navController.navigate(FolderDetailsRoute(folderId = folder.id, folderType = folder.type.value))
                                 }
                             )
                         }
