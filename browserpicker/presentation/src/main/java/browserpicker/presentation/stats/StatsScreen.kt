@@ -17,6 +17,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import browserpicker.core.results.AppError
+import browserpicker.core.results.DomainResult
 import browserpicker.domain.model.BrowserUsageStat // Import Domain model
 import browserpicker.domain.model.query.BrowserStatSortField
 import browserpicker.domain.service.DomainError
@@ -253,7 +255,7 @@ fun PreviewStatsScreenEmpty() {
         // Use a dummy ViewModel with empty state for preview
         StatsScreen(viewModel = object : StatsViewModel(
             getBrowserStatsUseCase = object : GetBrowserStatsUseCase {
-                override fun invoke(sortBy: BrowserStatSortField): Flow<List<BrowserUsageStat>> = flowOf(emptyList())
+                override fun invoke(sortBy: BrowserStatSortField): Flow<DomainResult<List<BrowserUsageStat>, AppError>> = flowOf()
             },
             clearBrowserStatsUseCase = object : ClearBrowserStatsUseCase {
                 override suspend fun invoke(onSuccess: () -> Unit, onError: (DomainError) -> Unit) {
@@ -289,7 +291,7 @@ fun PreviewStatsScreenWithData() {
         )
         StatsScreen(viewModel = object : StatsViewModel(
             getBrowserStatsUseCase = object : GetBrowserStatsUseCase {
-                override fun invoke(sortBy: BrowserStatSortField): Flow<List<BrowserUsageStat>> = flowOf(dummyStats)
+                override fun invoke(sortBy: BrowserStatSortField): Flow<DomainResult<List<BrowserUsageStat>, AppError>> = flowOf()
             },
             clearBrowserStatsUseCase = object : ClearBrowserStatsUseCase {
                 override suspend fun invoke(onSuccess: () -> Unit, onError: (DomainError) -> Unit) {
