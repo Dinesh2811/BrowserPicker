@@ -44,7 +44,7 @@ class BrowserPickerActivity: ComponentActivity() {
                     colorScheme = themeUiState.colorScheme,
                     isSystemInDarkTheme = systemInDarkTheme,
                 ) {
-                    browserpicker.presentation.main.MainScreen()
+                    browserpicker.presentation.test.main.MainScreen()
                     com.dinesh.browserpicker.mock.DebugScreen()
                 }
             }
