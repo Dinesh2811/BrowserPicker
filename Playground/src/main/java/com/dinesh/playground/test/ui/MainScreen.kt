@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.History
@@ -73,7 +74,7 @@ fun MainScreen() {
         listOf(
             BottomNavItem("Home", Icons.Default.Home, HomeScreen),
             BottomNavItem("History", Icons.Default.History, UriHistoryScreen),
-            BottomNavItem("Preferences", Icons.Default.Settings, PreferencesScreen),
+            BottomNavItem("Preferences", Icons.AutoMirrored.Filled.ListAlt, PreferencesScreen),
             BottomNavItem("Folder", Icons.Default.Folder, FolderDetailsScreen),
             BottomNavItem("Analytics", Icons.Default.Analytics, BrowserAnalyticsScreen)
         )
