@@ -5,9 +5,14 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import browserpicker.presentation.features.browser_analytics.*
+import browserpicker.presentation.features.folder.*
+import browserpicker.presentation.features.home.HomeScreen
+import browserpicker.presentation.features.preferences.*
+import browserpicker.presentation.features.uri_history.*
 
 @Composable
-private fun BrowserPickerNavHost(
+fun BrowserPickerNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
     startDestination: AppDestination = HomeRoute,

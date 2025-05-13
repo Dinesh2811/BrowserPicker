@@ -29,7 +29,13 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import browserpicker.presentation.test.navigation.BrowserPickerNavHost
+import browserpicker.presentation.navigation.AppDestination
+import browserpicker.presentation.navigation.BrowserAnalyticsRoute
+import browserpicker.presentation.navigation.BrowserPickerNavHost
+import browserpicker.presentation.navigation.FolderDetailsRoute
+import browserpicker.presentation.navigation.HomeRoute
+import browserpicker.presentation.navigation.PreferencesRoute
+import browserpicker.presentation.navigation.UriHistoryRoute
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
@@ -43,11 +49,11 @@ fun MainScreen(
 
     val bottomNavItems = remember {
         listOf(
-            BottomNavItem("Home", Icons.Default.Home, HomeScreen),
-            BottomNavItem("History", Icons.Default.History, UriHistoryScreen),
-            BottomNavItem("Preferences", Icons.AutoMirrored.Filled.ListAlt, PreferencesScreen),
-            BottomNavItem("Folder", Icons.Default.Folder, FolderDetailsScreen),
-            BottomNavItem("Analytics", Icons.Default.Analytics, BrowserAnalyticsScreen)
+            BottomNavItem("Home", Icons.Default.Home, HomeRoute),
+            BottomNavItem("History", Icons.Default.History, UriHistoryRoute),
+            BottomNavItem("Preferences", Icons.AutoMirrored.Filled.ListAlt, PreferencesRoute),
+            BottomNavItem("Folder", Icons.Default.Folder, FolderDetailsRoute),
+            BottomNavItem("Analytics", Icons.Default.Analytics, BrowserAnalyticsRoute)
         )
     }
 
@@ -111,7 +117,7 @@ private fun HandleBackPress(navController: NavHostController) {
 
     // Check if the current destination is the start destination (HomeScreen)
     // by comparing the route string with the qualified name of the HomeScreen object
-    val isAtHome = currentBackStackEntry?.destination?.route == HomeScreen::class.qualifiedName
+    val isAtHome = currentBackStackEntry?.destination?.route == HomeRoute::class.qualifiedName
 
     // Check if the back stack *below* home is empty
     // We can approximate this by checking if the previous back stack entry is null
