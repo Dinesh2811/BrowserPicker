@@ -5,24 +5,42 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.* // Using filled icons for simplicity
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.*
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.dinesh.playground.test.navigation.AppDestination
+import com.dinesh.playground.test.navigation.BrowserAnalyticsScreen
+import com.dinesh.playground.test.navigation.FolderDetailsScreen
+import com.dinesh.playground.test.navigation.HomeScreen
+import com.dinesh.playground.test.navigation.PreferencesScreen
+import com.dinesh.playground.test.navigation.UriHistoryScreen
 import com.dinesh.playground.test.ui.screens.BrowserAnalyticsScreen
 import com.dinesh.playground.test.ui.screens.FolderDetailsScreen
 import com.dinesh.playground.test.ui.screens.HomeScreen
-import com.dinesh.playground.test.ui.screens.PreferencesScreen
-import com.dinesh.playground.test.ui.screens.UriHistoryScreen
-import com.dinesh.playground.test.navigation.* // Import your destinations
+import com.dinesh.playground.test.ui.screens.NestedFolderDetailsScreen
 import com.dinesh.playground.test.ui.screens.NestedFolderDetailsScreen1
 import com.dinesh.playground.test.ui.screens.NestedFolderDetailsScreen2
 import com.dinesh.playground.test.ui.screens.NestedFolderDetailsScreen3
@@ -30,9 +48,12 @@ import com.dinesh.playground.test.ui.screens.NestedPreferencesScreen
 import com.dinesh.playground.test.ui.screens.NestedPreferencesScreen1
 import com.dinesh.playground.test.ui.screens.NestedPreferencesScreen2
 import com.dinesh.playground.test.ui.screens.NestedPreferencesScreen3
+import com.dinesh.playground.test.ui.screens.NestedUriHistoryScreen
 import com.dinesh.playground.test.ui.screens.NestedUriHistoryScreen1
 import com.dinesh.playground.test.ui.screens.NestedUriHistoryScreen2
 import com.dinesh.playground.test.ui.screens.NestedUriHistoryScreen3
+import com.dinesh.playground.test.ui.screens.PreferencesScreen
+import com.dinesh.playground.test.ui.screens.UriHistoryScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
@@ -76,7 +97,8 @@ private fun AppBottomNavigation(
     items: List<BottomNavItem>
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
+    // Attempt to get the current type-safe route object
+    val currentRouteObject = navBackStackEntry?.toRoute<AppDestination>()
 
     // Function to handle navigation clicks
     val navigateToTopLevelDestination = { destination: AppDestination ->
@@ -91,48 +113,23 @@ private fun AppBottomNavigation(
 
     NavigationBar {
         items.forEach { item ->
-            val isSelected = currentDestination?.hierarchy?.any { navDest ->
-                // Check if the current destination's route *is* the item's route object's type
-                navDest.route?.let { routeStr ->
-                    // This comparison is tricky with type safety. We need to know the *type*
-                    // of the destination object associated with the route string.
-                    // Let's try checking based on the start destination of the graph for that item.
-                    // A more robust way might involve inspecting the backstack entry argument/type.
-                    navController.graph.nodes.find { it.route == item.route::class.qualifiedName }?.id == navDest.id
-                } ?: false
-                // Simplified check (might not be perfect for nested graphs)
-                // It checks if the current destination's *route string* matches the *qualified name*
-                // of the destination class. This works for top-level items defined directly.
-                 navDest.route == item.route::class.qualifiedName
-            } == true
-
-             // Alternative / potentially better check using currentBackStackEntry's destination type
-             val isSelectedAccurate = currentDestination?.matchHierarchy(item.route) == true
-
+            // Use the currentRouteObject for comparison
+            val isSelected = currentRouteObject == item.route
 
             NavigationBarItem(
                 icon = { Icon(item.icon, contentDescription = item.label) },
                 label = { Text(item.label) },
-                selected = isSelectedAccurate, // Use the more accurate check
+                selected = isSelected,
                 onClick = {
-                    if (!isSelectedAccurate) {
+                    if (!isSelected) {
                         navigateToTopLevelDestination(item.route)
                     }
                 },
-                // Ensure selected item is not reselected unnecessarily
-                alwaysShowLabel = true // Optional: improve UI
+                alwaysShowLabel = true
             )
         }
     }
 }
-
-// Extension function to check hierarchy based on Kotlin class/object type
-fun NavDestination.matchHierarchy(route: AppDestination): Boolean = hierarchy.any {
-    // Note: route is the String representation from NavDestination
-    // We compare it against the qualified name of the KClass associated with the route object
-    it.route == route::class.qualifiedName
-}
-
 
 @Composable
 private fun AppNavHost(
@@ -170,6 +167,20 @@ private fun AppNavHost(
         composable<BrowserAnalyticsScreen> { BrowserAnalyticsScreen() }
 
         // --- Nested Screens ---
+//        // Note: Using generic nested screen composables and passing titles
+//        composable<UriHistoryScreen.NestedScreen1> { NestedUriHistoryScreen(title = "Nested URI History 1", onNavigateBack = { navController.popBackStack() }) }
+//        composable<UriHistoryScreen.NestedScreen2> { NestedUriHistoryScreen(title = "Nested URI History 2", onNavigateBack = { navController.popBackStack() }) }
+//        composable<UriHistoryScreen.NestedScreen3> { NestedUriHistoryScreen(title = "Nested URI History 3", onNavigateBack = { navController.popBackStack() }) }
+//
+//        composable<PreferencesScreen.NestedScreen1> { NestedPreferencesScreen(title = "Nested Preferences 1", onNavigateBack = { navController.popBackStack() }) }
+//        composable<PreferencesScreen.NestedScreen2> { NestedPreferencesScreen(title = "Nested Preferences 2", onNavigateBack = { navController.popBackStack() }) }
+//        composable<PreferencesScreen.NestedScreen3> { NestedPreferencesScreen(title = "Nested Preferences 3", onNavigateBack = { navController.popBackStack() }) }
+//
+//        composable<FolderDetailsScreen.NestedScreen1> { NestedFolderDetailsScreen(title = "Nested Folder Details 1", onNavigateBack = { navController.popBackStack() }) }
+//        composable<FolderDetailsScreen.NestedScreen2> { NestedFolderDetailsScreen(title = "Nested Folder Details 2", onNavigateBack = { navController.popBackStack() }) }
+//        composable<FolderDetailsScreen.NestedScreen3> { NestedFolderDetailsScreen(title = "Nested Folder Details 3", onNavigateBack = { navController.popBackStack() }) }
+
+
         composable<UriHistoryScreen.NestedScreen1> { NestedUriHistoryScreen1(onNavigateBack = { navController.popBackStack() }) }
         composable<UriHistoryScreen.NestedScreen2> { NestedUriHistoryScreen2(onNavigateBack = { navController.popBackStack() }) }
         composable<UriHistoryScreen.NestedScreen3> { NestedUriHistoryScreen3(onNavigateBack = { navController.popBackStack() }) }
@@ -192,7 +203,8 @@ private fun HandleBackPress(navController: NavHostController) {
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
 
     // Check if the current destination is the start destination (HomeScreen)
-    val isAtHome = currentBackStackEntry?.destination?.route == HomeScreen::class.qualifiedName
+    // Use toRoute to get the type-safe object for comparison
+    val isAtHome = currentBackStackEntry?.toRoute<AppDestination>() == HomeScreen
 
     // Check if the back stack *below* home is empty
     // We can approximate this by checking if the previous back stack entry is null
@@ -212,4 +224,4 @@ private fun HandleBackPress(navController: NavHostController) {
             }
         }
     }
-} 
+}
