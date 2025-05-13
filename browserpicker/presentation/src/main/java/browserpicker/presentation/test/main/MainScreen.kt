@@ -3,6 +3,7 @@ package browserpicker.presentation.test.main
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
@@ -201,7 +202,8 @@ sealed class NavItem(
 ) {
     data object Home : NavItem(HomeRoute, "Home", Icons.Filled.Home)
     data object History : NavItem(UriHistoryRoute, "History", Icons.Filled.History)
-    data object Bookmarks : NavItem(BookmarksRoute, "Bookmarks", Icons.Filled.Star)
+//    data object Bookmarks : NavItem(BookmarksRoute, "Bookmarks", Icons.Filled.Star)
+    data object Bookmarks : NavItem(BookmarksRoute, "Preferences", Icons.AutoMirrored.Filled.ListAlt)
     data object Analytics : NavItem(BrowserAnalyticsRoute, "Analytics", Icons.Outlined.Analytics)
     data object Settings : NavItem(SettingsRoute, "Settings", Icons.Filled.Settings)
 }
