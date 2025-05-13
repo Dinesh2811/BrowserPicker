@@ -24,13 +24,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.dinesh.playground.test.navigation.AppDestination
 import com.dinesh.playground.test.navigation.BrowserAnalyticsScreen
 import com.dinesh.playground.test.navigation.FolderDetailsScreen
@@ -73,7 +73,7 @@ fun MainScreen() {
         listOf(
             BottomNavItem("Home", Icons.Default.Home, HomeScreen),
             BottomNavItem("History", Icons.Default.History, UriHistoryScreen),
-            BottomNavItem("Prefs", Icons.Default.Settings, PreferencesScreen),
+            BottomNavItem("Preferences", Icons.Default.Settings, PreferencesScreen),
             BottomNavItem("Folder", Icons.Default.Folder, FolderDetailsScreen),
             BottomNavItem("Analytics", Icons.Default.Analytics, BrowserAnalyticsScreen)
         )
@@ -94,12 +94,12 @@ private fun AppBottomNavigation(
     items: List<BottomNavItem>
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    // Attempt to get the current type-safe route object
-    val currentRouteObject = navBackStackEntry?.toRoute<AppDestination>()
+    val currentDestination = navBackStackEntry?.destination
 
     // Function to handle navigation clicks
     val navigateToTopLevelDestination = { destination: AppDestination ->
         navController.navigate(destination) {
+            // Correctly pop up to the start destination of the graph
             popUpTo(navController.graph.findStartDestination().id) {
                 saveState = true // Save state when popping
             }
@@ -110,8 +110,10 @@ private fun AppBottomNavigation(
 
     NavigationBar {
         items.forEach { item ->
-            // Use the currentRouteObject for comparison
-            val isSelected = currentRouteObject == item.route
+            // Use the qualified name of the serializable object for comparison
+            val isSelected = currentDestination?.hierarchy?.any { navDest ->
+                navDest.route == item.route::class.qualifiedName
+            } == true
 
             NavigationBarItem(
                 icon = { Icon(item.icon, contentDescription = item.label) },
@@ -186,12 +188,14 @@ private fun HandleBackPress(navController: NavHostController) {
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
 
     // Check if the current destination is the start destination (HomeScreen)
-    // Use toRoute to get the type-safe object for comparison
-    val isAtHome = currentBackStackEntry?.toRoute<AppDestination>() == HomeScreen
+    // by comparing the route string with the qualified name of the HomeScreen object
+    val isAtHome = currentBackStackEntry?.destination?.route == HomeScreen::class.qualifiedName
 
     // Check if the back stack *below* home is empty
     // We can approximate this by checking if the previous back stack entry is null
     // or if navigating back would pop the start destination.
+    // A more robust check would involve inspecting the back stack entries themselves,
+    // but this approximation is usually sufficient for bottom navigation setups.
     val canPop = navController.previousBackStackEntry != null
 
 
