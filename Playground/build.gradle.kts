@@ -83,4 +83,43 @@ dependencies {
     releaseImplementation(libs.bundles.releaseImplementation)
     androidTestImplementation(libs.bundles.androidTestImplementation)
     testImplementation(libs.bundles.testImplementation)
+
+
+    implementation(libs.timeago)
+    implementation(libs.kotlinx.datetime)
+    implementation(libs.timber)
+
+    implementation(libs.bundles.android)
+    implementation(libs.bundles.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+
+    //  ViewModel & LiveData
+    implementation(libs.bundles.lifecycle)
+
+    //  Room components
+    implementation(libs.bundles.room)
+    ksp(libs.androidx.room.compiler)
+
+    // Serialization
+    implementation(libs.bundles.serialization)
+
+    androidTestImplementation(libs.bundles.android.test)
+    debugImplementation(libs.bundles.debug)
+    testImplementation(libs.bundles.test)
+
+    // Navigation Component
+    implementation(libs.bundles.navigation)
+
+    // Paging
+    implementation(libs.bundles.paging)
+
+    //  Hilt
+    implementation(libs.bundles.hilt)
+    ksp(libs.bundles.hilt.compiler)
+
+    debugImplementation(libs.bundles.debugImplementation)
+    releaseImplementation(libs.bundles.releaseImplementation)
+    androidTestImplementation(libs.bundles.androidTestImplementation)
+    testImplementation(libs.bundles.testImplementation)
 }
