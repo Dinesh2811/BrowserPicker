@@ -57,50 +57,6 @@ dependencies {
     implementation(libs.bundles.room)
     ksp(libs.androidx.room.compiler)
 
-    implementation(libs.bundles.paging)
-    // Serialization
-    implementation(libs.bundles.serialization)
-
-    // HTTP
-    implementation(libs.bundles.okhttp)
-
-    androidTestImplementation(libs.bundles.android.test)
-    debugImplementation(libs.bundles.debug)
-    testImplementation(libs.bundles.test)
-
-    //  Hilt
-    implementation(libs.bundles.hilt)
-    ksp(libs.bundles.hilt.compiler)
-
-    // WorkManager
-    implementation(libs.work.manager)
-
-    // DataStore
-    implementation(libs.bundles.datastore.preferences)
-    implementation(libs.splashscreen)
-
-    debugImplementation(libs.bundles.debugImplementation)
-    releaseImplementation(libs.bundles.releaseImplementation)
-    androidTestImplementation(libs.bundles.androidTestImplementation)
-    testImplementation(libs.bundles.testImplementation)
-
-
-    implementation(libs.timeago)
-    implementation(libs.kotlinx.datetime)
-    implementation(libs.timber)
-
-    implementation(libs.bundles.android)
-    implementation(libs.bundles.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-
-    //  ViewModel & LiveData
-    implementation(libs.bundles.lifecycle)
-
-    //  Room components
-    implementation(libs.bundles.room)
-    ksp(libs.androidx.room.compiler)
-
     // Serialization
     implementation(libs.bundles.serialization)
 
