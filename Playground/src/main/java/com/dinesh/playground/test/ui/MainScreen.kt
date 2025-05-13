@@ -40,15 +40,12 @@ import com.dinesh.playground.test.navigation.UriHistoryScreen
 import com.dinesh.playground.test.ui.screens.BrowserAnalyticsScreen
 import com.dinesh.playground.test.ui.screens.FolderDetailsScreen
 import com.dinesh.playground.test.ui.screens.HomeScreen
-import com.dinesh.playground.test.ui.screens.NestedFolderDetailsScreen
 import com.dinesh.playground.test.ui.screens.NestedFolderDetailsScreen1
 import com.dinesh.playground.test.ui.screens.NestedFolderDetailsScreen2
 import com.dinesh.playground.test.ui.screens.NestedFolderDetailsScreen3
-import com.dinesh.playground.test.ui.screens.NestedPreferencesScreen
 import com.dinesh.playground.test.ui.screens.NestedPreferencesScreen1
 import com.dinesh.playground.test.ui.screens.NestedPreferencesScreen2
 import com.dinesh.playground.test.ui.screens.NestedPreferencesScreen3
-import com.dinesh.playground.test.ui.screens.NestedUriHistoryScreen
 import com.dinesh.playground.test.ui.screens.NestedUriHistoryScreen1
 import com.dinesh.playground.test.ui.screens.NestedUriHistoryScreen2
 import com.dinesh.playground.test.ui.screens.NestedUriHistoryScreen3
@@ -167,20 +164,6 @@ private fun AppNavHost(
         composable<BrowserAnalyticsScreen> { BrowserAnalyticsScreen() }
 
         // --- Nested Screens ---
-//        // Note: Using generic nested screen composables and passing titles
-//        composable<UriHistoryScreen.NestedScreen1> { NestedUriHistoryScreen(title = "Nested URI History 1", onNavigateBack = { navController.popBackStack() }) }
-//        composable<UriHistoryScreen.NestedScreen2> { NestedUriHistoryScreen(title = "Nested URI History 2", onNavigateBack = { navController.popBackStack() }) }
-//        composable<UriHistoryScreen.NestedScreen3> { NestedUriHistoryScreen(title = "Nested URI History 3", onNavigateBack = { navController.popBackStack() }) }
-//
-//        composable<PreferencesScreen.NestedScreen1> { NestedPreferencesScreen(title = "Nested Preferences 1", onNavigateBack = { navController.popBackStack() }) }
-//        composable<PreferencesScreen.NestedScreen2> { NestedPreferencesScreen(title = "Nested Preferences 2", onNavigateBack = { navController.popBackStack() }) }
-//        composable<PreferencesScreen.NestedScreen3> { NestedPreferencesScreen(title = "Nested Preferences 3", onNavigateBack = { navController.popBackStack() }) }
-//
-//        composable<FolderDetailsScreen.NestedScreen1> { NestedFolderDetailsScreen(title = "Nested Folder Details 1", onNavigateBack = { navController.popBackStack() }) }
-//        composable<FolderDetailsScreen.NestedScreen2> { NestedFolderDetailsScreen(title = "Nested Folder Details 2", onNavigateBack = { navController.popBackStack() }) }
-//        composable<FolderDetailsScreen.NestedScreen3> { NestedFolderDetailsScreen(title = "Nested Folder Details 3", onNavigateBack = { navController.popBackStack() }) }
-
-
         composable<UriHistoryScreen.NestedScreen1> { NestedUriHistoryScreen1(onNavigateBack = { navController.popBackStack() }) }
         composable<UriHistoryScreen.NestedScreen2> { NestedUriHistoryScreen2(onNavigateBack = { navController.popBackStack() }) }
         composable<UriHistoryScreen.NestedScreen3> { NestedUriHistoryScreen3(onNavigateBack = { navController.popBackStack() }) }
