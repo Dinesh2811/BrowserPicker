@@ -7,53 +7,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 
 @Composable
-fun MainScreen(
-    onNewIntent: (String) -> Unit = {}
-) {}
-@Composable
-fun HomeScreen(modifier: Modifier = Modifier) {}
-@Composable
-fun UriHistoryScreen(
-    modifier: Modifier = Modifier,
-    onNavigateToNested1: () -> Unit,
-    onNavigateToNested2: () -> Unit,
-    onNavigateToNested3: () -> Unit
-) {}
-@Composable
-fun PreferencesScreen(
-    modifier: Modifier = Modifier,
-    onNavigateToNested1: () -> Unit,
-    onNavigateToNested2: () -> Unit,
-    onNavigateToNested3: () -> Unit
-) {}
-@Composable
-fun FolderDetailsScreen(
-    modifier: Modifier = Modifier,
-    onNavigateToNested1: () -> Unit,
-    onNavigateToNested2: () -> Unit,
-    onNavigateToNested3: () -> Unit
-) {}
-@Composable
-fun BrowserAnalyticsScreen(modifier: Modifier = Modifier) {}
-@Composable
-fun NestedUriHistoryScreen1(modifier: Modifier = Modifier, onNavigateBack: () -> Unit) {}
-@Composable
-fun NestedUriHistoryScreen2(modifier: Modifier = Modifier, onNavigateBack: () -> Unit) {}
-@Composable
-fun NestedUriHistoryScreen3(modifier: Modifier = Modifier, onNavigateBack: () -> Unit) {}
-@Composable
-fun NestedPreferencesScreen1(modifier: Modifier = Modifier, onNavigateBack: () -> Unit) {}
-@Composable
-fun NestedPreferencesScreen2(modifier: Modifier = Modifier, onNavigateBack: () -> Unit) {}
-@Composable
-fun NestedPreferencesScreen3(modifier: Modifier = Modifier, onNavigateBack: () -> Unit) {}
-@Composable
-fun NestedFolderDetailsScreen1(modifier: Modifier = Modifier, onNavigateBack: () -> Unit) {}
-@Composable
-fun NestedFolderDetailsScreen2(modifier: Modifier = Modifier, onNavigateBack: () -> Unit) {}
-@Composable
-fun NestedFolderDetailsScreen3(modifier: Modifier = Modifier, onNavigateBack: () -> Unit) {}
-@Composable
 private fun BrowserPickerNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
