@@ -1,31 +1,40 @@
 package browserpicker.domain.service
 
-import androidx.annotation.Keep
-import androidx.compose.runtime.Immutable
+import android.net.Uri
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Warning
 import androidx.core.net.toUri
-import browserpicker.core.results.MyResult
+import browserpicker.core.results.DomainResult
 import browserpicker.core.results.UriValidationError
-import kotlinx.serialization.Serializable
-import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
-import browserpicker.domain.model.UriRecord
-
-import browserpicker.core.results.AppError
-import browserpicker.core.results.DomainResult
+import kotlin.to
 
 data class ParsedUri(
     val originalString: String,
+    val originalUri: Uri,
+    val displayText: String,
     val scheme: String,
     val host: String,
-    val path: String?,
-    val query: String?,
-    val fragment: String?,
-    val port: Int = -1,
 ) {
     init {
         require(host.isNotBlank()) { "Host cannot be blank." }
         require(scheme.isNotBlank()) { "Scheme cannot be blank." }
+    }
+
+    companion object {
+        val ParsedUri.isSecure
+            get() = this.scheme == "https"
+
+        val ParsedUri?.uriInfoBar get() = when {
+            this?.originalUri == null -> Icons.AutoMirrored.Filled.HelpOutline to "No URL provided"
+            this.scheme == "https" -> Icons.Filled.Lock to "Secure connection (HTTPS)"
+            this.scheme == "http" -> Icons.Filled.Warning to "Insecure connection (HTTP)"
+            else -> Icons.Filled.Link to "Connection type unknown"
+        }
     }
 }
 
@@ -50,6 +59,9 @@ class AndroidUriParser @Inject constructor(): UriParser {
             val uri = uriString.toUri()
             val scheme = uri.scheme
             val host = uri.host
+            val path = uri.path?.takeIf { it.isNotEmpty() && it != "/" }
+            val displayText = host?.let { h -> path?.let { p -> "$h$p" }?: h }?: uri.toString()
+
             when {
                 host.isNullOrEmpty() -> DomainResult.Failure(UriValidationError.Invalid(message = "Host cannot be missing or blank in URI: $uriString"))
                 !uri.isAbsolute -> DomainResult.Failure(UriValidationError.Invalid(message = "URI must be absolute: $uriString"))
@@ -58,12 +70,10 @@ class AndroidUriParser @Inject constructor(): UriParser {
                     DomainResult.Success(
                         data = ParsedUri(
                             originalString = uriString,
+                            originalUri = uriString.toUri(),
+                            displayText = displayText,
                             scheme = scheme,
                             host = host,
-                            path = uri.path,
-                            query = uri.query,
-                            fragment = uri.fragment,
-                            port = uri.port
                         )
                     )
                 }
