@@ -46,6 +46,7 @@ class BrowserPickerActivity: ComponentActivity() {
                 ) {
 //                    browserpicker.presentation.test.main.MainScreen()
                     browserpicker.presentation.features.main.MainScreen()
+//                    browserpicker.presentation.features.browserpicker.BrowserPickerScreen()
                     com.dinesh.browserpicker.mock.DebugScreen()
                 }
             }
