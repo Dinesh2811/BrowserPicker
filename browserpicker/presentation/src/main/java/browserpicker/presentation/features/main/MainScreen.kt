@@ -3,18 +3,31 @@ package browserpicker.presentation.features.main
 import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,6 +37,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -40,6 +55,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     onNewIntent: (String) -> Unit = {}
@@ -57,12 +73,33 @@ fun MainScreen(
         )
     }
 
-    Scaffold(
-        bottomBar = {
-            AppBottomNavigation(navController, bottomNavItems)
+    val snackBarHostState = remember { SnackbarHostState() }
+    val sheetState = rememberBottomSheetScaffoldState(
+        bottomSheetState = rememberStandardBottomSheetState(initialValue = SheetValue.Expanded), snackbarHostState = snackBarHostState
+    )
+
+    BottomSheetScaffold(
+        scaffoldState = sheetState,
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
+        sheetPeekHeight = 0.dp,
+        sheetSwipeEnabled = true,
+        sheetContent = {
+            Column(Modifier.height(500.dp)) {  }
+        },
+        sheetTonalElevation = BottomSheetDefaults.Elevation,
+        sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        sheetContainerColor = MaterialTheme.colorScheme.surface,
+        sheetContentColor = MaterialTheme.colorScheme.onSurface,
+        sheetShadowElevation = 8.dp,
+        sheetDragHandle = null,
+    ) { paddingValues: PaddingValues ->
+        Scaffold(
+            bottomBar = {
+                AppBottomNavigation(navController, bottomNavItems)
+            }
+        ) { innerPadding ->
+            BrowserPickerNavHost(navController = navController, modifier = Modifier.padding(innerPadding))
         }
-    ) { innerPadding ->
-        BrowserPickerNavHost(navController = navController, modifier = Modifier.padding(innerPadding))
     }
 }
 
@@ -95,7 +132,12 @@ private fun AppBottomNavigation(
 
             NavigationBarItem(
                 icon = { Icon(item.icon, contentDescription = item.label) },
-                label = { Text(item.label) },
+                label = {
+                    Text(
+                        text = item.label,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )},
                 selected = isSelected,
                 onClick = {
                     if (!isSelected) {
