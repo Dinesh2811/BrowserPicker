@@ -1,4 +1,4 @@
-package browserpicker.presentation.features.browserpicker
+package browserpicker.presentation.features.browserpicker.uri_info_bar
 
 import android.net.Uri
 import androidx.compose.runtime.Composable

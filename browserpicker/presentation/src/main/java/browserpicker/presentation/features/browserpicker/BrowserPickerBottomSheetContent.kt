@@ -27,8 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import browserpicker.core.utils.logError
 import browserpicker.core.utils.logInfo
-import browserpicker.domain.model.BrowserAppInfo
-import browserpicker.domain.model.UriRecord
+import browserpicker.presentation.features.browserpicker.uri_info_bar.UriInfoBar
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
