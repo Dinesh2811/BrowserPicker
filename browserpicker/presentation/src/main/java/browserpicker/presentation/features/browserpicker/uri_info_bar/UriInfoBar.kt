@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -39,8 +40,12 @@ import browserpicker.presentation.util.BrowserDefault
 import browserpicker.presentation.util.helper.ClipboardHelper
 import browserpicker.presentation.util.helper.ShareHelper
 
+private fun performHapticFeedback(hapticFeedback: HapticFeedback) {
+    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+}
+
 @Composable
-fun UriInfoBar(
+internal fun UriInfoBar(
     parsedUri: ParsedUri? = null,
     uriProcessingResult: UriProcessingResult? = null,
     onUriEdited: (Uri) -> Unit = {},
@@ -51,70 +56,18 @@ fun UriInfoBar(
     var showEditDialog by remember { mutableStateOf(false) }
     var showMoreMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val hapticFeedback = LocalHapticFeedback.current
-
-    val handleEditClick = remember {
-        {
-            showEditDialog = true
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-        }
-    }
-
-    val handleMoreClick = remember {
-        {
-            showMoreMenu = true
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-        }
-    }
-
-    val handleDismissMenu = remember { { showMoreMenu = false } }
-
-    val handleCopyClick = remember(parsedUri?.originalUri, context, hapticFeedback) {
-        {
-            ClipboardHelper.copyToClipboard(
-                context = context,
-                label = "URL",
-                text = parsedUri?.originalUri?.toString()?: BrowserDefault.URL
-            ) {
-                if (it && parsedUri?.originalUri?.toString().isNullOrEmpty()) Toast.makeText(context, "Default URL copied to clipboard", Toast.LENGTH_SHORT).show()
-            }
-            showMoreMenu = false
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-        }
-    }
-
-    val handleShareClick = remember(parsedUri?.originalUri, context, hapticFeedback) {
-        {
-            ShareHelper.shareUri(context, parsedUri?.originalUri)
-            showMoreMenu = false
-            // No haptic on share, system usually provides feedback
-        }
-    }
-
-    val handleBookmarkClick = remember(hapticFeedback) {
+    val handleBookmarkClick = remember {
         {
             onBookmarkUri()
             showMoreMenu = false
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
         }
     }
-
-    val handleBlockClick = remember(hapticFeedback) {
+    val handleBlockClick = remember {
         {
             onBlockUri()
             showMoreMenu = false
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
         }
     }
-
-    val handleDialogConfirm = remember {
-        { editedUri: Uri ->
-            onUriEdited(editedUri)
-            showEditDialog = false
-        }
-    }
-
-    val handleDialogDismiss = remember { { showEditDialog = false } }
 
     Surface(
         modifier = Modifier
@@ -170,11 +123,23 @@ fun UriInfoBar(
                 showMoreMenu = showMoreMenu,
                 isBookmarked = uriProcessingResult?.isBookmarked,
                 isBlocked = uriProcessingResult?.isBlocked,
-                onEditClick = handleEditClick,
-                onMoreClick = handleMoreClick,
-                onDismissMenu = handleDismissMenu,
-                onCopyClick = handleCopyClick,
-                onShareClick = handleShareClick,
+                onEditClick = { showEditDialog = true },
+                onMoreClick = { showMoreMenu = true },
+                onDismissMenu = { showMoreMenu = false },
+                onCopyClick = {
+                    ClipboardHelper.copyToClipboard(
+                        context = context,
+                        label = "URL",
+                        text = parsedUri?.originalUri?.toString()?: BrowserDefault.URL
+                    ) {
+                        if (it && parsedUri?.originalUri?.toString().isNullOrEmpty()) Toast.makeText(context, "Default URL copied to clipboard", Toast.LENGTH_SHORT).show()
+                    }
+                    showMoreMenu = false
+                },
+                onShareClick = {
+                    ShareHelper.shareUri(context, parsedUri?.originalUri)
+                    showMoreMenu = false
+                },
                 onBookmarkClick = handleBookmarkClick,
                 onBlockClick = handleBlockClick,
             )
@@ -185,8 +150,11 @@ fun UriInfoBar(
     if (showEditDialog) {
         EditUriDialog(
             uri = parsedUri?.originalUri,
-            onConfirm = handleDialogConfirm,
-            onDismiss = handleDialogDismiss
+            onConfirm = { editedUri: Uri ->
+                onUriEdited(editedUri)
+                showEditDialog = false
+            },
+            onDismiss = { showEditDialog = false }
         )
     }
 }

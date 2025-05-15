@@ -1,4 +1,4 @@
-package browserpicker.presentation.features.browserpicker.uri_info_bar
+package browserpicker.presentation.features.browserpicker.uri_info_bar.previews
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.net.toUri
 import browserpicker.domain.service.ParsedUri
+import browserpicker.presentation.features.browserpicker.uri_info_bar.UriInfoBar
 
 @Preview(showBackground = true, name = "Secure URL")
 @Composable
