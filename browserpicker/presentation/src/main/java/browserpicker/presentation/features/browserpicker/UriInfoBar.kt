@@ -77,6 +77,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.window.isPopupLayout
 import androidx.core.content.ContextCompat
 import browserpicker.domain.service.ParsedUri
+import browserpicker.domain.service.ParsedUri.Companion.isSecure
 import browserpicker.presentation.features.common.components.MyIcon
 import browserpicker.presentation.util.BrowserDefault
 import browserpicker.presentation.util.helper.ClipboardHelper
@@ -97,7 +98,6 @@ data class UriDisplayInfo(
 
 @Composable
 fun UriInfoBar(
-    uri: Uri?,
     parsedUri: ParsedUri? = null,
     uriProcessingResult: UriProcessingResult? = null,
     onUriEdited: (Uri) -> Unit = {},
@@ -115,27 +115,26 @@ fun UriInfoBar(
 //    val securityTint = MaterialTheme.colorScheme.onSurface
 
     // Calculate display info only when URI changes
-    val displayInfo = remember(uri) {
-        val host = uri?.host?.takeIf { it.isNotEmpty() }
-        val path = uri?.path?.takeIf { it.isNotEmpty() && it != "/" }
-        val scheme = uri?.scheme?.lowercase()
+    val displayInfo = remember(parsedUri?.originalUri) {
+        val host = parsedUri?.originalUri?.host?.takeIf { it.isNotEmpty() }
+        val path = parsedUri?.originalUri?.path?.takeIf { it.isNotEmpty() && it != "/" }
+        val scheme = parsedUri?.originalUri?.scheme?.lowercase()
 
         val text = host?.let { h -> path?.let { p -> "$h$p" } ?: h } // Combine host and path if available
-            ?: uri?.toString() // Fallback to full URI string
-//            ?: "No URL"       // Final fallback
+            ?: parsedUri?.originalUri?.toString()
 
         val isSecure = scheme == "https"
         val (icon, desc) = when {
-            uri == null -> Icons.AutoMirrored.Filled.HelpOutline to "No URL provided"
+            parsedUri?.originalUri == null -> Icons.AutoMirrored.Filled.HelpOutline to "No URL provided"
             isSecure -> Icons.Filled.Lock to "Secure connection (HTTPS)"
             scheme == "http" -> Icons.Filled.Warning to "Insecure connection (HTTP)"
             else -> Icons.Filled.Link to "Connection type unknown" // For other schemes like ftp, file etc.
         }
         UriDisplayInfo(
-            uri = uri,
-            host = host,
+            uri = parsedUri?.originalUri,
+            host = parsedUri?.host,
             displayText = text,
-            isSecure = isSecure,
+            isSecure = parsedUri.isSecure,
             securityIcon = icon,
             securityDescription = desc,
 //            securityTint = securityTint
@@ -160,7 +159,7 @@ fun UriInfoBar(
 
     val handleDismissMenu = remember { { showMoreMenu = false } }
 
-    val handleCopyClick = remember(uri, context, hapticFeedback) {
+    val handleCopyClick = remember(parsedUri?.originalUri, context, hapticFeedback) {
         {
             ClipboardHelper.copyToClipboard(
                 context = context,
@@ -174,9 +173,9 @@ fun UriInfoBar(
         }
     }
 
-    val handleShareClick = remember(uri, context, hapticFeedback) {
+    val handleShareClick = remember(parsedUri?.originalUri, context, hapticFeedback) {
         {
-            ShareHelper.shareUri(context, uri)
+            ShareHelper.shareUri(context, parsedUri?.originalUri)
             showMoreMenu = false
             // No haptic on share, system usually provides feedback
         }
@@ -212,6 +211,7 @@ fun UriInfoBar(
 
     UriInfoBarContent(
         displayInfo = displayInfo,
+        parsedUri = parsedUri,
         isBookmarked = uriProcessingResult?.isBookmarked,
         isBlocked = uriProcessingResult?.isBlocked,
         showMoreMenu = showMoreMenu,
@@ -228,7 +228,7 @@ fun UriInfoBar(
     // --- Dialog ---
     if (showEditDialog) {
         EditUriDialog(
-            uri = uri, // Pass the original URI to edit
+            uri = parsedUri?.originalUri, // Pass the original URI to edit
             onConfirm = handleDialogConfirm,
             onDismiss = handleDialogDismiss
         )
@@ -238,6 +238,7 @@ fun UriInfoBar(
 @Composable
 private fun UriInfoBarContent(
     displayInfo: UriDisplayInfo,
+    parsedUri: ParsedUri?,
     isBookmarked: Boolean?,
     isBlocked: Boolean?,
     showMoreMenu: Boolean,
@@ -639,7 +640,7 @@ private fun UriInfoBarPreviewSecure() {
     var uri by remember { mutableStateOf("https://developer.android.com/jetpack/compose".toUri()) }
     MaterialTheme {
         UriInfoBar(
-            uri = uri,
+            parsedUri = ParsedUri(originalString = uri.toString(), originalUri = uri, scheme = uri.scheme!!, host = uri.host!!),
             onUriEdited = {
                 uri = it
             },
@@ -653,9 +654,10 @@ private fun UriInfoBarPreviewSecure() {
 @Preview(showBackground = true, name = "Insecure URL")
 @Composable
 private fun UriInfoBarPreviewInsecure() {
+    var uri by remember { mutableStateOf("http://example.com/some/path".toUri()) }
     MaterialTheme {
         UriInfoBar(
-            uri = "http://example.com/some/path".toUri(),
+            parsedUri = ParsedUri(originalString = uri.toString(), originalUri = uri, scheme = uri.scheme!!, host = uri.host!!),
             onUriEdited = {},
             onBlockUri = {}
         )
@@ -667,7 +669,7 @@ private fun UriInfoBarPreviewInsecure() {
 private fun UriInfoBarPreviewNoUrl() {
     MaterialTheme {
         UriInfoBar(
-            uri = null,
+            parsedUri = null,
             onUriEdited = {},
             onBlockUri = {}
         )
@@ -677,9 +679,10 @@ private fun UriInfoBarPreviewNoUrl() {
 @Preview(showBackground = true, name = "File URL")
 @Composable
 private fun UriInfoBarPreviewFileUrl() {
+    var uri by remember { mutableStateOf("file:///storage/emulated/0/Download/document.pdf".toUri()) }
     MaterialTheme {
         UriInfoBar(
-            uri = "file:///storage/emulated/0/Download/document.pdf".toUri(),
+            parsedUri = ParsedUri(originalString = uri.toString(), originalUri = uri, scheme = uri.scheme!!, host = uri.host!!),
             onUriEdited = {},
             onBlockUri = {}
         )

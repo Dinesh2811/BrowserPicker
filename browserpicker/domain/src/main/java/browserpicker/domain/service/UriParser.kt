@@ -25,8 +25,8 @@ data class ParsedUri(
     }
 
     companion object {
-        val ParsedUri.isSecure
-            get() = this.scheme == "https"
+        val ParsedUri?.isSecure
+            get() = this?.scheme == "https"
 
         val ParsedUri?.uriInfoBar get() = when {
             this?.originalUri == null -> Icons.AutoMirrored.Filled.HelpOutline to "No URL provided"

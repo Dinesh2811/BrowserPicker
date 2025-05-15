@@ -132,7 +132,7 @@ fun ColumnScope.AppPickerSheetContent(
 ) {
     Column(modifier = modifier) {
         UriInfoBar(
-            uri = uri,
+//            uri = uri,
             uriProcessingResult = uriProcessingResult,
             onUriEdited = { editedUri ->
                 onUriEdited(editedUri) { isSuccess ->
