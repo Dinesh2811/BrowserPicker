@@ -1,9 +1,16 @@
 package browserpicker.core.results
 
+import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlin.Result as KotlinResult
+
+@Immutable
+sealed interface UriValidationError: AppError {
+    data class BlankOrEmpty(override val message: String): UriValidationError
+    data class Invalid(override val message: String, override val cause: Throwable? = null): UriValidationError
+}
 
 sealed interface AppError {
     val message: String

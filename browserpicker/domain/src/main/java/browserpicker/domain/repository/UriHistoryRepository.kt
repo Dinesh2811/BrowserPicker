@@ -4,7 +4,6 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import browserpicker.core.results.AppError
 import browserpicker.core.results.DomainResult
-import browserpicker.core.results.MyResult
 import browserpicker.domain.model.DateCount
 import browserpicker.domain.model.GroupCount
 import browserpicker.domain.model.InteractionAction

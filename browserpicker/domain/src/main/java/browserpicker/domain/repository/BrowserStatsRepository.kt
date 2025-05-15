@@ -2,7 +2,6 @@ package browserpicker.domain.repository
 
 import browserpicker.core.results.AppError
 import browserpicker.core.results.DomainResult
-import browserpicker.core.results.MyResult
 import browserpicker.domain.model.BrowserUsageStat
 import kotlinx.coroutines.flow.Flow
 

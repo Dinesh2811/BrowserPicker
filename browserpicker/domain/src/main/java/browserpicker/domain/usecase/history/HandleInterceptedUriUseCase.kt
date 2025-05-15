@@ -3,7 +3,6 @@ package browserpicker.domain.usecase.history
 import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
 import browserpicker.core.results.DomainResult
-import browserpicker.core.results.MyResult
 import browserpicker.core.results.UriValidationError
 import browserpicker.domain.model.InteractionAction
 import browserpicker.domain.model.UriSource

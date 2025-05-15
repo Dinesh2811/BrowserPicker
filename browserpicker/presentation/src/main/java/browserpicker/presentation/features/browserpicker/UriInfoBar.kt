@@ -76,6 +76,7 @@ import androidx.compose.material3.Button
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.window.isPopupLayout
 import androidx.core.content.ContextCompat
+import browserpicker.domain.service.ParsedUri
 import browserpicker.presentation.features.common.components.MyIcon
 import browserpicker.presentation.util.BrowserDefault
 import browserpicker.presentation.util.helper.ClipboardHelper
@@ -97,6 +98,7 @@ data class UriDisplayInfo(
 @Composable
 fun UriInfoBar(
     uri: Uri?,
+    parsedUri: ParsedUri? = null,
     uriProcessingResult: UriProcessingResult? = null,
     onUriEdited: (Uri) -> Unit = {},
     onBookmarkUri: () -> Unit = {},
