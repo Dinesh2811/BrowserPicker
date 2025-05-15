@@ -16,7 +16,6 @@ import kotlin.to
 data class ParsedUri(
     val originalString: String,
     val originalUri: Uri,
-    val displayText: String,
     val scheme: String,
     val host: String,
 ) {
@@ -59,8 +58,8 @@ class AndroidUriParser @Inject constructor(): UriParser {
             val uri = uriString.toUri()
             val scheme = uri.scheme
             val host = uri.host
-            val path = uri.path?.takeIf { it.isNotEmpty() && it != "/" }
-            val displayText = host?.let { h -> path?.let { p -> "$h$p" }?: h }?: uri.toString()
+            //val path = uri.path?.takeIf { it.isNotEmpty() && it != "/" }
+            //val displayText = host?.let { h -> path?.let { p -> "$h$p" }?: h }?: uri.toString()
 
             when {
                 host.isNullOrEmpty() -> DomainResult.Failure(UriValidationError.Invalid(message = "Host cannot be missing or blank in URI: $uriString"))
@@ -71,7 +70,6 @@ class AndroidUriParser @Inject constructor(): UriParser {
                         data = ParsedUri(
                             originalString = uriString,
                             originalUri = uriString.toUri(),
-                            displayText = displayText,
                             scheme = scheme,
                             host = host,
                         )
