@@ -46,8 +46,8 @@ private fun performHapticFeedback(hapticFeedback: HapticFeedback) {
 
 @Composable
 internal fun UriInfoBar(
-    parsedUri: ParsedUri? = null,
-    uriProcessingResult: UriProcessingResult? = null,
+    parsedUri: ParsedUri?,
+    uriProcessingResult: UriProcessingResult?,
     onUriEdited: (Uri) -> Unit = {},
     onBookmarkUri: () -> Unit = {},
     onBlockUri: () -> Unit = {},

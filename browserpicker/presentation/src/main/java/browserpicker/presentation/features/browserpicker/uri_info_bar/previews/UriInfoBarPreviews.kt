@@ -18,6 +18,7 @@ private fun UriInfoBarPreviewSecure() {
     MaterialTheme {
         UriInfoBar(
             parsedUri = ParsedUri(originalString = uri.toString(), originalUri = uri, scheme = uri.scheme!!, host = uri.host!!),
+            uriProcessingResult = null,
             onUriEdited = {
                 uri = it
             },
@@ -35,6 +36,7 @@ private fun UriInfoBarPreviewInsecure() {
     MaterialTheme {
         UriInfoBar(
             parsedUri = ParsedUri(originalString = uri.toString(), originalUri = uri, scheme = uri.scheme!!, host = uri.host!!),
+            uriProcessingResult = null,
             onUriEdited = {},
             onBlockUri = {}
         )
@@ -47,6 +49,7 @@ private fun UriInfoBarPreviewNoUrl() {
     MaterialTheme {
         UriInfoBar(
             parsedUri = null,
+            uriProcessingResult = null,
             onUriEdited = {},
             onBlockUri = {}
         )
@@ -60,6 +63,7 @@ private fun UriInfoBarPreviewFileUrl() {
     MaterialTheme {
         UriInfoBar(
             parsedUri = ParsedUri(originalString = uri.toString(), originalUri = uri, scheme = uri.scheme!!, host = uri.host!!),
+            uriProcessingResult = null,
             onUriEdited = {},
             onBlockUri = {}
         )

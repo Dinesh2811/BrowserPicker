@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import browserpicker.core.utils.logError
 import browserpicker.core.utils.logInfo
+import browserpicker.domain.service.ParsedUri
 import browserpicker.presentation.features.browserpicker.uri_info_bar.UriInfoBar
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
@@ -105,8 +106,8 @@ data class UriProcessingResult(
 @Composable
 fun ColumnScope.AppPickerSheetContent(
     modifier: Modifier,
-    uri: Uri?,
-    uriProcessingResult: UriProcessingResult? = null,
+    parsedUri: ParsedUri?,
+    uriProcessingResult: UriProcessingResult?,
 //    browserCount: Int,
 //    searchQuery: String,
 //    filteredBrowsers: List<BrowserAppInfo>,
@@ -132,6 +133,7 @@ fun ColumnScope.AppPickerSheetContent(
     Column(modifier = modifier) {
         UriInfoBar(
 //            uri = uri,
+            parsedUri = null,
             uriProcessingResult = uriProcessingResult,
             onUriEdited = { editedUri ->
                 onUriEdited(editedUri) { isSuccess ->
@@ -141,7 +143,7 @@ fun ColumnScope.AppPickerSheetContent(
             },
             onBookmarkUri = onBookmarkUri,
             onBlockUri = onBlockUri,
-            onSecurityIconClick = onSecurityIconClick
+            onSecurityIconClick = onSecurityIconClick,
         )
 ////                HeaderBar {}
 //        AnimatedSearchBar(

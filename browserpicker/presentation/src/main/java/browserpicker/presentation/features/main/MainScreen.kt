@@ -61,7 +61,9 @@ fun MainScreen(
 //            Column(Modifier.height(500.dp)) {  }
             AppPickerSheetContent(
                 modifier = Modifier.bottomSheetContentModifier(),
-                uri = BrowserDefault.URL.toUri(),
+//                uri = BrowserDefault.URL.toUri(),
+                parsedUri = null,
+                uriProcessingResult = null,
             )
         },
         sheetTonalElevation = BottomSheetDefaults.Elevation,
