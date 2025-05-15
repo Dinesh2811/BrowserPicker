@@ -78,6 +78,7 @@ import androidx.compose.ui.window.isPopupLayout
 import androidx.core.content.ContextCompat
 import browserpicker.domain.service.ParsedUri
 import browserpicker.domain.service.ParsedUri.Companion.isSecure
+import browserpicker.domain.service.ParsedUri.Companion.uriInfoBar
 import browserpicker.presentation.features.common.components.MyIcon
 import browserpicker.presentation.util.BrowserDefault
 import browserpicker.presentation.util.helper.ClipboardHelper
@@ -210,7 +211,6 @@ fun UriInfoBar(
     // --- UI Composition ---
 
     UriInfoBarContent(
-        displayInfo = displayInfo,
         parsedUri = parsedUri,
         isBookmarked = uriProcessingResult?.isBookmarked,
         isBlocked = uriProcessingResult?.isBlocked,
@@ -237,7 +237,6 @@ fun UriInfoBar(
 
 @Composable
 private fun UriInfoBarContent(
-    displayInfo: UriDisplayInfo,
     parsedUri: ParsedUri?,
     isBookmarked: Boolean?,
     isBlocked: Boolean?,
@@ -275,7 +274,7 @@ private fun UriInfoBarContent(
                     .weight(1f)
                     .padding(end = 8.dp) // Weight and padding to avoid overlap
             ) {
-                SecurityIcon(displayInfo = displayInfo, onSecurityIconClick = onSecurityIconClick)
+                SecurityIcon(parsedUri = parsedUri, onSecurityIconClick = onSecurityIconClick)
                 // Show Bookmark icon if bookmarked
                 if (isBookmarked == true) {
                     Spacer(modifier = Modifier.width(8.dp))
@@ -297,7 +296,7 @@ private fun UriInfoBarContent(
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                UriText(displayInfo = displayInfo)
+                UriText(parsedUri = parsedUri)
             }
 
             // Action Buttons (fixed size)
@@ -320,16 +319,16 @@ private fun UriInfoBarContent(
 
 @Composable
 private fun SecurityIcon(
-    displayInfo: UriDisplayInfo,
+    parsedUri: ParsedUri?,
     onSecurityIconClick: () -> Unit,
 ) {
-    val tint = when (displayInfo.securityIcon) {
+    val tint = when (parsedUri.uriInfoBar.first) {
         Icons.Filled.Lock -> MaterialTheme.colorScheme.primary
         Icons.Filled.Warning -> MaterialTheme.colorScheme.error
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
     MyIcon(
-        imageVector = displayInfo.securityIcon,
+        imageVector = parsedUri.uriInfoBar.first,
         tint = tint,
         backgroundColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.25f),
         onClick = onSecurityIconClick
@@ -337,12 +336,13 @@ private fun SecurityIcon(
 }
 
 @Composable
-private fun RowScope.UriText(displayInfo: UriDisplayInfo) {
+private fun RowScope.UriText(parsedUri: ParsedUri?) {
     val context = LocalContext.current
+    val displayText = parsedUri?.host?.let { h -> parsedUri.originalUri.path?.let { p -> "$h$p" }?: h }
     Column(modifier = Modifier.weight(1f)) {
 //        SelectionContainer {}
 
-        if(displayInfo.host == displayInfo.displayText) {
+        if(parsedUri?.host == displayText) {
             UrlText(
                 modifier = Modifier
 //                    .pointerInput(Unit) { // Use Unit as key since the gesture logic doesn't depend on external state
@@ -358,17 +358,17 @@ private fun RowScope.UriText(displayInfo: UriDisplayInfo) {
 //                        )
 //                    }
                 ,
-                displayInfo = displayInfo,
-                text = displayInfo.displayText?.toString()?: "No URL",
+                parsedUri = parsedUri,
+                text = displayText?: "No URL",
                 label = "URL",
                 context = context,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = if (displayInfo.displayText.isNullOrEmpty()) MaterialTheme.typography.titleLarge else MaterialTheme.typography.bodyLarge
+                style = if (displayText.isNullOrEmpty()) MaterialTheme.typography.titleLarge else MaterialTheme.typography.bodyLarge
             )
         } else {
             UrlText(
-                displayInfo = displayInfo,
-                text = displayInfo.host?: "Unknown Host",
+                parsedUri = parsedUri,
+                text = parsedUri?.host?: "Unknown Host",
                 label = "Host URL",
                 context = context,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -376,8 +376,8 @@ private fun RowScope.UriText(displayInfo: UriDisplayInfo) {
             )
 
             UrlText(
-                displayInfo = displayInfo,
-                text = displayInfo.displayText?.toString()?: "No URL",
+                parsedUri = parsedUri,
+                text = displayText?: "No URL",
                 label = "URL",
                 context = context,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
@@ -391,7 +391,7 @@ private fun RowScope.UriText(displayInfo: UriDisplayInfo) {
 @Composable
 private fun ColumnScope.UrlText(
     modifier: Modifier = Modifier,
-    displayInfo: UriDisplayInfo,
+    parsedUri: ParsedUri?,
     text: String,
     label: String,
     context: Context,
@@ -440,8 +440,8 @@ private fun ColumnScope.UrlText(
             .combinedClickable(
                 onClick = {
                     val textToCopy = when (label) {
-                        "URL" -> displayInfo.uri?.toString()?: BrowserDefault.URL
-                        else -> displayInfo.host?: BrowserDefault.URL.toUri().host?: "www.google.com"
+                        "URL" -> parsedUri?.originalUri?.toString()?: BrowserDefault.URL
+                        else -> parsedUri?.host?: BrowserDefault.URL.toUri().host?: "www.google.com"
                     }
 
                     ClipboardHelper.copyToClipboard(
@@ -456,8 +456,8 @@ private fun ColumnScope.UrlText(
                 },
                 onLongClick = {
                     val uriToShare = when (label) {
-                        "URL" -> displayInfo.uri?.toString()?: BrowserDefault.URL
-                        else -> (toValidWebUri((displayInfo.host?: BrowserDefault.URL.toUri().host).toString()))?.toString()?: BrowserDefault.URL
+                        "URL" -> parsedUri?.originalUri?.toString()?: BrowserDefault.URL
+                        else -> (toValidWebUri((parsedUri?.host?: BrowserDefault.URL.toUri().host).toString()))?.toString()?: BrowserDefault.URL
                     }
 
                     shareUri(
