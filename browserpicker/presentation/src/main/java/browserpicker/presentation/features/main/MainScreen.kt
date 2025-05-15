@@ -1,5 +1,6 @@
 package browserpicker.presentation.features.main
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation.compose.rememberNavController
+import browserpicker.domain.model.UriSource
 import browserpicker.presentation.features.browserpicker.AppPickerSheetContent
 import browserpicker.presentation.navigation.BrowserPickerNavHost
 import browserpicker.presentation.util.BrowserDefault
@@ -64,6 +66,16 @@ fun MainScreen(
 //                uri = BrowserDefault.URL.toUri(),
                 parsedUri = null,
                 uriProcessingResult = null,
+//                onUriEdited = { updatedUri: Uri, callback: (Boolean) -> Unit ->
+//                    browserViewModel.updateUri(updatedUri, UriSource.MANUAL, callback)
+//                },
+//                onBookmarkUri = onBookmarkUri,
+//                onBlockUri = onBlockUri,
+////                    onSetAlways = { /* TODO: Implement Set Always logic -> Show scope dialog, Call VM */ },
+//                onSecurityIconClick = {
+//                    browserViewModel.fetchCurrentUriSecurityInfo()
+//                    showSecurityDialog = true
+//                },
             )
         },
         sheetTonalElevation = BottomSheetDefaults.Elevation,

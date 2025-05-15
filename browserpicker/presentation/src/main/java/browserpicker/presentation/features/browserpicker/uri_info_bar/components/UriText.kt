@@ -28,6 +28,7 @@ import androidx.core.net.toUri
 import browserpicker.domain.service.ParsedUri
 import browserpicker.presentation.util.BrowserDefault
 import browserpicker.presentation.util.helper.ClipboardHelper
+import browserpicker.presentation.util.helper.ShareHelper
 
 @Composable
 internal fun RowScope.UriText(parsedUri: ParsedUri?) {
@@ -153,7 +154,7 @@ private fun ColumnScope.UrlText(
 //                        else -> (toValidWebUri((parsedUri?.host?: BrowserDefault.URL.toUri().host).toString()))?.toString()?: BrowserDefault.URL
 //                    }
 
-                    shareUri(
+                    ShareHelper.shareUri(
                         context = context,
                         uri = (parsedUri?.originalUri?.toString()?: BrowserDefault.URL).toUri()
                     )
@@ -209,30 +210,4 @@ private fun ColumnScope.UrlText(
         )
 
      */
-}
-
-private fun shareUri(
-    context: Context,
-    uri: Uri,
-    isSuccessful: ((Boolean, Exception?) -> Unit)? = null
-) {
-    try {
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, uri.toString())
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-
-        val chooser = Intent.createChooser(shareIntent, "Share via").apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-
-        context.startActivity(chooser)
-
-        isSuccessful?.invoke(true, null)
-    } catch (e: ActivityNotFoundException) {
-        isSuccessful?.invoke(false, e) ?: Toast.makeText(context, "No app available to share the content", Toast.LENGTH_SHORT).show()
-    } catch (e: Exception) {
-        isSuccessful?.invoke(false, e) ?: Toast.makeText(context, "Failed to share content", Toast.LENGTH_SHORT).show()
-    }
 }
