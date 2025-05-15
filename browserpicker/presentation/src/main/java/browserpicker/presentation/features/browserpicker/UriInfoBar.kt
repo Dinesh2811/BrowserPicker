@@ -1,14 +1,11 @@
 package browserpicker.presentation.features.browserpicker
 
-import android.content.ClipData
-import android.content.ClipboardManager
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,11 +24,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
@@ -41,13 +38,11 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,7 +51,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.contentDescription
@@ -67,35 +61,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import android.content.ActivityNotFoundException
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material3.Button
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.window.isPopupLayout
-import androidx.core.content.ContextCompat
 import browserpicker.domain.service.ParsedUri
-import browserpicker.domain.service.ParsedUri.Companion.isSecure
 import browserpicker.domain.service.ParsedUri.Companion.uriInfoBar
 import browserpicker.presentation.features.common.components.MyIcon
 import browserpicker.presentation.util.BrowserDefault
 import browserpicker.presentation.util.helper.ClipboardHelper
 import browserpicker.presentation.util.helper.ShareHelper
-
-@Immutable
-data class UriDisplayInfo(
-    val uri: Uri? = null,
-    val host: String? = null,
-    val displayText: String? = "No URL",
-    val isSecure: Boolean = false,
-    val securityIcon: ImageVector = Icons.AutoMirrored.Filled.HelpOutline,
-    val securityDescription: String = "URL status unknown",
-//    val securityTint: Color
-)
-
-// --- Composable Functions ---
 
 @Composable
 fun UriInfoBar(
@@ -106,43 +77,10 @@ fun UriInfoBar(
     onBlockUri: () -> Unit = {},
     onSecurityIconClick: () -> Unit = {},
 ) {
-    // State for controlling UI elements visibility
     var showEditDialog by remember { mutableStateOf(false) }
     var showMoreMenu by remember { mutableStateOf(false) }
-
-    // Local dependencies
     val context = LocalContext.current
     val hapticFeedback = LocalHapticFeedback.current
-//    val securityTint = MaterialTheme.colorScheme.onSurface
-
-    // Calculate display info only when URI changes
-    val displayInfo = remember(parsedUri?.originalUri) {
-        val host = parsedUri?.originalUri?.host?.takeIf { it.isNotEmpty() }
-        val path = parsedUri?.originalUri?.path?.takeIf { it.isNotEmpty() && it != "/" }
-        val scheme = parsedUri?.originalUri?.scheme?.lowercase()
-
-        val text = host?.let { h -> path?.let { p -> "$h$p" } ?: h } // Combine host and path if available
-            ?: parsedUri?.originalUri?.toString()
-
-        val isSecure = scheme == "https"
-        val (icon, desc) = when {
-            parsedUri?.originalUri == null -> Icons.AutoMirrored.Filled.HelpOutline to "No URL provided"
-            isSecure -> Icons.Filled.Lock to "Secure connection (HTTPS)"
-            scheme == "http" -> Icons.Filled.Warning to "Insecure connection (HTTP)"
-            else -> Icons.Filled.Link to "Connection type unknown" // For other schemes like ftp, file etc.
-        }
-        UriDisplayInfo(
-            uri = parsedUri?.originalUri,
-            host = parsedUri?.host,
-            displayText = text,
-            isSecure = parsedUri.isSecure,
-            securityIcon = icon,
-            securityDescription = desc,
-//            securityTint = securityTint
-        )
-    }
-
-    // --- Stable Lambdas for Actions ---
 
     val handleEditClick = remember {
         {
@@ -165,9 +103,9 @@ fun UriInfoBar(
             ClipboardHelper.copyToClipboard(
                 context = context,
                 label = "URL",
-                text = displayInfo.uri?.toString()?: BrowserDefault.URL
+                text = parsedUri?.originalUri?.toString()?: BrowserDefault.URL
             ) {
-                if (it && displayInfo.uri?.toString().isNullOrEmpty()) Toast.makeText(context, "Default URL copied to clipboard", Toast.LENGTH_SHORT).show()
+                if (it && parsedUri?.originalUri?.toString().isNullOrEmpty()) Toast.makeText(context, "Default URL copied to clipboard", Toast.LENGTH_SHORT).show()
             }
             showMoreMenu = false
             hapticFeedback.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
@@ -384,7 +322,6 @@ private fun RowScope.UriText(parsedUri: ParsedUri?) {
                 style = MaterialTheme.typography.labelSmall,
             )
         }
-
     }
 }
 
@@ -455,14 +392,14 @@ private fun ColumnScope.UrlText(
                     }
                 },
                 onLongClick = {
-                    val uriToShare = when (label) {
-                        "URL" -> parsedUri?.originalUri?.toString()?: BrowserDefault.URL
-                        else -> (toValidWebUri((parsedUri?.host?: BrowserDefault.URL.toUri().host).toString()))?.toString()?: BrowserDefault.URL
-                    }
+//                    val uriToShare = when (label) {
+//                        "URL" -> parsedUri?.originalUri?.toString()?: BrowserDefault.URL
+//                        else -> (toValidWebUri((parsedUri?.host?: BrowserDefault.URL.toUri().host).toString()))?.toString()?: BrowserDefault.URL
+//                    }
 
                     shareUri(
                         context = context,
-                        uri = uriToShare.toUri()
+                        uri = (parsedUri?.originalUri?.toString()?: BrowserDefault.URL).toUri()
                     )
                 }
             ),
@@ -686,37 +623,5 @@ private fun UriInfoBarPreviewFileUrl() {
             onUriEdited = {},
             onBlockUri = {}
         )
-    }
-}
-
-fun toValidWebUri(uriString: String?): Uri? {
-    if (uriString.isNullOrEmpty()) return null
-
-    val trimmed = uriString.trim()
-    var normalized = trimmed
-
-    // If the input string doesn't contain "://", assume it's missing the scheme.
-    if (!trimmed.contains("://")) {
-        normalized = "https://$trimmed"
-        // Ensure there's a "/" after the authority so that the parser correctly extracts the host.
-        val schemeDelimiter = "://"
-        val index = normalized.indexOf(schemeDelimiter)
-        if (index != -1) {
-            val afterScheme = normalized.substring(index + schemeDelimiter.length)
-            if (!afterScheme.contains("/")) {
-                normalized += "/"
-            }
-        }
-    }
-
-    // Parse the normalized string.
-    val uri = normalized.toUri()
-    val scheme = uri.scheme?.lowercase() ?: return null
-
-    // Only allow http or https schemes.
-    return if ((scheme == "http" || scheme == "https") && !uri.host.isNullOrBlank()) {
-        uri
-    } else {
-        null
     }
 }
