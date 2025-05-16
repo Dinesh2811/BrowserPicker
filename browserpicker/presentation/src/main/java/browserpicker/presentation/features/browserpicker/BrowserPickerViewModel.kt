@@ -160,18 +160,10 @@ class BrowserPickerViewModel @Inject constructor(
     }
 
     fun loadBrowserApps() {
-        if (_browserState.value.uiState is UiState.Loading) return
-
         viewModelScope.launch {
             loadBrowserAppsUseCase()
-                .collectLatest { update: BrowserState ->
-                    _browserState.update { currentState ->
-                        currentState.copy(
-                            allAvailableBrowsers = update.allAvailableBrowsers,
-                            uiState = update.uiState,
-                            selectedBrowserAppInfo = null
-                        )
-                    }
+                .collectLatest { newBrowserState: BrowserState ->
+                    _browserState.value = newBrowserState
                 }
         }
     }
@@ -225,7 +217,7 @@ class LoadBrowserAppsUseCase @Inject constructor(
 //                emit(DomainResult.Failure(PersistentError.LoadFailed(cause = e)))
 //            }
 //    }
-
+/*
     operator fun invoke(): Flow<BrowserState> {
         return flow {
             val browserAppInfos: Flow<List<BrowserAppInfo>> = browserPickerRepository.getBrowserApps()
@@ -253,6 +245,38 @@ class LoadBrowserAppsUseCase @Inject constructor(
                     uiState = UiState.Loading,
                     selectedBrowserAppInfo = null
                 ))
+            }
+            .catch { e ->
+                emit(BrowserState(
+                    allAvailableBrowsers = emptyList(),
+                    uiState = UiState.Error(PersistentError.LoadFailed(cause = e)),
+                    selectedBrowserAppInfo = null
+                ))
+            }
+    }
+
+ */
+
+    operator fun invoke(): Flow<BrowserState> {
+        return browserPickerRepository.getBrowserApps()
+            .flowOn(ioDispatcher)
+            .map { apps: List<BrowserAppInfo> ->
+                if (apps.isEmpty()) {
+                    BrowserState(
+                        allAvailableBrowsers = emptyList(),
+                        uiState = UiState.Error(PersistentError.NoBrowserAppsFound()),
+                        selectedBrowserAppInfo = null
+                    )
+                } else {
+                    BrowserState(
+                        allAvailableBrowsers = apps,
+                        uiState = UiState.Idle,
+                        selectedBrowserAppInfo = null
+                    )
+                }
+            }
+            .onStart {
+                emit(BrowserState(uiState = UiState.Loading))
             }
             .catch { e ->
                 emit(BrowserState(
