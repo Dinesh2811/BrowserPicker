@@ -19,6 +19,10 @@ import browserpicker.core.di.IoDispatcher
 import browserpicker.core.di.MainDispatcher
 import browserpicker.core.results.AppError
 import browserpicker.core.results.DomainResult
+import browserpicker.core.results.PersistentError
+import browserpicker.core.results.TransientError
+import browserpicker.core.results.UiError
+import browserpicker.core.results.UiState
 import browserpicker.core.utils.LogLevel
 import browserpicker.core.utils.log
 import browserpicker.core.utils.logDebug
@@ -55,6 +59,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
+import timber.log.Timber
 import javax.inject.*
 import kotlin.collections.map
 import kotlin.time.Duration.Companion.milliseconds
@@ -82,6 +87,7 @@ class BrowserPickerViewModel @Inject constructor(
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     @MainDispatcher private val mainDispatcher: CoroutineDispatcher,
+    private val loadBrowserAppsUseCase: LoadBrowserAppsUseCase,
 ): ViewModel() {
     private val _browserState: MutableStateFlow<BrowserState> = MutableStateFlow(BrowserState(uiState = UiState.Loading))
     val browserState: StateFlow<BrowserState> = _browserState.asStateFlow()
@@ -121,7 +127,11 @@ class BrowserPickerViewModel @Inject constructor(
         }
     }
 
-    fun loadBrowserApps() {
+    private fun updateErrorUiState(uiState: UiError) {
+        _browserState.update { it.copy(uiState = UiState.Error(uiState)) }
+    }
+
+    fun loadBrowserApps1() {
         if (_browserState.value.uiState !is UiState.Loading) {
             _browserState.update { it.copy(uiState = UiState.Loading) }
         }
@@ -130,7 +140,7 @@ class BrowserPickerViewModel @Inject constructor(
                 getInstalledBrowserAppsUseCase()
                     .flowOn(Dispatchers.IO)
                     .catch { e ->
-//                        updateErrorUiState(PersistentError.LoadFailed(e as? Exception))
+                        updateErrorUiState(PersistentError.LoadFailed(cause = e))
                     }
                     .collectLatest { apps ->
                         _browserState.update {
@@ -143,9 +153,59 @@ class BrowserPickerViewModel @Inject constructor(
                         logDebug("Browser apps loaded. Count: ${apps.size}")
                     }
             } catch (e: Exception) {
-//                updateErrorUiState(PersistentError.LoadFailed(e))
+                updateErrorUiState(PersistentError.LoadFailed(cause = e))
             }
         }
+    }
+
+    fun loadBrowserApps() {
+        if (_browserState.value.uiState is UiState.Loading) {
+            return
+        }
+
+        viewModelScope.launch {
+            _browserState.update { it.copy(uiState = UiState.Loading) }
+
+            loadBrowserAppsUseCase()
+                .collectLatest { result: DomainResult<List<BrowserAppInfo>, PersistentError> ->
+                    _browserState.update { currentState: BrowserState ->
+                        result.fold(
+                            onSuccess = { apps: List<BrowserAppInfo> ->
+                                Timber.d("Browser apps loaded. Count: ${apps.size}")
+                                currentState.copy(
+                                    allAvailableBrowsers = apps,
+                                    uiState = if (apps.isEmpty()) { UiState.Error(PersistentError.NoBrowserAppsFound()) } else { UiState.Idle },
+                                    selectedBrowserAppInfo = null
+                                )
+                            },
+                            onFailure = { error: PersistentError ->
+                                currentState.copy(
+                                    allAvailableBrowsers = emptyList(),
+                                    uiState = UiState.Error(error),
+                                    selectedBrowserAppInfo = null
+                                )
+                            }
+                        )
+                    }
+                }
+        }
+    }
+}
+
+class LoadBrowserAppsUseCase @Inject constructor(
+    private val browserPickerRepository: BrowserPickerRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+) {
+    operator fun invoke(): Flow<DomainResult<List<BrowserAppInfo>, PersistentError>> {
+        val browserAppInfos: Flow<List<BrowserAppInfo>> = browserPickerRepository.getBrowserApps()
+        return browserAppInfos
+            .flowOn(ioDispatcher)
+            .map<List<BrowserAppInfo>, DomainResult<List<BrowserAppInfo>, PersistentError>> { apps ->
+                DomainResult.Success(apps)
+            }
+            .catch { e ->
+                emit(DomainResult.Failure(PersistentError.LoadFailed(cause = e)))
+            }
     }
 }
 
