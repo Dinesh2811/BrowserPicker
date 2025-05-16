@@ -276,7 +276,11 @@ class LoadBrowserAppsUseCase @Inject constructor(
                 }
             }
             .onStart {
-                emit(BrowserState(uiState = UiState.Loading))
+                emit(BrowserState(
+                    allAvailableBrowsers = emptyList(),
+                    uiState = UiState.Loading,
+                    selectedBrowserAppInfo = null
+                ))
             }
             .catch { e ->
                 emit(BrowserState(
