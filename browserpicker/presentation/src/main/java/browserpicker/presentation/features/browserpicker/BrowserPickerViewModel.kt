@@ -18,7 +18,6 @@ import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
 import browserpicker.core.di.MainDispatcher
 import browserpicker.core.results.AppError
-import browserpicker.core.results.DomainError
 import browserpicker.core.results.DomainResult
 import browserpicker.core.results.PersistentError
 import browserpicker.core.results.TransientError
@@ -204,6 +203,12 @@ class BrowserPickerViewModel @Inject constructor(
 //    }
 }
 
+sealed interface DomainError: AppError {
+    data class LoadFailed(
+        override val message: String = "Data load failed in domain layer",
+        override val cause: Throwable? = null,
+    ): DomainError
+}
 class LoadBrowserAppsUseCase @Inject constructor(
     private val browserPickerRepository: BrowserPickerRepository,
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
@@ -268,15 +273,15 @@ class LoadBrowserAppsUseCase @Inject constructor(
                         )
                     }
                     is DomainResult.Failure -> {
-                        val uiError = when (domainResult.error) {
-                            is DomainError.LoadFailed -> {
-                                PersistentError.LoadFailed(cause = domainResult.error.cause)
-                            }
-                            else -> {
-                                PersistentError.UnknownError(cause = domainResult.error.cause, message = "An unexpected domain error occurred.")
-                            }
-                        }
-                        createBrowserState(uiState = UiState.Error(uiError))
+//                        val uiError = when (domainResult.error) {
+//                            is DomainError.LoadFailed -> {
+//                                PersistentError.LoadFailed(cause = domainResult.error.cause)
+//                            }
+//                            else -> {
+//                                PersistentError.UnknownError(cause = domainResult.error.cause, message = "An unexpected domain error occurred.")
+//                            }
+//                        }
+                        createBrowserState(uiState = UiState.Error(PersistentError.LoadFailed(cause = domainResult.error.cause)))
                     }
                 }
             }
