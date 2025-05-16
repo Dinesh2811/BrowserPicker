@@ -206,6 +206,13 @@ enum class TransientError(override val message: String): UiError {
     SELECTION_REQUIRED("Please select a browser first")
 }
 
+sealed interface DomainError: AppError {
+    data class LoadFailed(
+        override val cause: Throwable? = null,
+        override val message: String = "Data load failed in domain layer"
+    ): DomainError // Specific domain error for loading failure
+    // Add other domain errors here as needed later (e.g., NetworkError, DatabaseError, MappingError)
+}
 /**
  * A sealed class representing various types of domain-specific failures.
  * This provides a structured and extensible way to categorize errors.
