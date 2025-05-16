@@ -161,16 +161,14 @@ class BrowserPickerViewModel @Inject constructor(
     }
 
     fun loadBrowserApps() {
-        viewModelScope.launch(defaultDispatcher) {
-            withContext(defaultDispatcher) {
-                loadBrowserAppsUseCase()
-                    .flowOn(defaultDispatcher)
-                    .collectLatest { newBrowserState: BrowserState ->
-                        _browserState.value = newBrowserState
-                    }
-            }
+        viewModelScope.launch {
+            loadBrowserAppsUseCase()
+                .collectLatest { newBrowserState: BrowserState ->
+                    _browserState.value = newBrowserState
+                }
         }
     }
+
 
 //    fun loadBrowserApps() {
 //        if (_browserState.value.uiState is UiState.Loading) {
@@ -253,11 +251,9 @@ class LoadBrowserAppsUseCase @Inject constructor(
 //        )
 //    }
 
-
     operator fun invoke(): Flow<BrowserState> {
         val getBrowserAppsResult: Flow<DomainResult<List<BrowserAppInfo>, DomainError>> = browserPickerRepository.getBrowserApps()
         return getBrowserAppsResult
-            .flowOn(defaultDispatcher)
             .map { domainResult: DomainResult<List<BrowserAppInfo>, DomainError> ->
                 when (domainResult) {
                     is DomainResult.Success -> {
