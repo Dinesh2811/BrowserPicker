@@ -218,40 +218,6 @@ class LoadBrowserAppsUseCase @Inject constructor(
 //            }
 //    }
 
-//    operator fun invoke(): Flow<BrowserState> {
-//        return browserPickerRepository.getBrowserApps()
-//            .flowOn(ioDispatcher)
-//            .map { apps: List<BrowserAppInfo> ->
-//                if (apps.isEmpty()) {
-//                    BrowserState(
-//                        allAvailableBrowsers = emptyList(),
-//                        uiState = UiState.Error(PersistentError.NoBrowserAppsFound()),
-//                        selectedBrowserAppInfo = null
-//                    )
-//                } else {
-//                    BrowserState(
-//                        allAvailableBrowsers = apps,
-//                        uiState = UiState.Idle,
-//                        selectedBrowserAppInfo = null
-//                    )
-//                }
-//            }
-//            .onStart {
-//                emit(BrowserState(
-//                    allAvailableBrowsers = emptyList(),
-//                    uiState = UiState.Loading,
-//                    selectedBrowserAppInfo = null
-//                ))
-//            }
-//            .catch { e ->
-//                emit(BrowserState(
-//                    allAvailableBrowsers = emptyList(),
-//                    uiState = UiState.Error(PersistentError.LoadFailed(cause = e)),
-//                    selectedBrowserAppInfo = null
-//                ))
-//            }
-//    }
-
     operator fun invoke(): Flow<BrowserState> {
         return browserPickerRepository.getBrowserApps()
             .flowOn(ioDispatcher)
@@ -309,7 +275,7 @@ class BrowserPickerRepositoryImpl @Inject constructor(
     private val browserPickerDataSource: BrowserPickerDataSource,
     private val browserPickerAppMapper: BrowserPickerAppMapper,
 ): BrowserPickerRepository {
-    private val TAG = "log_BrowserRepositoryImpl"
+    private val TAG = "log_BrowserPickerRepositoryImpl"
 
     override fun getBrowserApps(): Flow<List<BrowserAppInfo>> = flow {
         try {
