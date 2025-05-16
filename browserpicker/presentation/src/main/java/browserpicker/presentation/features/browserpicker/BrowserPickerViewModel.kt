@@ -8,15 +8,24 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Build
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import browserpicker.core.di.DefaultDispatcher
+import browserpicker.core.di.InstantProvider
 import browserpicker.core.di.IoDispatcher
+import browserpicker.core.di.MainDispatcher
 import browserpicker.core.results.AppError
 import browserpicker.core.results.DomainResult
 import browserpicker.core.utils.LogLevel
 import browserpicker.core.utils.log
+import browserpicker.core.utils.logDebug
+import browserpicker.core.utils.logError
 import browserpicker.domain.model.BrowserAppInfo
+import browserpicker.domain.model.UriSource
+import browserpicker.presentation.toUiState
 import browserpicker.presentation.util.BrowserDefault
 import dagger.Binds
 import dagger.Module
@@ -31,13 +40,35 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import javax.inject.*
 import kotlin.collections.map
+import kotlin.time.Duration.Companion.milliseconds
+
+data class BrowserState(
+    val allAvailableBrowsers: List<BrowserAppInfo> = emptyList(),
+    val selectedBrowserAppInfo: BrowserAppInfo? = null,
+    val uiState: UiState<Unit, UiError> = UiState.Idle,
+    val searchQuery: String = "",
+//    val securityInfoResult: SecurityInfoResult = SecurityInfoResult.Error(SslStatus.FETCH_ERROR, "Not yet fetched", null),
+    val uri: Uri? = null,
+    val uriSource: UriSource = UriSource.INTENT,
+    val uriProcessingResult: UriProcessingResult? = null
+)
 
 @OptIn(FlowPreview::class)
 @HiltViewModel
@@ -47,10 +78,75 @@ class BrowserPickerViewModel @Inject constructor(
 //    private val launchBrowserUseCase: LaunchBrowserUseCase,
 //    private val getUriSecurityInfoUseCase: GetUriSecurityInfoUseCase,
 //    private val appRepository: AppRepository,
-    private val clock: Clock,
+    private val instantProvider: InstantProvider,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    @MainDispatcher private val mainDispatcher: CoroutineDispatcher,
 ): ViewModel() {
+    private val _browserState: MutableStateFlow<BrowserState> = MutableStateFlow(BrowserState(uiState = UiState.Loading))
+    val browserState: StateFlow<BrowserState> = _browserState.asStateFlow()
 
+    fun updateBrowserState(newValue: BrowserState) {
+        _browserState.update { newValue }
+    }
+    fun updateBrowserState(update: (BrowserState) -> BrowserState) {
+        _browserState.update(update)
+    }
+    fun updateUri(uri: Uri, source: UriSource = UriSource.INTENT, isUriUpdated: (Boolean) -> Unit) {
+        viewModelScope.launch {
+//            clearUriSecurityInfo()
+            val uriString = uri.toString()
+            if (BrowserDefault.isValidUrl(uriString)) {
+                _browserState.update {
+                    it.copy(
+                        uri = uri,
+                        uriSource = source,
+                        uriProcessingResult = null
+                    )
+                }
+                isUriUpdated(true)
+                processUri(uriString, source)
+            } else {
+                isUriUpdated(false)
+                _browserState.update { it.copy(uiState = UiState.Error(TransientError.INVALID_URL_FORMAT)) }
+            }
+        }
+    }
+
+    private fun processUri(uriString: String, source: UriSource) {
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                // TODO: Implement the code here
+            }
+        }
+    }
+
+    fun loadBrowserApps() {
+        if (_browserState.value.uiState !is UiState.Loading) {
+            _browserState.update { it.copy(uiState = UiState.Loading) }
+        }
+        viewModelScope.launch {
+            try {
+                getInstalledBrowserAppsUseCase()
+                    .flowOn(Dispatchers.IO)
+                    .catch { e ->
+//                        updateErrorUiState(PersistentError.LoadFailed(e as? Exception))
+                    }
+                    .collectLatest { apps ->
+                        _browserState.update {
+                            it.copy(
+                                allAvailableBrowsers = apps,
+                                uiState = if (apps.isEmpty()) { UiState.Error(PersistentError.NoBrowserAppsFound()) } else { UiState.Idle },
+                                selectedBrowserAppInfo = null
+                            )
+                        }
+                        logDebug("Browser apps loaded. Count: ${apps.size}")
+                    }
+            } catch (e: Exception) {
+//                updateErrorUiState(PersistentError.LoadFailed(e))
+            }
+        }
+    }
 }
 
 class GetInstalledBrowserAppsUseCase @Inject constructor(
