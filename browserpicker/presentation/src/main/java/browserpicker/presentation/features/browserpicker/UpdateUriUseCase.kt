@@ -52,16 +52,14 @@ class UpdateUriUseCase @Inject constructor(
 
 //                    processUri(parsedUri, source, this)
 
-                    val hostRuleFlow: Flow<DomainResult<HostRule?, AppError>> = hostRuleRepository.getHostRuleByHost(parsedUri.host)
-                    hostRuleFlow.collect { hostRuleResult: DomainResult<HostRule?, AppError> ->
-                        hostRuleResult.onSuccess { hostRule: HostRule? ->
-                            emit(currentBrowserState.copy(uri = parsedUri.originalUri, uriProcessingResult = uriProcessingResult, uiState = uiErrorState))
-                        }.onFailure { appError: AppError ->
-                            emit(currentBrowserState.copy(uri = parsedUri.originalUri, uriProcessingResult = uriProcessingResult, uiState = uiErrorState))
-                        }
+                    val hostRuleResult: DomainResult<HostRule?, AppError> = hostRuleRepository.getHostRuleByHost(parsedUri.host)
+                    hostRuleResult.onSuccess { hostRule: HostRule? ->
+                        emit(currentBrowserState.copy(uri = parsedUri.originalUri, uriProcessingResult = uriProcessingResult, uiState = uiErrorState))
+                    }.onFailure { appError: AppError ->
+                        emit(currentBrowserState.copy(uri = parsedUri.originalUri, uriProcessingResult = uriProcessingResult, uiState = uiErrorState))
                     }
 
-                    val hostRuleResult = getHostRuleByHostUseCase(parsedUri.host).first()
+
 
                     var activeHostRuleLocal: HostRule? = null
                     var isBlockedByRule = false
@@ -161,7 +159,7 @@ class UpdateUriUseCase @Inject constructor(
 class GetHostRuleByHostUseCase @Inject constructor(
     private val hostRuleRepository: HostRuleRepository
 ) {
-    operator fun invoke(host: String): Flow<DomainResult<HostRule?, AppError>> {
+    suspend operator fun invoke(host: String): DomainResult<HostRule?, AppError> {
         return hostRuleRepository.getHostRuleByHost(host)
     }
 }

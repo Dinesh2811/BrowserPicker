@@ -43,7 +43,7 @@ class HandleUriUseCaseImpl @Inject constructor(
             ?: return DomainResult.Success(HandleUriResult.InvalidUri("URI could not be parsed"))
 
         // Check if there's a rule for this host
-        val hostRuleResult = hostRuleRepository.getHostRuleByHost(parsedUri.host).first()
+        val hostRuleResult = hostRuleRepository.getHostRuleByHost(parsedUri.host)
         if (hostRuleResult is DomainResult.Failure) {
             return DomainResult.Failure(hostRuleResult.error)
         }

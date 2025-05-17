@@ -36,19 +36,19 @@ class HostRuleRepositoryImpl @Inject constructor(
     private val browserPickerDatabase: BrowserPickerDatabase,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ): HostRuleRepository {
-
-    override fun getHostRuleByHost(host: String): Flow<DomainResult<HostRule?, AppError>> {
-        return hostRuleDataSource.getHostRuleByHost(host)
-            .map<HostRuleEntity?, DomainResult<HostRule?, AppError>> { entity ->
-                val domainModel = entity?.let { ent ->
-                    runCatching { HostRuleMapper.toDomainModel(ent) }
-                        .onFailure { e -> Timber.e(e, "[Repository] Failed to map HostRuleEntity for host: %s", host) }
-                        .getOrNull()
-                }
-                DomainResult.Success(domainModel)
+    override suspend fun getHostRuleByHost(host: String): DomainResult<HostRule?, AppError> = withContext(ioDispatcher) {
+        try {
+            val entity = hostRuleDataSource.getHostRuleByHost(host)
+            val domainModel = entity?.let {
+                runCatching { HostRuleMapper.toDomainModel(it) }
+                    .onFailure { e -> Timber.e(e, "[Repository] Failed to map HostRuleEntity for host: %s", host) }
+                    .getOrNull()
             }
-            .catchUnexpected()
-            .flowOn(ioDispatcher)
+            DomainResult.Success(domainModel)
+        } catch (e: Exception) {
+            Timber.e(e, "[Repository] Error fetching HostRule for host: %s", host)
+            DomainResult.Failure(AppError.UnknownError("Failed to fetch host rule $host", e))
+        }
     }
 
     override suspend fun getHostRuleById(id: Long): DomainResult<HostRule?, AppError> = withContext(ioDispatcher) {
@@ -170,7 +170,7 @@ class HostRuleRepositoryImpl @Inject constructor(
             }
 
             val now = instantProvider.now()
-            val currentRuleEntity = hostRuleDataSource.getHostRuleByHost(trimmedHost).firstOrNull()
+            val currentRuleEntity = hostRuleDataSource.getHostRuleByHost(trimmedHost)
             val currentRuleDomain = currentRuleEntity?.let { HostRuleMapper.toDomainModel(it) }
 
             var effectiveFolderId = folderId

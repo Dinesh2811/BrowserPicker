@@ -10,7 +10,7 @@ interface GetHostRuleUseCase {
     /**
      * Gets a host rule by host
      */
-    operator fun invoke(host: String): Flow<DomainResult<HostRule?, AppError>>
+    suspend operator fun invoke(host: String): DomainResult<HostRule?, AppError>
 }
 
 interface GetHostRuleByIdUseCase {
@@ -58,7 +58,7 @@ interface CheckUriStatusUseCase {
     /**
      * Checks the bookmarked/blocked status for a given host
      */
-    suspend operator fun invoke(host: String): Flow<DomainResult<UriStatus?, AppError>>
+    suspend operator fun invoke(host: String): DomainResult<UriStatus?, AppError>
 }
 
 interface GetHostRulesByFolderUseCase {

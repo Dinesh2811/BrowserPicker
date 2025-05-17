@@ -18,7 +18,7 @@ interface GetPreferredBrowserForHostUseCase {
     /**
      * Gets the preferred browser for a specific host if one is set
      */
-    operator fun invoke(host: String): Flow<DomainResult<BrowserAppInfo?, AppError>>
+    suspend operator fun invoke(host: String): DomainResult<BrowserAppInfo?, AppError>
 }
 
 interface SetPreferredBrowserForHostUseCase {

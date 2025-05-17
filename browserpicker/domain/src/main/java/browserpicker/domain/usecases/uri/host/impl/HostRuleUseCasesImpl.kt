@@ -14,7 +14,7 @@ import javax.inject.Inject
 class GetHostRuleUseCaseImpl @Inject constructor(
     private val hostRuleRepository: HostRuleRepository
 ) : GetHostRuleUseCase {
-    override fun invoke(host: String): Flow<DomainResult<HostRule?, AppError>> {
+    override suspend fun invoke(host: String): DomainResult<HostRule?, AppError> {
         return hostRuleRepository.getHostRuleByHost(host)
     }
 }
@@ -102,16 +102,13 @@ class GetHostRulesByStatusUseCaseImpl @Inject constructor(
 class CheckUriStatusUseCaseImpl @Inject constructor(
     private val hostRuleRepository: HostRuleRepository
 ) : CheckUriStatusUseCase {
-    override suspend fun invoke(host: String): Flow<DomainResult<UriStatus?, AppError>> {
+    override suspend fun invoke(host: String): DomainResult<UriStatus?, AppError> {
         if (host.isBlank()) {
-            return kotlinx.coroutines.flow.flowOf(
-                DomainResult.Failure(AppError.ValidationError("Host cannot be blank"))
-            )
+            return DomainResult.Failure(AppError.ValidationError("Host cannot be blank"))
+
         }
 
-        return hostRuleRepository.getHostRuleByHost(host).map { result ->
-            result.mapSuccess { hostRule -> hostRule?.uriStatus }
-        }
+        return hostRuleRepository.getHostRuleByHost(host).mapSuccess { hostRule -> hostRule?.uriStatus }
     }
 }
 

@@ -11,7 +11,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 interface HostRuleLocalDataSource {
-    fun getHostRuleByHost(host: String): Flow<HostRuleEntity?>
+    suspend fun getHostRuleByHost(host: String): HostRuleEntity?
     suspend fun getHostRuleById(id: Long): HostRuleEntity?
     suspend fun upsertHostRule(rule: HostRuleEntity): Long
     fun getAllHostRules(): Flow<List<HostRuleEntity>>
@@ -29,7 +29,7 @@ class HostRuleLocalDataSourceImpl @Inject constructor(
     private val hostRuleDao: HostRuleDao,
 ): HostRuleLocalDataSource {
 
-    override fun getHostRuleByHost(host: String): Flow<HostRuleEntity?> {
+    override suspend fun getHostRuleByHost(host: String): HostRuleEntity? {
         return hostRuleDao.getHostRuleByHost(host)
     }
 

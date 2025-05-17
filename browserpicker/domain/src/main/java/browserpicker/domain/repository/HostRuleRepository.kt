@@ -7,7 +7,7 @@ import browserpicker.domain.model.UriStatus
 import kotlinx.coroutines.flow.Flow
 
 interface HostRuleRepository {
-    fun getHostRuleByHost(host: String): Flow<DomainResult<HostRule?, AppError>>
+    suspend fun getHostRuleByHost(host: String): DomainResult<HostRule?, AppError>
     suspend fun getHostRuleById(id: Long): DomainResult<HostRule?, AppError>
     fun getAllHostRules(): Flow<DomainResult<List<HostRule>, AppError>>
     fun getHostRulesByStatus(status: UriStatus): Flow<DomainResult<List<HostRule>, AppError>>

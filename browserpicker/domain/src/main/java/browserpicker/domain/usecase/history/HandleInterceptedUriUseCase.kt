@@ -61,7 +61,7 @@ class HandleInterceptedUriUseCaseImpl @Inject constructor(
 
         return withContext(ioDispatcher) {
             try {
-                val hostRule = hostRuleRepository.getHostRuleByHost(host).firstOrNull() // Check DB
+                val hostRule = hostRuleRepository.getHostRuleByHost(host)
 
                 when {
                     // 1. Blocked?

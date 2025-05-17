@@ -44,7 +44,7 @@ class TrackUriActionUseCaseImpl @Inject constructor(
                 // and we just need to ensure the rule reflects *that a preference exists* or update its timestamp.
                 // This is highly speculative due to missing parameters.
                 val existingRuleResult = associatedHostRuleId?.let { hostRuleRepository.getHostRuleById(it) }
-                    ?: hostRuleRepository.getHostRuleByHost(host).firstOrNull()
+                    ?: hostRuleRepository.getHostRuleByHost(host)
 
                 val existingRule = existingRuleResult?.getOrNull()
 

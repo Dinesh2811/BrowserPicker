@@ -105,14 +105,12 @@ class HostRuleDetailsViewModel @Inject constructor(
      */
     private fun loadPreferredBrowser(host: String) {
         viewModelScope.launch {
-            getPreferredBrowserForHostUseCase(host)
-                .collect { result ->
-                    result.onSuccess { browserInfo ->
+            getPreferredBrowserForHostUseCase(host).onSuccess { browserInfo ->
                         _uiState.value = _uiState.value.copy(
                             preferredBrowser = browserInfo
                         )
                     }
-                }
+
         }
     }
 

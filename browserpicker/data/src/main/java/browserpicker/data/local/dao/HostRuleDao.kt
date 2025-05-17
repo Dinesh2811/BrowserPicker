@@ -16,7 +16,7 @@ interface HostRuleDao {
     suspend fun getHostRuleById(id: Long): HostRuleEntity?
 
     @Query("SELECT * FROM host_rules WHERE host = :host LIMIT 1")
-    fun getHostRuleByHost(host: String): Flow<HostRuleEntity?>
+    suspend fun getHostRuleByHost(host: String): HostRuleEntity?
 
     @Query("SELECT * FROM host_rules ORDER BY updated_at DESC")
     fun getAllHostRules(): Flow<List<HostRuleEntity>>

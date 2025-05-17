@@ -32,15 +32,13 @@ class GetAvailableBrowsersUseCaseImpl @Inject constructor(
 class GetPreferredBrowserForHostUseCaseImpl @Inject constructor(
     private val hostRuleRepository: HostRuleRepository
 ) : GetPreferredBrowserForHostUseCase {
-    override fun invoke(host: String): Flow<DomainResult<BrowserAppInfo?, AppError>> {
+    override suspend fun invoke(host: String): DomainResult<BrowserAppInfo?, AppError> {
         if (host.isBlank()) {
-            return kotlinx.coroutines.flow.flowOf(
-                DomainResult.Failure(AppError.ValidationError("Host cannot be blank"))
-            )
+            return DomainResult.Failure(AppError.ValidationError("Host cannot be blank"))
+
         }
 
-        return hostRuleRepository.getHostRuleByHost(host).map { result ->
-            when (result) {
+        return when (val result = hostRuleRepository.getHostRuleByHost(host)) {
                 is DomainResult.Success -> {
                     val hostRule = result.data
                     if (hostRule != null &&
@@ -64,7 +62,7 @@ class GetPreferredBrowserForHostUseCaseImpl @Inject constructor(
                 }
                 is DomainResult.Failure -> DomainResult.Failure(result.error)
             }
-        }
+
     }
 }
 
@@ -82,7 +80,7 @@ class SetPreferredBrowserForHostUseCaseImpl @Inject constructor(
         }
 
         // Check if there's an existing rule for this host
-        val hostRuleResult = hostRuleRepository.getHostRuleByHost(host).first()
+        val hostRuleResult = hostRuleRepository.getHostRuleByHost(host)
         if (hostRuleResult is DomainResult.Failure) {
             return DomainResult.Failure(hostRuleResult.error)
         }
@@ -125,7 +123,7 @@ class ClearPreferredBrowserForHostUseCaseImpl @Inject constructor(
         }
 
         // Check if there's an existing rule for this host
-        val hostRuleResult = hostRuleRepository.getHostRuleByHost(host).first()
+        val hostRuleResult = hostRuleRepository.getHostRuleByHost(host)
         if (hostRuleResult is DomainResult.Failure) {
             return DomainResult.Failure(hostRuleResult.error)
         }
