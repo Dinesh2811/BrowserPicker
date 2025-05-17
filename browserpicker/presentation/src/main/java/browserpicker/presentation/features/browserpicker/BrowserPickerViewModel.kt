@@ -96,7 +96,6 @@ data class BrowserState(
     val searchQuery: String = "",
 //    val securityInfoResult: SecurityInfoResult = SecurityInfoResult.Error(SslStatus.FETCH_ERROR, "Not yet fetched", null),
     val uri: Uri? = null,
-    val uriSource: UriSource = UriSource.INTENT,
     val uriProcessingResult: UriProcessingResult? = null
 )
 

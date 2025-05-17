@@ -27,6 +27,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import browserpicker.core.utils.logError
 import browserpicker.core.utils.logInfo
+import browserpicker.domain.model.UriRecord
+import browserpicker.domain.model.UriSource
 import browserpicker.domain.service.ParsedUri
 import browserpicker.presentation.features.browserpicker.uri_info_bar.UriInfoBar
 
@@ -95,10 +97,11 @@ fun BrowserPickerBottomSheetContent(
 }
 
 data class UriProcessingResult(
-//    val requestedUri: String,
-//    val effectivePreference: UriRecord? = null,
+    val requestedUri: String,
+    val uriSource: UriSource,
+    val effectivePreference: UriRecord? = null,
     val isBlocked: Boolean = false,
-//    val alwaysOpenBrowserPackage: String? = null,
+    val alwaysOpenBrowserPackage: String? = null,
     val isBookmarked: Boolean = false
 )
 

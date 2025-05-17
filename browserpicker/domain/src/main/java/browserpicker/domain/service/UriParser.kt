@@ -38,7 +38,7 @@ data class ParsedUri(
 }
 
 interface UriParser {
-    fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String> = DEFAULT_SUPPORTED_SCHEMES): DomainResult<ParsedUri?, UriValidationError>
+    fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String> = DEFAULT_SUPPORTED_SCHEMES): DomainResult<ParsedUri, UriValidationError>
 
     companion object {
         val DEFAULT_SUPPORTED_SCHEMES: Set<String> = setOf("http", "https")
@@ -47,7 +47,7 @@ interface UriParser {
 
 @Singleton
 class AndroidUriParser @Inject constructor(): UriParser {
-    override fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String>): DomainResult<ParsedUri?, UriValidationError> {
+    override fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String>): DomainResult<ParsedUri, UriValidationError> {
         require(supportedSchemes.isNotEmpty()) { "At least one supported scheme must be provided." }
 
         if (uriString.isBlank()) {
