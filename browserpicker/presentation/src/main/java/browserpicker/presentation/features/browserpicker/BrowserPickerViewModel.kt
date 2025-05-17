@@ -148,14 +148,14 @@ class BrowserPickerViewModel @Inject constructor(
     fun updateUri1(uri: Uri, source: UriSource = UriSource.INTENT, isUriUpdated: (Boolean) -> Unit) {
         viewModelScope.launch {
             val currentState = _browserState.value
-            val newBrowserState = updateUriUseCase(currentState, uri, source)
-            val success = !(newBrowserState.uiState is UiState.Error<*> && newBrowserState.uiState.error == TransientError.INVALID_URL_FORMAT)
-
-            _browserState.value = newBrowserState
-            isUriUpdated(success)
+            updateUriUseCase(currentState, uri, source)
+                .collectLatest { newBrowserState: BrowserState ->
+                    _browserState.value = newBrowserState
+                    val success = !(newBrowserState.uiState is UiState.Error<*> && newBrowserState.uiState.error == TransientError.INVALID_URL_FORMAT)
+                    isUriUpdated(success)
+                }
         }
     }
-
 
     private fun processUri(uriString: String, source: UriSource) {
         viewModelScope.launch {
