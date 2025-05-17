@@ -1,6 +1,7 @@
 package browserpicker.domain.service
 
 import android.net.Uri
+import android.util.Patterns
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Link
@@ -38,6 +39,7 @@ data class ParsedUri(
 }
 
 interface UriParser {
+    fun parseAndValidateWebUri(uri: Uri, supportedSchemes: Set<String> = DEFAULT_SUPPORTED_SCHEMES): DomainResult<ParsedUri, UriValidationError>
     fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String> = DEFAULT_SUPPORTED_SCHEMES): DomainResult<ParsedUri, UriValidationError>
 
     companion object {
@@ -47,11 +49,12 @@ interface UriParser {
 
 @Singleton
 class AndroidUriParser @Inject constructor(): UriParser {
-    override fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String>): DomainResult<ParsedUri, UriValidationError> {
+    override fun parseAndValidateWebUri(uri: Uri, supportedSchemes: Set<String>): DomainResult<ParsedUri, UriValidationError> {
         require(supportedSchemes.isNotEmpty()) { "At least one supported scheme must be provided." }
+        val uriString = uri?.toString()?.trim()
 
-        if (uriString.isBlank()) {
-            return DomainResult.Failure(UriValidationError.BlankOrEmpty(message = "URI string cannot be blank or empty."))
+        if (uriString.isNullOrEmpty() || uriString.isBlank() || uriString.lowercase() == "null") {
+            return DomainResult.Failure(UriValidationError.BlankOrEmpty(message = "URI string cannot be null or empty."))
         }
 
         return try {
@@ -79,6 +82,18 @@ class AndroidUriParser @Inject constructor(): UriParser {
         } catch (e: Exception) {
             DomainResult.Failure(UriValidationError.Invalid("Failed to parse URI: $uriString", e))
         }
+    }
+
+    override fun parseAndValidateWebUri(uriString: String, supportedSchemes: Set<String>): DomainResult<ParsedUri, UriValidationError> {
+        return try {
+            parseAndValidateWebUri(uriString.toUri(), supportedSchemes)
+        } catch (e: Exception) {
+            DomainResult.Failure(UriValidationError.Invalid("Failed to parse URI: $uriString", e))
+        }
+    }
+
+    fun isValidUrl(url: String): Boolean {
+        return Patterns.WEB_URL.matcher(url.trim().toString()).matches()
     }
 
     private fun isValidHostFormat(host: String): Boolean {

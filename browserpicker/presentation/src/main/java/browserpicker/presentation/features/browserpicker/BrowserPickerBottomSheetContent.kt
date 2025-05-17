@@ -97,7 +97,8 @@ fun BrowserPickerBottomSheetContent(
 }
 
 data class UriProcessingResult(
-    val requestedUri: String,
+//    val requestedUri: String,
+    val parsedUri: ParsedUri,
     val uriSource: UriSource,
     val effectivePreference: UriRecord? = null,
     val isBlocked: Boolean = false,

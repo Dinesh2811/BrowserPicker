@@ -137,7 +137,6 @@ class BrowserPickerViewModel @Inject constructor(
         }
     }
 
-
     private fun processUri(uriString: String, source: UriSource) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
