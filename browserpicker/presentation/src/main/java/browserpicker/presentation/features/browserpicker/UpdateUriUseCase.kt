@@ -15,20 +15,27 @@ class UpdateUriUseCase @Inject constructor(
     operator fun invoke(
         currentBrowserState: BrowserState,
         uri: Uri,
-        source: UriSource = UriSource.INTENT
+        source: UriSource = UriSource.INTENT,
     ): Flow<BrowserState> = flow {
-        val uriString = uri.toString()
-
-        if (BrowserDefault.isValidUrl(uriString)) {
-            val successState = currentBrowserState.copy(
-                uri = uri,
-                uriSource = source,
-                uriProcessingResult = null,
-            )
-            emit(successState)
-        } else {
-            val errorState = currentBrowserState.copy(uiState = UiState.Error(TransientError.INVALID_URL_FORMAT))
-            emit(errorState)
+        val uriString = uri?.toString()?.trim()
+        when {
+            uriString.isNullOrEmpty() -> {
+                emit(currentBrowserState.copy(uiState = UiState.Error(TransientError.NULL_OR_EMPTY_URL)))
+                return@flow
+            }
+            !BrowserDefault.isValidUrl(uriString) -> {
+                emit(currentBrowserState.copy(uiState = UiState.Error(TransientError.INVALID_URL_FORMAT)))
+                return@flow
+            }
+            else -> {
+                val successState = currentBrowserState.copy(
+                    uri = uri,
+                    uriSource = source,
+                    uriProcessingResult = null,
+                    //uiState = if (currentBrowserState.uiState is UiState.Error<*>) { UiState.Idle } else { currentBrowserState.uiState }
+                )
+                emit(successState)
+            }
         }
     }
 }

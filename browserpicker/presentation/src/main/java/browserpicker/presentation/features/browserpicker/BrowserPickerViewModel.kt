@@ -124,38 +124,20 @@ class BrowserPickerViewModel @Inject constructor(
     fun updateBrowserState(update: (BrowserState) -> BrowserState) {
         _browserState.update(update)
     }
+
     fun updateUri(uri: Uri, source: UriSource = UriSource.INTENT, isUriUpdated: (Boolean) -> Unit) {
         viewModelScope.launch {
-//            clearUriSecurityInfo()
-            val uriString = uri.toString()
-            if (BrowserDefault.isValidUrl(uriString)) {
-                _browserState.update {
-                    it.copy(
-                        uri = uri,
-                        uriSource = source,
-                        uriProcessingResult = null
-                    )
-                }
-                isUriUpdated(true)
-                processUri(uriString, source)
-            } else {
-                isUriUpdated(false)
-                _browserState.update { it.copy(uiState = UiState.Error(TransientError.INVALID_URL_FORMAT)) }
-            }
-        }
-    }
-
-    fun updateUri1(uri: Uri, source: UriSource = UriSource.INTENT, isUriUpdated: (Boolean) -> Unit) {
-        viewModelScope.launch {
             val currentState = _browserState.value
+//            clearUriSecurityInfo()
             updateUriUseCase(currentState, uri, source)
                 .collectLatest { newBrowserState: BrowserState ->
                     _browserState.value = newBrowserState
-                    val success = !(newBrowserState.uiState is UiState.Error<*> && newBrowserState.uiState.error == TransientError.INVALID_URL_FORMAT)
-                    isUriUpdated(success)
+                    isUriUpdated(newBrowserState.uiState !is UiState.Error<*>)
+                    processUri(uri.toString(), source)
                 }
         }
     }
+
 
     private fun processUri(uriString: String, source: UriSource) {
         viewModelScope.launch {
@@ -166,6 +148,7 @@ class BrowserPickerViewModel @Inject constructor(
     }
 
     fun loadBrowserApps() {
+        if (_browserState.value.uiState == UiState.Loading) return
         viewModelScope.launch {
             getInstalledBrowserAppsUseCase()
                 .collectLatest { newBrowserState: BrowserState ->
