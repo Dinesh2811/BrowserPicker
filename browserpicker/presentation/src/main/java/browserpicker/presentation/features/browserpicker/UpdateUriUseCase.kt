@@ -37,7 +37,7 @@ class UpdateUriUseCase @Inject constructor(
         currentBrowserState: BrowserState,
         uri: Uri,
         source: UriSource = UriSource.INTENT
-    ): Flow<BrowserState> = flow {
+    ): BrowserState {
         val uriString = uri.toString()
 
         if (BrowserDefault.isValidUrl(uriString)) {
@@ -46,7 +46,7 @@ class UpdateUriUseCase @Inject constructor(
                 uriSource = source,
                 uriProcessingResult = null,
             )
-            emit(successState)
+            return successState
         } else {
             // If invalid, emit a new state reflecting the validation error.
             // Keep the URI fields as they were before the attempt, but set the error state.
@@ -56,7 +56,7 @@ class UpdateUriUseCase @Inject constructor(
                 uriProcessingResult = null,
                 uiState = UiState.Error(TransientError.INVALID_URL_FORMAT) // Set the specific transient error
             )
-            emit(errorState)
+            return errorState
         }
     }
     // No .onStart, .catch needed here as the operation is synchronous validation
