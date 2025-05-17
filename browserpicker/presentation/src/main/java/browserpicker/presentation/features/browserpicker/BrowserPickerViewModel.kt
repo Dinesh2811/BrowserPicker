@@ -113,6 +113,7 @@ class BrowserPickerViewModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     @MainDispatcher private val mainDispatcher: CoroutineDispatcher,
     private val getInstalledBrowserAppsUseCase: GetInstalledBrowserAppsUseCase,
+    private val updateUriUseCase: UpdateUriUseCase,
 ): ViewModel() {
     private val _browserState: MutableStateFlow<BrowserState> = MutableStateFlow(BrowserState(uiState = UiState.Loading))
     val browserState: StateFlow<BrowserState> = _browserState.asStateFlow()
@@ -143,6 +144,33 @@ class BrowserPickerViewModel @Inject constructor(
             }
         }
     }
+
+    fun updateUri1(uri: Uri, source: UriSource = UriSource.INTENT, isUriUpdated: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            // Get the current state to pass to the UseCase
+            val currentState = _browserState.value
+
+            // Call the new UseCase and collect its emitted BrowserState
+            updateUriUseCase(currentState, uri, source)
+                .collectLatest { newBrowserState: BrowserState ->
+                    // Update the ViewModel's state directly with the state from the UseCase
+                    _browserState.value = newBrowserState
+
+                    // Based on the state emitted by the UseCase, trigger the callback
+                    // If the new state is an Error state *and* specifically the INVALID_URL_FORMAT error,
+                    // consider it a failure for the callback. Otherwise, consider it a success.
+                    val success = !(newBrowserState.uiState is UiState.Error<*> &&
+                            newBrowserState.uiState.error == TransientError.INVALID_URL_FORMAT)
+
+                    isUriUpdated(success)
+
+                    // Optional: If the callback is solely for UI reaction (like showing a toast),
+                    // you might prefer exposing a one-shot event Flow from the ViewModel
+                    // instead of using a callback parameter. But adhering to the original signature.
+                }
+        }
+    }
+
 
     private fun processUri(uriString: String, source: UriSource) {
         viewModelScope.launch {
