@@ -74,3 +74,13 @@ fun FolderType.toUriStatus(): UriStatus = when (this) {
     FolderType.BLOCK -> UriStatus.BLOCKED
     FolderType.UNKNOWN -> UriStatus.NONE
 }
+
+
+/*
+
+enum class UriSource(val value: Int) { UNKNOWN(-1), INTENT(1), CLIPBOARD(2), MANUAL(3); }
+enum class InteractionAction(val value: Int) { UNKNOWN(-1), DISMISSED(1), BLOCKED_URI_ENFORCED(2), PREFERENCE_SET(10), OPENED_ONCE(11), OPENED_BY_PREFERENCE(12); }
+enum class UriStatus(val value: Int) { UNKNOWN(-1), NONE(0), BOOKMARKED(1), BLOCKED(2); }
+enum class FolderType(val value: Int) { UNKNOWN(-1), BOOKMARK(1), BLOCK(2); }
+
+ */
