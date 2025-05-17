@@ -46,4 +46,8 @@ class UpdateUriUseCase @Inject constructor(
                 }
             }
     }
+
+    private fun processUri(parsedUri: ParsedUri, source: UriSource) {
+
+    }
 }

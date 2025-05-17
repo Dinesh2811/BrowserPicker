@@ -137,6 +137,31 @@ class BrowserPickerViewModel @Inject constructor(
         }
     }
 
+//    private fun processUri(uriString: String, source: UriSource) {
+//        viewModelScope.launch {
+//            val request = UriProcessingRequest(
+//                uriString = uriString,
+//                uriSource = source,
+//                interceptionTime = clock.now()
+//            )
+//            try {
+//                appRepository.getUriProcessingInfo(request)
+//                    .flowOn(ioDispatcher) // Ensure DB access is on IO
+//                    .catch { e ->
+//                        logError("Error getting URI processing info for $uriString from $source \n ${e.message}")
+//                        updateErrorUiState(PersistentError.UnknownError(e as? Exception))
+//                    }
+//                    .collectLatest { result -> // Use collectLatest if multiple updates are possible quickly
+//                        _browserState.update { it.copy(uriProcessingResult = result) }
+//                        processUriResult(result)
+//                    }
+//            } catch (e: Exception) {
+//                logError("Failed to process URI $uriString from $source \n ${e.message}")
+//                updateErrorUiState(PersistentError.UnknownError(e))
+//            }
+//        }
+//    }
+
     private fun processUri(uriString: String, source: UriSource) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
