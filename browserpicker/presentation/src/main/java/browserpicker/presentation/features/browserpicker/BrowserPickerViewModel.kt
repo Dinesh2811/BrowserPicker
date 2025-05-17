@@ -19,14 +19,11 @@ import browserpicker.core.di.IoDispatcher
 import browserpicker.core.di.MainDispatcher
 import browserpicker.core.results.AppError
 import browserpicker.core.results.DomainResult
-import browserpicker.core.results.PersistentError
-import browserpicker.core.results.TransientError
-import browserpicker.core.results.UiError
-import browserpicker.core.results.UiState
 import browserpicker.core.utils.LogLevel
 import browserpicker.core.utils.log
 import browserpicker.domain.model.BrowserAppInfo
 import browserpicker.domain.model.UriSource
+import browserpicker.presentation.features.browserpicker.PersistentError.Companion.uiErrorState
 import browserpicker.presentation.util.BrowserDefault
 import dagger.Binds
 import dagger.Module
@@ -56,6 +53,41 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.*
 import kotlin.collections.map
+
+sealed interface UiError: AppError
+
+sealed interface UiState<out T, out E: UiError> {
+    data object Loading: UiState<Nothing, Nothing>
+    data object Idle: UiState<Nothing, Nothing>
+    data class Success<T>(val data: T): UiState<T, Nothing>
+    data class Error<E: UiError>(val error: E): UiState<Nothing, E>
+    data object Blocked: UiState<Nothing, Nothing>
+}
+
+sealed interface PersistentError: UiError {
+    sealed interface InstalledBrowserApps: PersistentError {
+        data class Empty(override val message: String = "No installed browser apps found"): InstalledBrowserApps
+        data class LoadFailed(override val message: String = "Failed to load installed browser apps", override val cause: Throwable? = null): InstalledBrowserApps
+        data class UnknownError(override val message: String = "An unknown error occurred while loading installed browser apps", override val cause: Throwable): InstalledBrowserApps
+    }
+
+    companion object {
+        fun uiErrorState(uiState: PersistentError): UiState.Error<UiError> {
+            return UiState.Error(uiState)
+        }
+    }
+
+//    data class InvalidConfiguration(override val message: String = "Invalid browser configuration", override val cause: Throwable? = null): PersistentError
+//    data class UnknownError(override val message: String = "An unknown error occurred", override val cause: Throwable? = null): PersistentError
+}
+
+enum class TransientError(override val message: String): UiError {
+    NULL_OR_EMPTY_URL("URL cannot be empty"),
+    NO_BROWSER_SELECTED("Please select a browser first"),
+    INVALID_URL_FORMAT("Invalid URL format"),
+    LAUNCH_FAILED("Failed to launch browser"),
+    SELECTION_REQUIRED("Please select a browser first")
+}
 
 data class BrowserState(
     val allAvailableBrowsers: List<BrowserAppInfo> = emptyList(),
@@ -120,37 +152,6 @@ class BrowserPickerViewModel @Inject constructor(
         }
     }
 
-    private fun updateErrorUiState(uiState: UiError) {
-        _browserState.update { it.copy(uiState = UiState.Error(uiState)) }
-    }
-
-//    fun loadBrowserApps1() {
-//        if (_browserState.value.uiState !is UiState.Loading) {
-//            _browserState.update { it.copy(uiState = UiState.Loading) }
-//        }
-//        viewModelScope.launch {
-//            try {
-//                getInstalledBrowserAppsUseCase()
-//                    .flowOn(Dispatchers.IO)
-//                    .catch { e ->
-//                        updateErrorUiState(PersistentError.LoadFailed(cause = e))
-//                    }
-//                    .collectLatest { apps ->
-//                        _browserState.update {
-//                            it.copy(
-//                                allAvailableBrowsers = apps,
-//                                uiState = if (apps.isEmpty()) { UiState.Error(PersistentError.NoBrowserAppsFound()) } else { UiState.Idle },
-//                                selectedBrowserAppInfo = null
-//                            )
-//                        }
-//                        logDebug("Browser apps loaded. Count: ${apps.size}")
-//                    }
-//            } catch (e: Exception) {
-//                updateErrorUiState(PersistentError.LoadFailed(cause = e))
-//            }
-//        }
-//    }
-
     fun loadBrowserApps() {
         viewModelScope.launch {
             getInstalledBrowserAppsUseCase()
@@ -159,121 +160,25 @@ class BrowserPickerViewModel @Inject constructor(
                 }
         }
     }
-
-
-//    fun loadBrowserApps() {
-//        if (_browserState.value.uiState is UiState.Loading) {
-//            return
-//        }
-//
-//        viewModelScope.launch {
-//            _browserState.update { it.copy(uiState = UiState.Loading) }
-//
-//            loadBrowserAppsUseCase()
-//                .collectLatest { result: DomainResult<List<BrowserAppInfo>, PersistentError> ->
-//                    _browserState.update { currentState: BrowserState ->
-//                        result.fold(
-//                            onSuccess = { apps: List<BrowserAppInfo> ->
-//                                Timber.d("Browser apps loaded. Count: ${apps.size}")
-//                                currentState.copy(
-//                                    allAvailableBrowsers = apps,
-//                                    uiState = if (apps.isEmpty()) { UiState.Error(PersistentError.NoBrowserAppsFound()) } else { UiState.Idle },
-//                                    selectedBrowserAppInfo = null
-//                                )
-//                            },
-//                            onFailure = { error: PersistentError ->
-//                                currentState.copy(
-//                                    allAvailableBrowsers = emptyList(),
-//                                    uiState = UiState.Error(error),
-//                                    selectedBrowserAppInfo = null
-//                                )
-//                            }
-//                        )
-//                    }
-//                }
-//        }
-//    }
 }
 
-sealed interface DomainError: AppError {
-    data class LoadFailed(
-        override val message: String = "Data load failed in domain layer",
-        override val cause: Throwable? = null,
-    ): DomainError
-}
 class GetInstalledBrowserAppsUseCase @Inject constructor(
     private val browserPickerRepository: BrowserPickerRepository,
-    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-    @MainDispatcher private val mainDispatcher: CoroutineDispatcher,
 ) {
-//    operator fun invoke(): Flow<DomainResult<List<BrowserAppInfo>, PersistentError>> {
-//        val browserAppInfos: Flow<List<BrowserAppInfo>> = browserPickerRepository.getBrowserApps()
-//        return browserAppInfos
-//            .flowOn(ioDispatcher)
-//            .map<List<BrowserAppInfo>, DomainResult<List<BrowserAppInfo>, PersistentError>> { apps ->
-//                DomainResult.Success(apps)
-//            }
-//            .catch { e ->
-//                emit(DomainResult.Failure(PersistentError.LoadFailed(cause = e)))
-//            }
-//    }
-
-//    operator fun invoke(): Flow<BrowserState> {
-//        return browserPickerRepository.getBrowserApps()
-//            .flowOn(ioDispatcher)
-//            .map { apps: List<BrowserAppInfo> ->
-//                createBrowserState(
-//                    allAvailableBrowsers = apps,
-//                    uiState = if (apps.isEmpty()) { UiState.Error(PersistentError.NoBrowserAppsFound()) } else { UiState.Idle }
-//                )
-//            }
-//            .onStart {
-//                emit(createBrowserState(uiState = UiState.Loading))
-//            }
-//            .catch { e ->
-//                emit(createBrowserState(uiState = UiState.Error(PersistentError.LoadFailed(cause = e))))
-//            }
-//    }
-//
-//    private fun createBrowserState(
-//        allAvailableBrowsers: List<BrowserAppInfo> = emptyList(),
-//        selectedBrowserAppInfo: BrowserAppInfo? = null,
-//        uiState: UiState<Unit, UiError> = UiState.Idle
-//    ): BrowserState {
-//        return BrowserState(
-//            allAvailableBrowsers = allAvailableBrowsers,
-//            selectedBrowserAppInfo = selectedBrowserAppInfo,
-//            uiState = uiState
-//        )
-//    }
-
     operator fun invoke(): Flow<BrowserState> {
-        val getBrowserAppsResult: Flow<DomainResult<List<BrowserAppInfo>, DomainError>> = browserPickerRepository.getBrowserApps()
+        val getBrowserAppsResult: Flow<DomainResult<List<BrowserAppInfo>, AppError>> = browserPickerRepository.getInstalledBrowserApps()
         return getBrowserAppsResult
-            .map { domainResult: DomainResult<List<BrowserAppInfo>, DomainError> ->
-                when (domainResult) {
+            .map { result: DomainResult<List<BrowserAppInfo>, AppError> ->
+                when (result) {
                     is DomainResult.Success -> {
-                        val apps: List<BrowserAppInfo> = domainResult.data
+                        val apps: List<BrowserAppInfo> = result.data
                         createBrowserState(
                             allAvailableBrowsers = apps,
-                            uiState = if (apps.isEmpty()) {
-                                UiState.Error(PersistentError.NoBrowserAppsFound())
-                            } else {
-                                UiState.Idle
-                            }
+                            uiState = if (apps.isEmpty()) { uiErrorState(PersistentError.InstalledBrowserApps.Empty()) } else { UiState.Idle }
                         )
                     }
                     is DomainResult.Failure -> {
-//                        val uiError = when (domainResult.error) {
-//                            is DomainError.LoadFailed -> {
-//                                PersistentError.LoadFailed(cause = domainResult.error.cause)
-//                            }
-//                            else -> {
-//                                PersistentError.UnknownError(cause = domainResult.error.cause, message = "An unexpected domain error occurred.")
-//                            }
-//                        }
-                        createBrowserState(uiState = UiState.Error(PersistentError.LoadFailed(cause = domainResult.error.cause)))
+                        createBrowserState(uiState = uiErrorState(PersistentError.InstalledBrowserApps.LoadFailed(cause = result.error.cause)))
                     }
                 }
             }
@@ -281,7 +186,7 @@ class GetInstalledBrowserAppsUseCase @Inject constructor(
                 emit(createBrowserState(uiState = UiState.Loading))
             }
             .catch { e ->
-                emit(createBrowserState(uiState = UiState.Error(PersistentError.UnknownError(cause = e, message = "An unexpected error occurred in the UseCase processing flow."))))
+                emit(createBrowserState(uiState = uiErrorState(PersistentError.InstalledBrowserApps.UnknownError(cause = e))))
             }
     }
 
@@ -298,18 +203,6 @@ class GetInstalledBrowserAppsUseCase @Inject constructor(
     }
 }
 
-//class GetInstalledBrowserAppsUseCase @Inject constructor(
-//    private val browserPickerRepository: BrowserPickerRepository,
-//) {
-//    operator fun invoke(): Flow<List<BrowserAppInfo>> {
-//        return flow { emptyList<List<BrowserAppInfo>>() }
-////        return browserPickerRepository.getBrowserApps()
-////            .map { browserList ->
-////                browserList.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.appName })
-////            }
-//    }
-//}
-
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class BrowserPickerModule {
@@ -320,7 +213,7 @@ abstract class BrowserPickerModule {
 
 
 interface BrowserPickerRepository {
-    fun getBrowserApps(): Flow<DomainResult<List<BrowserAppInfo>, DomainError>>
+    fun getInstalledBrowserApps(): Flow<DomainResult<List<BrowserAppInfo>, AppError>>
 }
 
 class BrowserPickerRepositoryImpl @Inject constructor(
@@ -330,7 +223,7 @@ class BrowserPickerRepositoryImpl @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     @MainDispatcher private val mainDispatcher: CoroutineDispatcher,
 ): BrowserPickerRepository {
-    override fun getBrowserApps(): Flow<DomainResult<List<BrowserAppInfo>, DomainError>> = flow {
+    override fun getInstalledBrowserApps(): Flow<DomainResult<List<BrowserAppInfo>, AppError>> = flow {
         try {
             val browserApps: List<BrowserAppInfo> = coroutineScope {
                 browserPickerDataSource.browserResolveInfoList
@@ -347,8 +240,9 @@ class BrowserPickerRepositoryImpl @Inject constructor(
 
             emit(DomainResult.Success(browserApps))
         } catch (e: Exception) {
-            Timber.e(e, "Error fetching browser apps: ${e.message}")
-            emit(DomainResult.Failure(DomainError.LoadFailed(cause = e)))
+            val message = "An unexpected error occurred while fetching installed browser apps"
+            Timber.e(e, "$message: ${e.message}")
+            emit(DomainResult.Failure(AppError.UnknownError(message = message, cause = e)))
         }
     }.flowOn(defaultDispatcher)
 

@@ -180,32 +180,6 @@ sealed class DomainResult<out S, out F: AppError> {
     }
 }
 
-
-sealed interface UiError: AppError
-
-sealed interface UiState<out T, out E: UiError> {
-    data object Loading: UiState<Nothing, Nothing>
-    data object Idle: UiState<Nothing, Nothing>
-    data class Success<T>(val data: T): UiState<T, Nothing>
-    data class Error<E: UiError>(val error: E): UiState<Nothing, E>
-    data object Blocked: UiState<Nothing, Nothing>
-}
-
-sealed interface PersistentError: UiError {
-    data class NoBrowserAppsFound(override val message: String = "No browsers available", override val cause: Throwable? = null): PersistentError
-    data class LoadFailed(override val message: String = "Failed to load browser apps", override val cause: Throwable? = null): PersistentError
-    data class InvalidConfiguration(override val message: String = "Invalid browser configuration", override val cause: Throwable? = null): PersistentError
-    data class UnknownError(override val message: String = "An unknown error occurred", override val cause: Throwable? = null): PersistentError
-}
-
-enum class TransientError(override val message: String): UiError {
-    NULL_OR_EMPTY_URL("URL cannot be empty"),
-    NO_BROWSER_SELECTED("Please select a browser first"),
-    INVALID_URL_FORMAT("Invalid URL format"),
-    LAUNCH_FAILED("Failed to launch browser"),
-    SELECTION_REQUIRED("Please select a browser first")
-}
-
 /**
  * A sealed class representing various types of domain-specific failures.
  * This provides a structured and extensible way to categorize errors.
