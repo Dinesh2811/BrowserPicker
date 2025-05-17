@@ -25,11 +25,8 @@ import browserpicker.core.results.UiError
 import browserpicker.core.results.UiState
 import browserpicker.core.utils.LogLevel
 import browserpicker.core.utils.log
-import browserpicker.core.utils.logDebug
-import browserpicker.core.utils.logError
 import browserpicker.domain.model.BrowserAppInfo
 import browserpicker.domain.model.UriSource
-import browserpicker.presentation.toUiState
 import browserpicker.presentation.util.BrowserDefault
 import dagger.Binds
 import dagger.Module
@@ -45,9 +42,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
@@ -55,15 +50,12 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
 import timber.log.Timber
 import javax.inject.*
 import kotlin.collections.map
-import kotlin.time.Duration.Companion.milliseconds
 
 data class BrowserState(
     val allAvailableBrowsers: List<BrowserAppInfo> = emptyList(),
@@ -79,7 +71,7 @@ data class BrowserState(
 @OptIn(FlowPreview::class)
 @HiltViewModel
 class BrowserPickerViewModel @Inject constructor(
-    private val getInstalledBrowserAppsUseCase: GetInstalledBrowserAppsUseCase,
+//    private val getInstalledBrowserAppsUseCase: GetInstalledBrowserAppsUseCase,
 //    private val setDefaultBrowserUseCase: SetDefaultBrowserUseCase,
 //    private val launchBrowserUseCase: LaunchBrowserUseCase,
 //    private val getUriSecurityInfoUseCase: GetUriSecurityInfoUseCase,
@@ -88,7 +80,7 @@ class BrowserPickerViewModel @Inject constructor(
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     @MainDispatcher private val mainDispatcher: CoroutineDispatcher,
-    private val loadBrowserAppsUseCase: LoadBrowserAppsUseCase,
+    private val getInstalledBrowserAppsUseCase: GetInstalledBrowserAppsUseCase,
 ): ViewModel() {
     private val _browserState: MutableStateFlow<BrowserState> = MutableStateFlow(BrowserState(uiState = UiState.Loading))
     val browserState: StateFlow<BrowserState> = _browserState.asStateFlow()
@@ -132,36 +124,36 @@ class BrowserPickerViewModel @Inject constructor(
         _browserState.update { it.copy(uiState = UiState.Error(uiState)) }
     }
 
-    fun loadBrowserApps1() {
-        if (_browserState.value.uiState !is UiState.Loading) {
-            _browserState.update { it.copy(uiState = UiState.Loading) }
-        }
-        viewModelScope.launch {
-            try {
-                getInstalledBrowserAppsUseCase()
-                    .flowOn(Dispatchers.IO)
-                    .catch { e ->
-                        updateErrorUiState(PersistentError.LoadFailed(cause = e))
-                    }
-                    .collectLatest { apps ->
-                        _browserState.update {
-                            it.copy(
-                                allAvailableBrowsers = apps,
-                                uiState = if (apps.isEmpty()) { UiState.Error(PersistentError.NoBrowserAppsFound()) } else { UiState.Idle },
-                                selectedBrowserAppInfo = null
-                            )
-                        }
-                        logDebug("Browser apps loaded. Count: ${apps.size}")
-                    }
-            } catch (e: Exception) {
-                updateErrorUiState(PersistentError.LoadFailed(cause = e))
-            }
-        }
-    }
+//    fun loadBrowserApps1() {
+//        if (_browserState.value.uiState !is UiState.Loading) {
+//            _browserState.update { it.copy(uiState = UiState.Loading) }
+//        }
+//        viewModelScope.launch {
+//            try {
+//                getInstalledBrowserAppsUseCase()
+//                    .flowOn(Dispatchers.IO)
+//                    .catch { e ->
+//                        updateErrorUiState(PersistentError.LoadFailed(cause = e))
+//                    }
+//                    .collectLatest { apps ->
+//                        _browserState.update {
+//                            it.copy(
+//                                allAvailableBrowsers = apps,
+//                                uiState = if (apps.isEmpty()) { UiState.Error(PersistentError.NoBrowserAppsFound()) } else { UiState.Idle },
+//                                selectedBrowserAppInfo = null
+//                            )
+//                        }
+//                        logDebug("Browser apps loaded. Count: ${apps.size}")
+//                    }
+//            } catch (e: Exception) {
+//                updateErrorUiState(PersistentError.LoadFailed(cause = e))
+//            }
+//        }
+//    }
 
     fun loadBrowserApps() {
         viewModelScope.launch {
-            loadBrowserAppsUseCase()
+            getInstalledBrowserAppsUseCase()
                 .collectLatest { newBrowserState: BrowserState ->
                     _browserState.value = newBrowserState
                 }
@@ -209,7 +201,7 @@ sealed interface DomainError: AppError {
         override val cause: Throwable? = null,
     ): DomainError
 }
-class LoadBrowserAppsUseCase @Inject constructor(
+class GetInstalledBrowserAppsUseCase @Inject constructor(
     private val browserPickerRepository: BrowserPickerRepository,
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
@@ -306,17 +298,17 @@ class LoadBrowserAppsUseCase @Inject constructor(
     }
 }
 
-class GetInstalledBrowserAppsUseCase @Inject constructor(
-    private val browserPickerRepository: BrowserPickerRepository,
-) {
-    operator fun invoke(): Flow<List<BrowserAppInfo>> {
-        return flow { emptyList<List<BrowserAppInfo>>() }
-//        return browserPickerRepository.getBrowserApps()
-//            .map { browserList ->
-//                browserList.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.appName })
-//            }
-    }
-}
+//class GetInstalledBrowserAppsUseCase @Inject constructor(
+//    private val browserPickerRepository: BrowserPickerRepository,
+//) {
+//    operator fun invoke(): Flow<List<BrowserAppInfo>> {
+//        return flow { emptyList<List<BrowserAppInfo>>() }
+////        return browserPickerRepository.getBrowserApps()
+////            .map { browserList ->
+////                browserList.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.appName })
+////            }
+//    }
+//}
 
 @Module
 @InstallIn(SingletonComponent::class)
