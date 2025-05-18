@@ -72,9 +72,9 @@ sealed interface PersistentError: UiError {
     }
 
 
-    data class HostRuleAccessFailed(override val message: String, override val cause: Throwable? = null) : PersistentError
-    data class UnknownHostRuleError(override val message: String, override val cause: Throwable? = null) : PersistentError
-    data class HistoryUpdateFailed(override val message: String, override val cause: Throwable? = null) : PersistentError
+    data class HostRuleAccessFailed(override val message: String, override val cause: Throwable? = null): PersistentError
+    data class UnknownHostRuleError(override val message: String, override val cause: Throwable? = null): PersistentError
+    data class HistoryUpdateFailed(override val message: String, override val cause: Throwable? = null): PersistentError
 
     companion object {
         fun uiErrorState(uiState: PersistentError): UiState.Error<UiError> {
@@ -94,14 +94,23 @@ enum class TransientError(override val message: String): UiError {
     SELECTION_REQUIRED("Please select a browser first")
 }
 
+sealed interface BrowserPickerUiEffect {
+    data object AutoOpenBrowser: BrowserPickerUiEffect
+    data object BrowserAppsLoaded: BrowserPickerUiEffect // If loading browser list results in a success state
+    data object SettingsSaved: BrowserPickerUiEffect // If saving settings updates this state
+    data object UriBookmarked: BrowserPickerUiEffect // If a bookmark action updates the state
+    data object UriBlocked: BrowserPickerUiEffect // If a block action updates the state
+    data class UriOpenedOnce(val packageName: String): BrowserPickerUiEffect // If opening once needs a specific signal
+}
+
 data class BrowserState(
     val allAvailableBrowsers: List<BrowserAppInfo> = emptyList(),
     val selectedBrowserAppInfo: BrowserAppInfo? = null,
-    val uiState: UiState<Unit, UiError> = UiState.Idle,
+    val uiState: UiState<BrowserPickerUiEffect, UiError> = UiState.Idle,
     val searchQuery: String = "",
 //    val securityInfoResult: SecurityInfoResult = SecurityInfoResult.Error(SslStatus.FETCH_ERROR, "Not yet fetched", null),
     val uri: Uri? = null,
-    val uriProcessingResult: UriProcessingResult? = null
+    val uriProcessingResult: UriProcessingResult? = null,
 )
 
 @OptIn(FlowPreview::class)
@@ -125,6 +134,7 @@ class BrowserPickerViewModel @Inject constructor(
     fun updateBrowserState(newValue: BrowserState) {
         _browserState.update { newValue }
     }
+
     fun updateBrowserState(update: (BrowserState) -> BrowserState) {
         _browserState.update(update)
     }
@@ -198,9 +208,14 @@ class GetInstalledBrowserAppsUseCase @Inject constructor(
                         val apps: List<BrowserAppInfo> = result.data
                         createBrowserState(
                             allAvailableBrowsers = apps,
-                            uiState = if (apps.isEmpty()) { uiErrorState(PersistentError.InstalledBrowserApps.Empty()) } else { UiState.Idle }
+                            uiState = if (apps.isEmpty()) {
+                                uiErrorState(PersistentError.InstalledBrowserApps.Empty())
+                            } else {
+                                UiState.Idle
+                            }
                         )
                     }
+
                     is DomainResult.Failure -> {
                         createBrowserState(uiState = uiErrorState(PersistentError.InstalledBrowserApps.LoadFailed(cause = result.error.cause)))
                     }
@@ -217,7 +232,7 @@ class GetInstalledBrowserAppsUseCase @Inject constructor(
     private fun createBrowserState(
         allAvailableBrowsers: List<BrowserAppInfo> = emptyList(),
         selectedBrowserAppInfo: BrowserAppInfo? = null,
-        uiState: UiState<Unit, UiError> = UiState.Idle
+        uiState: UiState<BrowserPickerUiEffect, UiError> = UiState.Idle,
     ): BrowserState {
         return BrowserState(
             allAvailableBrowsers = allAvailableBrowsers,
@@ -272,9 +287,9 @@ class BrowserPickerRepositoryImpl @Inject constructor(
 
     private suspend fun createBrowserAppInfo(resolveInfo: ResolveInfo): BrowserAppInfo? {
         return try {
-            val activityInfo = resolveInfo.activityInfo?: return null
-            val packageName = browserPickerDataSource.getPackageName(activityInfo)?: return null
-            val appName = browserPickerDataSource.getAppName(resolveInfo)?: return null
+            val activityInfo = resolveInfo.activityInfo ?: return null
+            val packageName = browserPickerDataSource.getPackageName(activityInfo) ?: return null
+            val appName = browserPickerDataSource.getAppName(resolveInfo) ?: return null
             val appIcon = browserPickerDataSource.getAppIcon(resolveInfo)
             val isDefaultBrowser = browserPickerDataSource.isDefaultBrowser(packageName, 0)
 
@@ -303,9 +318,9 @@ class BrowserPickerRepositoryImpl @Inject constructor(
 
     private fun createBrowserAppInfoEntity(resolveInfo: ResolveInfo): BrowserAppInfoEntity? {
         return try {
-            val activityInfo = resolveInfo.activityInfo?: return null
-            val packageName = browserPickerDataSource.getPackageName(activityInfo)?: return null
-            val appName = browserPickerDataSource.getAppName(resolveInfo)?: return null
+            val activityInfo = resolveInfo.activityInfo ?: return null
+            val packageName = browserPickerDataSource.getPackageName(activityInfo) ?: return null
+            val appName = browserPickerDataSource.getAppName(resolveInfo) ?: return null
             val appIcon = browserPickerDataSource.getAppIcon(resolveInfo)
             val isDefaultBrowser = browserPickerDataSource.isDefaultBrowser(packageName, 0)
 
@@ -472,8 +487,8 @@ class BrowserPickerAppMapper @Inject constructor() {
         try {
             entity.run {
                 BrowserAppInfo(
-                    packageName = packageName?: return@coroutineScope null,
-                    appName = appName?: return@coroutineScope null,
+                    packageName = packageName ?: return@coroutineScope null,
+                    appName = appName ?: return@coroutineScope null,
                 )
             }
         } catch (e: Exception) {

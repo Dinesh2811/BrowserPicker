@@ -13,7 +13,6 @@ import browserpicker.domain.repository.HostRuleRepository
 import browserpicker.domain.repository.UriHistoryRepository
 import browserpicker.domain.service.ParsedUri
 import browserpicker.domain.service.UriParser
-import browserpicker.presentation.features.browserpicker.test.GenericAppError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -21,6 +20,12 @@ import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 import javax.inject.Singleton
 import timber.log.Timber
+
+sealed class GenericAppError(override val message: String, override val cause: Throwable? = null) : AppError {
+    // data class UnknownError(override val message: String, override val cause: Throwable? = null) : GenericAppError(message, cause) // Already in snippet, assume it exists
+    // data class DataIntegrityError(override val message: String, override val cause: Throwable? = null) : GenericAppError(message, cause) // Already in snippet
+    data class DataAccessError(override val message: String, override val cause: Throwable? = null) : GenericAppError(message, cause)
+}
 
 @Singleton
 class UpdateUriUseCase @Inject constructor(
@@ -49,9 +54,7 @@ class UpdateUriUseCase @Inject constructor(
             }
             is DomainResult.Success -> {
                 val parsedUri = parsedUriResult.data
-
-                var currentUriProcessingResult = UriProcessingResult(parsedUri = parsedUri, uriSource = source)
-                val uriProcessingResult = UriProcessingResult(parsedUri = parsedUri, uriSource = source)
+                var uriProcessingResult = UriProcessingResult(parsedUri = parsedUri, uriSource = source)
 
                 // 2. Fetch Host Rule
                 when (val hostRuleDomainResult = hostRuleRepository.getHostRuleByHost(parsedUri.host)) {
@@ -69,7 +72,7 @@ class UpdateUriUseCase @Inject constructor(
                         }
                         emit(currentBrowserState.copy(
                             uri = parsedUri.originalUri,
-                            uriProcessingResult = currentUriProcessingResult, // Result so far
+                            uriProcessingResult = uriProcessingResult, // Result so far
                             uiState = UiState.Error(uiError)
                         ))
                         return@flow
@@ -77,12 +80,12 @@ class UpdateUriUseCase @Inject constructor(
 
                     is DomainResult.Success -> {
                         val hostRule: HostRule? = hostRuleDomainResult.data
-                        currentUriProcessingResult = currentUriProcessingResult.copy(hostRule = hostRule)
+                        uriProcessingResult = uriProcessingResult.copy(hostRule = hostRule)
                         if (hostRule != null) {
                             // 3.a. Check if URI is Blocked by rule
                             if (hostRule.uriStatus == UriStatus.BLOCKED) {
                                 Timber.i("URI ${parsedUri.originalString} is blocked by rule for host ${hostRule.host}")
-                                currentUriProcessingResult = currentUriProcessingResult.copy(isBlocked = true)
+                                uriProcessingResult = uriProcessingResult.copy(isBlocked = true)
                                 val historyResult = uriHistoryRepository.addUriRecord(
                                     uriString = parsedUri.originalString,
                                     host = parsedUri.host,
@@ -99,7 +102,7 @@ class UpdateUriUseCase @Inject constructor(
                                 }
                                 emit(currentBrowserState.copy(
                                     uri = parsedUri.originalUri,
-                                    uriProcessingResult = currentUriProcessingResult,
+                                    uriProcessingResult = uriProcessingResult,
                                     uiState = UiState.Blocked
                                 ))
                                 return@flow
@@ -108,7 +111,7 @@ class UpdateUriUseCase @Inject constructor(
                             // 3.b. Check for Preferred Browser (if not blocked)
                             if (hostRule.isPreferenceEnabled && !hostRule.preferredBrowserPackage.isNullOrBlank()) {
                                 Timber.i("URI ${parsedUri.originalString} to be opened by preference with ${hostRule.preferredBrowserPackage}")
-                                currentUriProcessingResult = currentUriProcessingResult.copy(
+                                uriProcessingResult = uriProcessingResult.copy(
                                     alwaysOpenBrowserPackage = hostRule.preferredBrowserPackage
                                 )
                                 val historyResult = uriHistoryRepository.addUriRecord(
@@ -125,18 +128,15 @@ class UpdateUriUseCase @Inject constructor(
                                 }
                                 emit(currentBrowserState.copy(
                                     uri = parsedUri.originalUri,
-                                    uriProcessingResult = currentUriProcessingResult,
-                                    // UiState.Success can signal the ViewModel to proceed with auto-opening
-                                    // The actual browser opening logic resides in the Activity/ViewModel.
-//                                    uiState = UiState.Success(currentUriProcessingResult)
-                                    uiState = UiState.Success(Unit)
+                                    uriProcessingResult = uriProcessingResult,
+                                    uiState = UiState.Success(BrowserPickerUiEffect.AutoOpenBrowser)
                                 ))
                                 return@flow
                             }
 
                             // 3.c. Check if Bookmarked (if not blocked and no active preference)
                             if (hostRule.uriStatus == UriStatus.BOOKMARKED) {
-                                currentUriProcessingResult = currentUriProcessingResult.copy(isBookmarked = true)
+                                uriProcessingResult = uriProcessingResult.copy(isBookmarked = true)
                             }
                         }
 
@@ -146,7 +146,7 @@ class UpdateUriUseCase @Inject constructor(
 
                         emit(currentBrowserState.copy(
                             uri = parsedUri.originalUri,
-                            uriProcessingResult = currentUriProcessingResult,
+                            uriProcessingResult = uriProcessingResult,
                             uiState = newUiState
                         ))
                     }
@@ -171,7 +171,7 @@ class UpdateUriUseCase @Inject constructor(
         }
     }.flowOn(ioDispatcher)
 
-    private fun determineNewUiStateForPicker(currentUiState: UiState<Unit, UiError>): UiState<Unit, UiError> {
+    private fun determineNewUiStateForPicker(currentUiState: UiState<BrowserPickerUiEffect, UiError>): UiState<BrowserPickerUiEffect, UiError> {
         return when {
             // If previous state was a transient URI error, clear it as we have a valid URI now.
             currentUiState is UiState.Error &&
@@ -182,10 +182,11 @@ class UpdateUriUseCase @Inject constructor(
             currentUiState is UiState.Blocked -> UiState.Idle
 
             // If previous state was a success (e.g. from a previous auto-open), reset to Idle for picker.
-            currentUiState is UiState.Success -> UiState.Idle
+//            currentUiState is UiState.Success -> UiState.Idle
 
+            currentUiState is UiState.Success && currentUiState.data == BrowserPickerUiEffect.AutoOpenBrowser -> UiState.Idle
             // Retain other persistent errors (e.g., failed to load browser list) or Idle/Loading.
-            currentUiState is UiState.Error<*> -> currentUiState
+            currentUiState is UiState.Error -> currentUiState
             currentUiState is UiState.Loading -> currentUiState // Should ideally not be loading during URI update, but handle defensively
             else -> UiState.Idle
         }
