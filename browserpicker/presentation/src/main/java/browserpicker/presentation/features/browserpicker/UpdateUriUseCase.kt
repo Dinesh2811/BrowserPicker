@@ -135,7 +135,9 @@ class UpdateUriUseCase @Inject constructor(
                         Timber.d("URI ${parsedUri.originalString} will be shown in picker. Host rule: $hostRule")
                         val newUiState = determineNewUiStateForPicker(currentBrowserState.uiState)
                         val uiErrorState = if (currentBrowserState.uiState is UiState.Error<*> &&
-                            (currentBrowserState.uiState.error == TransientError.NULL_OR_EMPTY_URL || currentBrowserState.uiState.error == TransientError.INVALID_URL_FORMAT)
+                            (currentBrowserState.uiState.error == TransientError.NULL_OR_EMPTY_URL || 
+                                    currentBrowserState.uiState.error == TransientError.INVALID_URL_FORMAT ||
+                                    currentBrowserState.uiState.error == TransientError.HOST_RULE_ACCESS_FAILED)
                         ) {
                             UiState.Idle
                         } else {
@@ -145,7 +147,7 @@ class UpdateUriUseCase @Inject constructor(
                         val successState: BrowserState = currentBrowserState.copy(
                             uri = parsedUri.originalUri,
                             uriProcessingResult = uriProcessingResult,
-                            uiState = newUiState  // if (this.uiState is UiState.Error<*>) { UiState.Idle } else { this.uiState }
+                            uiState = uiErrorState  // if (this.uiState is UiState.Error<*>) { UiState.Idle } else { this.uiState }
                         )
 
                         emit(successState)
@@ -167,8 +169,8 @@ class UpdateUriUseCase @Inject constructor(
 
             // If previous state was a success (e.g. from a previous auto-open), reset to Idle for picker.
 //            currentUiState is UiState.Success -> UiState.Idle
-
             currentUiState is UiState.Success && currentUiState.data == BrowserPickerUiEffect.AutoOpenBrowser -> UiState.Idle
+
             // Retain other persistent errors (e.g., failed to load browser list) or Idle/Loading.
             currentUiState is UiState.Error -> currentUiState
             currentUiState is UiState.Loading -> currentUiState // Should ideally not be loading during URI update, but handle defensively
