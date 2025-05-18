@@ -1,11 +1,10 @@
 package browserpicker.presentation.features.browserpicker
 
 import android.net.Uri
+import browserpicker.core.di.IoDispatcher
 import browserpicker.core.results.AppError
 import browserpicker.core.results.DomainResult
 import browserpicker.core.results.UriValidationError
-import browserpicker.core.results.onEachFailure
-import browserpicker.core.results.onEachSuccess
 import browserpicker.domain.model.HostRule
 import browserpicker.domain.model.InteractionAction
 import browserpicker.domain.model.UriSource
@@ -14,11 +13,13 @@ import browserpicker.domain.repository.HostRuleRepository
 import browserpicker.domain.repository.UriHistoryRepository
 import browserpicker.domain.service.ParsedUri
 import browserpicker.domain.service.UriParser
+import browserpicker.presentation.features.browserpicker.test.GenericAppError
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.first
 import timber.log.Timber
 
 @Singleton
@@ -27,12 +28,210 @@ class UpdateUriUseCase @Inject constructor(
     private val getHostRuleByHostUseCase: GetHostRuleByHostUseCase,
     private val addUriRecordUseCase: AddUriRecordUseCase,
     private val hostRuleRepository: HostRuleRepository,
+    private val uriHistoryRepository: UriHistoryRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) {
     operator fun invoke(
         currentBrowserState: BrowserState,
         uri: Uri,
         source: UriSource = UriSource.INTENT,
     ): Flow<BrowserState> = flow {
+        // 1. Parse and Validate URI
+        when (val parsedUriResult = uriParser.parseAndValidateWebUri(uri)) {
+            is DomainResult.Failure -> {
+                val uiErrorState = when(parsedUriResult.error) {
+                    is UriValidationError.BlankOrEmpty -> UiState.Error(TransientError.NULL_OR_EMPTY_URL)
+                    else -> UiState.Error(TransientError.INVALID_URL_FORMAT)
+                }
+                Timber.w("URI validation failed: ${parsedUriResult.error.message}")
+                emit(currentBrowserState.copy(uri = null, uriProcessingResult = null, uiState = uiErrorState))
+                return@flow
+            }
+            is DomainResult.Success -> {
+                val parsedUri = parsedUriResult.data
+
+                var currentUriProcessingResult = UriProcessingResult(parsedUri = parsedUri, uriSource = source)
+                val uriProcessingResult = UriProcessingResult(parsedUri = parsedUri, uriSource = source)
+
+                // 2. Fetch Host Rule
+                when (val hostRuleDomainResult = hostRuleRepository.getHostRuleByHost(parsedUri.host)) {
+                    is DomainResult.Failure -> {
+                        Timber.e(hostRuleDomainResult.error.cause, "Failed to fetch host rule for ${parsedUri.host}: ${hostRuleDomainResult.error.message}")
+                        val uiError: UiError = when (hostRuleDomainResult.error) {
+                            is GenericAppError.DataAccessError -> PersistentError.HostRuleAccessFailed(
+                                message = "Database error fetching rule for ${parsedUri.host}.",
+                                cause = hostRuleDomainResult.error.cause
+                            )
+                            else -> PersistentError.UnknownHostRuleError(
+                                message = "Unknown error fetching rule for ${parsedUri.host}.",
+                                cause = hostRuleDomainResult.error.cause
+                            )
+                        }
+                        emit(currentBrowserState.copy(
+                            uri = parsedUri.originalUri,
+                            uriProcessingResult = currentUriProcessingResult, // Result so far
+                            uiState = UiState.Error(uiError)
+                        ))
+                        return@flow
+                    }
+
+                    is DomainResult.Success -> {
+                        val hostRule: HostRule? = hostRuleDomainResult.data
+                        currentUriProcessingResult = currentUriProcessingResult.copy(hostRule = hostRule)
+                        if (hostRule != null) {
+                            // 3.a. Check if URI is Blocked by rule
+                            if (hostRule.uriStatus == UriStatus.BLOCKED) {
+                                Timber.i("URI ${parsedUri.originalString} is blocked by rule for host ${hostRule.host}")
+                                currentUriProcessingResult = currentUriProcessingResult.copy(isBlocked = true)
+                                val historyResult = uriHistoryRepository.addUriRecord(
+                                    uriString = parsedUri.originalString,
+                                    host = parsedUri.host,
+                                    source = source,
+                                    action = InteractionAction.BLOCKED_URI_ENFORCED,
+                                    chosenBrowser = null,
+                                    associatedHostRuleId = hostRule.id
+                                )
+                                if (historyResult is DomainResult.Failure) {
+                                    Timber.e(historyResult.error.cause, "Failed to record blocked URI history: ${historyResult.error.message}")
+                                    // Optionally emit a state indicating history recording failure,
+                                    // but the primary action (blocking) still proceeds.
+                                    // For now, we just log it. A non-critical error state could be added to BrowserState.
+                                }
+                                emit(currentBrowserState.copy(
+                                    uri = parsedUri.originalUri,
+                                    uriProcessingResult = currentUriProcessingResult,
+                                    uiState = UiState.Blocked
+                                ))
+                                return@flow
+                            }
+
+                            // 3.b. Check for Preferred Browser (if not blocked)
+                            if (hostRule.isPreferenceEnabled && !hostRule.preferredBrowserPackage.isNullOrBlank()) {
+                                Timber.i("URI ${parsedUri.originalString} to be opened by preference with ${hostRule.preferredBrowserPackage}")
+                                currentUriProcessingResult = currentUriProcessingResult.copy(
+                                    alwaysOpenBrowserPackage = hostRule.preferredBrowserPackage
+                                )
+                                val historyResult = uriHistoryRepository.addUriRecord(
+                                    uriString = parsedUri.originalString,
+                                    host = parsedUri.host,
+                                    source = source,
+                                    action = InteractionAction.OPENED_BY_PREFERENCE,
+                                    chosenBrowser = hostRule.preferredBrowserPackage,
+                                    associatedHostRuleId = hostRule.id
+                                )
+                                if (historyResult is DomainResult.Failure) {
+                                    Timber.e(historyResult.error.cause, "Failed to record preference URI history: ${historyResult.error.message}")
+                                    // Log, similar to blocked URI history failure.
+                                }
+                                emit(currentBrowserState.copy(
+                                    uri = parsedUri.originalUri,
+                                    uriProcessingResult = currentUriProcessingResult,
+                                    // UiState.Success can signal the ViewModel to proceed with auto-opening
+                                    // The actual browser opening logic resides in the Activity/ViewModel.
+//                                    uiState = UiState.Success(currentUriProcessingResult)
+                                    uiState = UiState.Success(Unit)
+                                ))
+                                return@flow
+                            }
+
+                            // 3.c. Check if Bookmarked (if not blocked and no active preference)
+                            if (hostRule.uriStatus == UriStatus.BOOKMARKED) {
+                                currentUriProcessingResult = currentUriProcessingResult.copy(isBookmarked = true)
+                            }
+                        }
+
+                        // 4. No blocking rule, no auto-open preference => Picker will be shown
+                        Timber.d("URI ${parsedUri.originalString} will be shown in picker. Host rule: $hostRule")
+                        val newUiState = determineNewUiStateForPicker(currentBrowserState.uiState)
+
+                        emit(currentBrowserState.copy(
+                            uri = parsedUri.originalUri,
+                            uriProcessingResult = currentUriProcessingResult,
+                            uiState = newUiState
+                        ))
+                    }
+                }
+
+
+                val uiErrorState = if (currentBrowserState.uiState is UiState.Error<*> &&
+                    (currentBrowserState.uiState.error == TransientError.NULL_OR_EMPTY_URL || currentBrowserState.uiState.error == TransientError.INVALID_URL_FORMAT)
+                ) {
+                    UiState.Idle
+                } else {
+                    currentBrowserState.uiState
+                }
+                val successState: BrowserState = currentBrowserState.copy(
+                    uri = parsedUri.originalUri,
+                    uriProcessingResult = uriProcessingResult,
+                    uiState = uiErrorState  // if (this.uiState is UiState.Error<*>) { UiState.Idle } else { this.uiState }
+                )
+
+                emit(successState)
+            }
+        }
+    }.flowOn(ioDispatcher)
+
+    private fun determineNewUiStateForPicker(currentUiState: UiState<Unit, UiError>): UiState<Unit, UiError> {
+        return when {
+            // If previous state was a transient URI error, clear it as we have a valid URI now.
+            currentUiState is UiState.Error &&
+                    (currentUiState.error == TransientError.NULL_OR_EMPTY_URL ||
+                            currentUiState.error == TransientError.INVALID_URL_FORMAT) -> UiState.Idle
+
+            // If previous state was Blocked, but current URI is not, clear it.
+            currentUiState is UiState.Blocked -> UiState.Idle
+
+            // If previous state was a success (e.g. from a previous auto-open), reset to Idle for picker.
+            currentUiState is UiState.Success -> UiState.Idle
+
+            // Retain other persistent errors (e.g., failed to load browser list) or Idle/Loading.
+            currentUiState is UiState.Error<*> -> currentUiState
+            currentUiState is UiState.Loading -> currentUiState // Should ideally not be loading during URI update, but handle defensively
+            else -> UiState.Idle
+        }
+    }
+
+    private fun processUri(parsedUri: ParsedUri, source: UriSource, currentBrowserState: BrowserState) {
+
+    }
+}
+
+@Singleton
+class GetHostRuleByHostUseCase @Inject constructor(
+    private val hostRuleRepository: HostRuleRepository
+) {
+    suspend operator fun invoke(host: String): DomainResult<HostRule?, AppError> {
+        return hostRuleRepository.getHostRuleByHost(host)
+    }
+}
+
+@Singleton
+class AddUriRecordUseCase @Inject constructor(
+    private val uriHistoryRepository: UriHistoryRepository
+    // InstantProvider is not directly needed here;
+    // The repository implementation should handle timestamp generation.
+) {
+    suspend operator fun invoke(
+        uriString: String,
+        host: String,
+        source: UriSource,
+        action: InteractionAction,
+        chosenBrowser: String?,
+        associatedHostRuleId: Long?
+    ): DomainResult<Long, AppError> {
+        return uriHistoryRepository.addUriRecord(
+            uriString = uriString,
+            host = host,
+            source = source,
+            action = action,
+            chosenBrowser = chosenBrowser,
+            associatedHostRuleId = associatedHostRuleId
+        )
+    }
+}
+
+/*
+
         uriParser.parseAndValidateWebUri(uri)
             .onFailure {
                 val uiErrorState = when(it) {
@@ -150,43 +349,5 @@ class UpdateUriUseCase @Inject constructor(
                     emit(successState)
                 }
             }
-    }
 
-    private fun processUri(parsedUri: ParsedUri, source: UriSource) {
-
-    }
-}
-
-@Singleton
-class GetHostRuleByHostUseCase @Inject constructor(
-    private val hostRuleRepository: HostRuleRepository
-) {
-    suspend operator fun invoke(host: String): DomainResult<HostRule?, AppError> {
-        return hostRuleRepository.getHostRuleByHost(host)
-    }
-}
-
-@Singleton
-class AddUriRecordUseCase @Inject constructor(
-    private val uriHistoryRepository: UriHistoryRepository
-    // InstantProvider is not directly needed here;
-    // The repository implementation should handle timestamp generation.
-) {
-    suspend operator fun invoke(
-        uriString: String,
-        host: String,
-        source: UriSource,
-        action: InteractionAction,
-        chosenBrowser: String?,
-        associatedHostRuleId: Long?
-    ): DomainResult<Long, AppError> {
-        return uriHistoryRepository.addUriRecord(
-            uriString = uriString,
-            host = host,
-            source = source,
-            action = action,
-            chosenBrowser = chosenBrowser,
-            associatedHostRuleId = associatedHostRuleId
-        )
-    }
-}
+ */
