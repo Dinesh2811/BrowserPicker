@@ -134,30 +134,23 @@ class UpdateUriUseCase @Inject constructor(
                         // 4. No blocking rule, no auto-open preference => Picker will be shown
                         Timber.d("URI ${parsedUri.originalString} will be shown in picker. Host rule: $hostRule")
                         val newUiState = determineNewUiStateForPicker(currentBrowserState.uiState)
+                        val uiErrorState = if (currentBrowserState.uiState is UiState.Error<*> &&
+                            (currentBrowserState.uiState.error == TransientError.NULL_OR_EMPTY_URL || currentBrowserState.uiState.error == TransientError.INVALID_URL_FORMAT)
+                        ) {
+                            UiState.Idle
+                        } else {
+                            currentBrowserState.uiState
+                        }
 
-                        emit(currentBrowserState.copy(
+                        val successState: BrowserState = currentBrowserState.copy(
                             uri = parsedUri.originalUri,
                             uriProcessingResult = uriProcessingResult,
-                            uiState = newUiState
-                        ))
+                            uiState = newUiState  // if (this.uiState is UiState.Error<*>) { UiState.Idle } else { this.uiState }
+                        )
+
+                        emit(successState)
                     }
                 }
-
-
-                val uiErrorState = if (currentBrowserState.uiState is UiState.Error<*> &&
-                    (currentBrowserState.uiState.error == TransientError.NULL_OR_EMPTY_URL || currentBrowserState.uiState.error == TransientError.INVALID_URL_FORMAT)
-                ) {
-                    UiState.Idle
-                } else {
-                    currentBrowserState.uiState
-                }
-                val successState: BrowserState = currentBrowserState.copy(
-                    uri = parsedUri.originalUri,
-                    uriProcessingResult = uriProcessingResult,
-                    uiState = uiErrorState  // if (this.uiState is UiState.Error<*>) { UiState.Idle } else { this.uiState }
-                )
-
-                emit(successState)
             }
         }
     }.flowOn(ioDispatcher)
