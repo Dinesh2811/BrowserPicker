@@ -71,6 +71,11 @@ sealed interface PersistentError: UiError {
         data class UnknownError(override val message: String = "An unknown error occurred while loading installed browser apps", override val cause: Throwable): InstalledBrowserApps
     }
 
+
+    data class HostRuleAccessFailed(override val message: String, override val cause: Throwable? = null) : PersistentError
+    data class UnknownHostRuleError(override val message: String, override val cause: Throwable? = null) : PersistentError
+    data class HistoryUpdateFailed(override val message: String, override val cause: Throwable? = null) : PersistentError
+
     companion object {
         fun uiErrorState(uiState: PersistentError): UiState.Error<UiError> {
             return UiState.Error(uiState)

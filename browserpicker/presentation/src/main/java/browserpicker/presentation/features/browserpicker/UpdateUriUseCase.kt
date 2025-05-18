@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.first
+import timber.log.Timber
 
 @Singleton
 class UpdateUriUseCase @Inject constructor(
@@ -38,6 +39,7 @@ class UpdateUriUseCase @Inject constructor(
                     is UriValidationError.BlankOrEmpty -> UiState.Error(TransientError.NULL_OR_EMPTY_URL)
                     else -> UiState.Error(TransientError.INVALID_URL_FORMAT)
                 }
+                Timber.w("URI validation failed: ${it.message}")
                 emit(currentBrowserState.copy(uri = null, uriProcessingResult = null, uiState = uiErrorState))
                 return@flow
             }.onSuccess { parsedUri: ParsedUri ->

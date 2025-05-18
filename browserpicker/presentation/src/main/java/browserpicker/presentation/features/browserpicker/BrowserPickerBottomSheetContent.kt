@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import browserpicker.core.utils.logError
 import browserpicker.core.utils.logInfo
+import browserpicker.domain.model.HostRule
 import browserpicker.domain.model.UriRecord
 import browserpicker.domain.model.UriSource
 import browserpicker.domain.service.ParsedUri
@@ -103,9 +104,9 @@ data class UriProcessingResult(
     val effectivePreference: UriRecord? = null,
     val isBlocked: Boolean = false,
     val alwaysOpenBrowserPackage: String? = null,
-    val isBookmarked: Boolean = false
+    val isBookmarked: Boolean = false,
+    val hostRule: HostRule? = null,
 )
-
 
 @Composable
 fun ColumnScope.AppPickerSheetContent(
