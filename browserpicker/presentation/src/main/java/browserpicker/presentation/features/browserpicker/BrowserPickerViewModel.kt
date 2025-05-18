@@ -71,10 +71,8 @@ sealed interface PersistentError: UiError {
         data class UnknownError(override val message: String = "An unknown error occurred while loading installed browser apps", override val cause: Throwable): InstalledBrowserApps
     }
 
-
     data class HostRuleAccessFailed(override val message: String, override val cause: Throwable? = null): PersistentError
-    data class UnknownHostRuleError(override val message: String, override val cause: Throwable? = null): PersistentError
-    data class HistoryUpdateFailed(override val message: String, override val cause: Throwable? = null): PersistentError
+
 
     companion object {
         fun uiErrorState(uiState: PersistentError): UiState.Error<UiError> {
@@ -91,7 +89,8 @@ enum class TransientError(override val message: String): UiError {
     NO_BROWSER_SELECTED("Please select a browser first"),
     INVALID_URL_FORMAT("Invalid URL format"),
     LAUNCH_FAILED("Failed to launch browser"),
-    SELECTION_REQUIRED("Please select a browser first")
+    SELECTION_REQUIRED("Please select a browser first"),
+    HOST_RULE_ACCESS_FAILED("Failed to fetch host rule"),
 }
 
 sealed interface BrowserPickerUiEffect {

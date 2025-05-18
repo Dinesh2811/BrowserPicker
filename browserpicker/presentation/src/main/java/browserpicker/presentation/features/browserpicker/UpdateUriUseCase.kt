@@ -21,12 +21,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import timber.log.Timber
 
-sealed class GenericAppError(override val message: String, override val cause: Throwable? = null) : AppError {
-    // data class UnknownError(override val message: String, override val cause: Throwable? = null) : GenericAppError(message, cause) // Already in snippet, assume it exists
-    // data class DataIntegrityError(override val message: String, override val cause: Throwable? = null) : GenericAppError(message, cause) // Already in snippet
-    data class DataAccessError(override val message: String, override val cause: Throwable? = null) : GenericAppError(message, cause)
-}
-
 @Singleton
 class UpdateUriUseCase @Inject constructor(
     private val uriParser: UriParser,
@@ -41,6 +35,7 @@ class UpdateUriUseCase @Inject constructor(
         uri: Uri,
         source: UriSource = UriSource.INTENT,
     ): Flow<BrowserState> = flow {
+        emit(currentBrowserState.copy(uiState = UiState.Loading))
         // 1. Parse and Validate URI
         when (val parsedUriResult = uriParser.parseAndValidateWebUri(uri)) {
             is DomainResult.Failure -> {
@@ -61,19 +56,15 @@ class UpdateUriUseCase @Inject constructor(
                     is DomainResult.Failure -> {
                         Timber.e(hostRuleDomainResult.error.cause, "Failed to fetch host rule for ${parsedUri.host}: ${hostRuleDomainResult.error.message}")
                         val uiError: UiError = when (hostRuleDomainResult.error) {
-                            is GenericAppError.DataAccessError -> PersistentError.HostRuleAccessFailed(
+                            else -> PersistentError.HostRuleAccessFailed(
                                 message = "Database error fetching rule for ${parsedUri.host}.",
-                                cause = hostRuleDomainResult.error.cause
-                            )
-                            else -> PersistentError.UnknownHostRuleError(
-                                message = "Unknown error fetching rule for ${parsedUri.host}.",
                                 cause = hostRuleDomainResult.error.cause
                             )
                         }
                         emit(currentBrowserState.copy(
                             uri = parsedUri.originalUri,
-                            uriProcessingResult = uriProcessingResult, // Result so far
-                            uiState = UiState.Error(uiError)
+                            uriProcessingResult = uriProcessingResult,
+                            uiState = UiState.Error(TransientError.HOST_RULE_ACCESS_FAILED)
                         ))
                         return@flow
                     }
