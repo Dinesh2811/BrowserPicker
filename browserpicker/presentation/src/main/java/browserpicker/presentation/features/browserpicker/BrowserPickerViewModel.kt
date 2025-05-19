@@ -91,6 +91,7 @@ enum class TransientError(override val message: String): UiError {
     LAUNCH_FAILED("Failed to launch browser"),
     SELECTION_REQUIRED("Please select a browser first"),
     HOST_RULE_ACCESS_FAILED("Failed to fetch host rule"),
+    UNEXPECTED_ERROR_PROCESSING_URI("Unexpected error processing URI"),
 }
 
 sealed interface BrowserPickerUiEffect {
@@ -138,14 +139,17 @@ class BrowserPickerViewModel @Inject constructor(
         _browserState.update(update)
     }
 
-    fun updateUri(uri: Uri, source: UriSource = UriSource.INTENT, isUriUpdated: (Boolean) -> Unit) {
+    fun updateUri(uri: Uri, source: UriSource = UriSource.INTENT) {
         viewModelScope.launch {
             val currentState = _browserState.value
 //            clearUriSecurityInfo()
             updateUriUseCase(currentState, uri, source)
-                .collectLatest { newBrowserState: BrowserState ->
+                .catch { e ->
+                    Timber.e(e, "Unhandled error in UpdateUriUseCase flow for URI: $uri")
+                    _browserState.value = currentState.copy(uri = null, uriProcessingResult = null, uiState = UiState.Error(TransientError.UNEXPECTED_ERROR_PROCESSING_URI))
+                }
+                .collect { newBrowserState: BrowserState ->
                     _browserState.value = newBrowserState
-                    isUriUpdated(newBrowserState.uiState !is UiState.Error<*>)
                     processUri(uri.toString(), source)
                 }
         }
@@ -193,6 +197,78 @@ class BrowserPickerViewModel @Inject constructor(
                 }
         }
     }
+
+    /**
+     * Called by the UI when a transient state (like Success, Transient Error, Blocked)
+     * has been consumed (e.g., browser launched, toast shown, blocked message displayed).
+     * Resets the uiState back to Idle for these cases.
+     * This is a specific implementation choice based on the constraint of not using
+     * separate event flows for side effects.
+     */
+    fun consumeUiOutcome() {
+        // Use update to safely modify the StateFlow value
+        _browserState.update { current ->
+            when(current.uiState) {
+                is UiState.Success -> {
+                    Timber.d("Consuming Success state: ${current.uiState.data}")
+                    current.copy(uiState = UiState.Idle) // Reset Success to Idle
+                }
+                is UiState.Error -> {
+                    when(current.uiState.error) {
+                        is PersistentError -> {
+                            Timber.d("Attempted to consume PersistentError state: ${current.uiState.error.message}")
+                            current // Do NOT reset Persistent Errors
+                        }
+                        is TransientError -> {
+                            Timber.d("Consuming TransientError state: ${current.uiState.error.message}")
+                            current.copy(uiState = UiState.Idle) // Reset Transient Errors to Idle
+                        }
+                    }
+                }
+                is UiState.Blocked -> {
+                    Timber.d("Consuming Blocked state")
+                    current.copy(uiState = UiState.Idle) // Reset Blocked state to Idle
+                }
+                else -> {
+                    Timber.d("Attempted to consume non-consumable state: ${current.uiState}")
+                    current // Do not reset Loading or Idle
+                }
+            }
+        }
+    }
+
+    fun clearUiState() {
+        viewModelScope.launch {
+            _browserState.update { current ->
+                when(val currentUiState = current.uiState) {
+                    is UiState.Error -> {
+                        when(currentUiState.error) {
+                            is PersistentError -> current
+                            is TransientError -> current.copy(uiState = UiState.Idle)
+                        }
+                    }
+                    is UiState.Success -> current.copy(uiState = UiState.Idle, selectedBrowserAppInfo = null)
+                    is UiState.Blocked -> current.copy(uiState = UiState.Idle)
+                    else -> current
+                }
+            }
+        }
+    }
+    // Example of another ViewModel function that might interact with state
+    // fun onBrowserSelected(browser: BrowserAppInfo) {
+    //     viewModelScope.launch {
+    //         val currentUriProcessing = browserState.value.uriProcessingResult ?: return@launch
+    //         val uriString = currentUriProcessing.parsedUri.originalString
+    //         val host = currentUriProcessing.parsedUri.host
+    //
+    //         // Logic to open the browser and record history
+    //         // This would likely involve another UseCase, e.g., OpenUriInBrowserUseCase
+    //         // After successful opening and history recording:
+    //         // _browserState.update { it.copy(uiState = UiState.Idle, selectedBrowserAppInfo = null) }
+    //         // The picker would then dismiss or reset, potentially back to Idle state.
+    //     }
+    // }
+
 }
 
 class GetInstalledBrowserAppsUseCase @Inject constructor(
