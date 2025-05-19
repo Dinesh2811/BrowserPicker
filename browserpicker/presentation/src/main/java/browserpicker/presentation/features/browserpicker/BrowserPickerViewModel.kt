@@ -247,7 +247,12 @@ class BrowserPickerViewModel @Inject constructor(
                             is TransientError -> current.copy(uiState = UiState.Idle)
                         }
                     }
-                    is UiState.Success -> current.copy(uiState = UiState.Idle, selectedBrowserAppInfo = null)
+                    is UiState.Success -> {
+                        when(currentUiState.data) {
+                            BrowserPickerUiEffect.AutoOpenBrowser, is BrowserPickerUiEffect.UriOpenedOnce -> current.copy(uiState = UiState.Idle, selectedBrowserAppInfo = null)
+                            else -> current.copy(uiState = UiState.Idle)
+                        }
+                    }
                     is UiState.Blocked -> current.copy(uiState = UiState.Idle)
                     else -> current
                 }
