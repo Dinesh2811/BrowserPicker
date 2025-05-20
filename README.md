@@ -110,14 +110,22 @@ interface AppError {
 }
 ```
 
-## Project Detail: 
-- Title: Browser Picker Android App 
-- Target version: Android 15+ (SDK 35) 
-- Minimum supported version: Android 10 (SDK 29) 
+## Project Detail:
+- Title: Browser Picker Android App
+- Target version: Android 15+ (SDK 35)
+- Minimum supported version: Android 10 (SDK 29)
 
 ## Project overview:
-- The project is a *Browser Picker Android app* built entirely with *Jetpack Compose, targeting **Android 15+*.
-- My app is supported to be *set as the default browser. Whenever a **valid web URI* is intercepted then I will show a UI to let the users choose a browser to open the URI.
+- The project is a **Browser Picker Android app** built entirely with Jetpack Compose, targeting **Android 15+**.
+- My app will be already set as the default browser and whenever a **valid web URI** is intercepted then I will be showing a BottomSheetScaffold that will list out the current URI and list of installed browsers.
+    * The URI can be intercepted in three ways. The interception of URI is the core starting point of the app.
+    * Note that the **'UriSource' should be one of the following, 'INTENT', 'CLIPBOARD', and 'MANUAL'**. We can have a fail safe called 'UNKNOWN' but it's not supported to be stored in the database and should always need proper validation during storing and retrieving data from the database.
+- The users can select any one browser from the listed browsers shown in the BottomSheetScaffold to open the intercepted URI. By the way users have a choice, whether to open the URI once or always prefer opening the URI in the selected browser.
+    * If the user decides to always prefer opening the URI in the selected browser then the selected browser will be stored in the database with the associate host of the intercepted URI.
+    * Whenever an URI is intercepted then its host will be checked, if it has a preferred browser from the database and if it has any preference then the intercepted URI will be automatically opened in the preferred browser without any user involvement or interaction from the user.
+
+
+
 - The Source for the intercepted URIs will be, *Intent, Clipboard, Manual.* The interception of URI is the core starting point of the app.
 - The users have options to set the *preferred browser based on URI.* When a preference is set then the URI will be automatically opened in the preferred browser without the user's interaction. Naturally users can change the browser preference anytime.
 - Also the app lets users to *Bookmark or Block URI* if they want. *At any given time a URI can either be Bookmarked or Blocked but not both.* Remember that this Bookmark/Block feature is not same as Browser preference but if a URI is Blocked then the Browser preference is removed and if it had been Bookmarked then it will be revoked to Blocked. Because the *Block will take precedence.*
