@@ -23,7 +23,7 @@ enum class InteractionAction(val value: Int) {
     DISMISSED(1),                       // Picker dismissed without action
     BLOCKED_URI_ENFORCED(2),            // Blocked automatically by a rule
 
-    PREFERENCE_SET(10),                 // User set a browser preference
+//    PREFERENCE_SET(10),                 // User set a browser preference
     OPENED_ONCE(11),                    // User picked a browser for this instance
     OPENED_BY_PREFERENCE(12);           // Opened automatically using a saved browser preference
 

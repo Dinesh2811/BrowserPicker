@@ -443,7 +443,7 @@ private fun UriCard(
                     InteractionAction.OPENED_ONCE -> "Opened"
                     InteractionAction.OPENED_BY_PREFERENCE -> "Auto-opened"
                     InteractionAction.BLOCKED_URI_ENFORCED -> "Blocked"
-                    InteractionAction.PREFERENCE_SET -> "Preferred"
+//                    InteractionAction.PREFERENCE_SET -> "Preferred"
                     InteractionAction.DISMISSED -> "Dismissed"
                     else -> "Unknown"
                 }

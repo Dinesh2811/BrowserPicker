@@ -37,39 +37,39 @@ class TrackUriActionUseCaseImpl @Inject constructor(
             // The use case description mentions "bookmarking, blocking" which are not directly in InteractionAction enum.
             // This implies InteractionAction might need to be expanded or this use case handles specific interpretations.
 
-            InteractionAction.PREFERENCE_SET -> {
-                // To set a preference, we need the browser package name and whether it's enabled.
-                // These are not parameters of this use case. This is a significant gap.
-                // Assuming this action is a signal that a preference *was* set by another mechanism,
-                // and we just need to ensure the rule reflects *that a preference exists* or update its timestamp.
-                // This is highly speculative due to missing parameters.
-                val existingRuleResult = associatedHostRuleId?.let { hostRuleRepository.getHostRuleById(it) }
-                    ?: hostRuleRepository.getHostRuleByHost(host)
-
-                val existingRule = existingRuleResult?.getOrNull()
-
-                if (existingRule != null) {
-                    // We don't have the new preference details. We can only update `updatedAt` or assume
-                    // isPreferenceEnabled is true.
-                    // This is insufficient for a real PREFERENCE_SET.
-                    // Let's assume this means we are just enabling a preference on an existing rule
-                    // if it had one, or simply updating its timestamp.
-                    val updatedRule = existingRule.copy(
-                        isPreferenceEnabled = true, // Assumption
-                        updatedAt = clock.now()
-                    )
-                    hostRuleRepository.saveHostRule(
-                        host = updatedRule.host,
-                        status = updatedRule.uriStatus,
-                        folderId = updatedRule.folderId,
-                        preferredBrowser = updatedRule.preferredBrowserPackage, // existing one, not necessarily new one
-                        isPreferenceEnabled = updatedRule.isPreferenceEnabled
-                    ).mapSuccess { }
-                } else {
-                    // Cannot set preference if rule doesn't exist and we don't have preference details.
-                    DomainResult.Failure(AppError.DataNotFound("Host rule not found to set preference for host: $host"))
-                }
-            }
+//            InteractionAction.PREFERENCE_SET -> {
+//                // To set a preference, we need the browser package name and whether it's enabled.
+//                // These are not parameters of this use case. This is a significant gap.
+//                // Assuming this action is a signal that a preference *was* set by another mechanism,
+//                // and we just need to ensure the rule reflects *that a preference exists* or update its timestamp.
+//                // This is highly speculative due to missing parameters.
+//                val existingRuleResult = associatedHostRuleId?.let { hostRuleRepository.getHostRuleById(it) }
+//                    ?: hostRuleRepository.getHostRuleByHost(host)
+//
+//                val existingRule = existingRuleResult?.getOrNull()
+//
+//                if (existingRule != null) {
+//                    // We don't have the new preference details. We can only update `updatedAt` or assume
+//                    // isPreferenceEnabled is true.
+//                    // This is insufficient for a real PREFERENCE_SET.
+//                    // Let's assume this means we are just enabling a preference on an existing rule
+//                    // if it had one, or simply updating its timestamp.
+//                    val updatedRule = existingRule.copy(
+//                        isPreferenceEnabled = true, // Assumption
+//                        updatedAt = clock.now()
+//                    )
+//                    hostRuleRepository.saveHostRule(
+//                        host = updatedRule.host,
+//                        status = updatedRule.uriStatus,
+//                        folderId = updatedRule.folderId,
+//                        preferredBrowser = updatedRule.preferredBrowserPackage, // existing one, not necessarily new one
+//                        isPreferenceEnabled = updatedRule.isPreferenceEnabled
+//                    ).mapSuccess { }
+//                } else {
+//                    // Cannot set preference if rule doesn't exist and we don't have preference details.
+//                    DomainResult.Failure(AppError.DataNotFound("Host rule not found to set preference for host: $host"))
+//                }
+//            }
             // How to handle "bookmarking" or "blocking" based on InteractionAction?
             // If InteractionAction.BLOCKED_URI_ENFORCED is passed, it means a block was applied, not that user *is* blocking.
             // This use case as defined is difficult to implement robustly without clearer mapping from

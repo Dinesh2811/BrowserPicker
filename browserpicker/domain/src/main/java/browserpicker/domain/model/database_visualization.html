@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Visualization</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        h2 {
+            color: #3498db;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+            margin-top: 40px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background-color: #fff;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            position: sticky;
+            top: 0; /* For sticky headers */
+        }
+        tr:nth-child(even) {
+            background-color: #ecf0f1;
+        }
+        tr:hover {
+            background-color: #d4e6f1;
+        }
+        .container {
+            max-width: 1600px;
+            margin: auto;
+            overflow-x: auto; /* Allows horizontal scrolling for wide tables */
+        }
+        .null-value {
+            color: #95a5a6;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Room Database Visualization</h1>
+
+    <h2>Folders Table (<code>folders</code>)</h2>
+    <table id="foldersTable">
+        <thead>
+        <tr>
+            <th>folder_id (PK)</th>
+            <th>parent_folder_id (FK)</th>
+            <th>name</th>
+            <th>folder_type</th>
+            <th>created_at</th>
+            <th>updated_at</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <h2>Host Rules Table (<code>host_rules</code>)</h2>
+    <table id="hostRulesTable">
+        <thead>
+        <tr>
+            <th>host_rule_id (PK)</th>
+            <th>host</th>
+            <th>uri_status</th>
+            <th>folder_id (FK)</th>
+            <th>preferred_browser_package</th>
+            <th>is_preference_enabled</th>
+            <th>created_at</th>
+            <th>updated_at</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <h2>URI Records Table (<code>uri_records</code>)</h2>
+    <table id="uriRecordsTable">
+        <thead>
+        <tr>
+            <th>uri_record_id (PK)</th>
+            <th>uri_string</th>
+            <th>host</th>
+            <th>timestamp</th>
+            <th>uri_source</th>
+            <th>interaction_action</th>
+            <th>chosen_browser_package</th>
+            <th>associated_host_rule_id (FK)</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    // Enum Mappings
+    const UriSourceMap = { 1: "INTENT", 2: "CLIPBOARD", 3: "MANUAL" };
+    const InteractionActionMap = { 1: "DISMISSED", 2: "BLOCKED_URI_ENFORCED", 10: "PREFERENCE_SET", 11: "OPENED_ONCE", 12: "OPENED_BY_PREFERENCE" };
+    const UriStatusMap = { 0: "NONE", 1: "BOOKMARKED", 2: "BLOCKED" };
+    const FolderTypeMap = { 1: "BOOKMARK", 2: "BLOCK" };
+
+    // Helper to format timestamp (simulating Instant to readable string)
+    function formatTimestamp(epochMillis) {
+        if (epochMillis === null || epochMillis === undefined) return '<span class="null-value">N/A</span>';
+        return new Date(epochMillis).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    // Helper to display null values
+    function displayValue(value) {
+        return value === null || value === undefined ? '<span class="null-value">NULL</span>' : value;
+    }
+
+    // Data Generation
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+    const oneHour = 60 * 60 * 1000;
+
+    const foldersData = [
+        { id: 1, parentFolderId: null, name: "Social Media", folderType: FolderTypeMap[1], createdAt: formatTimestamp(now - 30 * oneDay), updatedAt: formatTimestamp(now - 5 * oneDay) },
+        { id: 2, parentFolderId: null, name: "News Sites", folderType: FolderTypeMap[1], createdAt: formatTimestamp(now - 28 * oneDay), updatedAt: formatTimestamp(now - 2 * oneDay) },
+        { id: 3, parentFolderId: null, name: "Blocked Distractions", folderType: FolderTypeMap[2], createdAt: formatTimestamp(now - 25 * oneDay), updatedAt: formatTimestamp(now - 1 * oneDay) },
+        { id: 4, parentFolderId: 1, name: "Professional Networking", folderType: FolderTypeMap[1], createdAt: formatTimestamp(now - 20 * oneDay), updatedAt: formatTimestamp(now - 3 * oneDay) },
+        { id: 5, parentFolderId: null, name: "Developer Resources", folderType: FolderTypeMap[1], createdAt: formatTimestamp(now - 15 * oneDay), updatedAt: formatTimestamp(now - 1 * oneDay) },
+        { id: 6, parentFolderId: 3, name: "Time Waster Games", folderType: FolderTypeMap[2], createdAt: formatTimestamp(now - 10 * oneDay), updatedAt: formatTimestamp(now - 10 * oneDay) },
+        { id: 7, parentFolderId: null, name: "Shopping Bookmarks", folderType: FolderTypeMap[1], createdAt: formatTimestamp(now - 40 * oneDay), updatedAt: formatTimestamp(now - 7 * oneDay) },
+        { id: 8, parentFolderId: 7, name: "Tech Gadgets", folderType: FolderTypeMap[1], createdAt: formatTimestamp(now - 35 * oneDay), updatedAt: formatTimestamp(now - 6 * oneDay) },
+        { id: 9, parentFolderId: null, name: "Utility Tools", folderType: FolderTypeMap[1], createdAt: formatTimestamp(now - 50 * oneDay), updatedAt: formatTimestamp(now - 20 * oneDay) },
+        { id: 10, parentFolderId: 3, name: "Clickbait News Block", folderType: FolderTypeMap[2], createdAt: formatTimestamp(now - 5 * oneDay), updatedAt: formatTimestamp(now - 1 * oneDay) }
+    ];
+
+    const hostRulesData = [
+        // Social Media (Folder 1)
+        { id: 1, host: "facebook.com", uriStatus: UriStatusMap[1], folderId: 1, preferredBrowserPackage: "com.facebook.katana", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 29 * oneDay), updatedAt: formatTimestamp(now - 4 * oneDay) },
+        { id: 2, host: "twitter.com", uriStatus: UriStatusMap[1], folderId: 1, preferredBrowserPackage: "com.twitter.android", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 28 * oneDay), updatedAt: formatTimestamp(now - 3 * oneDay) },
+        { id: 3, host: "instagram.com", uriStatus: UriStatusMap[1], folderId: 1, preferredBrowserPackage: "com.instagram.android", isPreferenceEnabled: false, createdAt: formatTimestamp(now - 27 * oneDay), updatedAt: formatTimestamp(now - 6 * oneDay) },
+        // Professional Networking (Folder 4, child of Folder 1)
+        { id: 4, host: "linkedin.com", uriStatus: UriStatusMap[1], folderId: 4, preferredBrowserPackage: "com.linkedin.android", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 19 * oneDay), updatedAt: formatTimestamp(now - 2 * oneDay) },
+        // News Sites (Folder 2)
+        { id: 5, host: "nytimes.com", uriStatus: UriStatusMap[1], folderId: 2, preferredBrowserPackage: "com.android.chrome", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 27 * oneDay), updatedAt: formatTimestamp(now - 1 * oneDay) },
+        { id: 6, host: "bbc.com", uriStatus: UriStatusMap[1], folderId: 2, preferredBrowserPackage: null, isPreferenceEnabled: true, createdAt: formatTimestamp(now - 26 * oneDay), updatedAt: formatTimestamp(now - 5 * oneDay) },
+        { id: 7, host: "theguardian.com", uriStatus: UriStatusMap[1], folderId: 2, preferredBrowserPackage: "org.mozilla.firefox", isPreferenceEnabled: false, createdAt: formatTimestamp(now - 25 * oneDay), updatedAt: formatTimestamp(now - 10 * oneDay) },
+        // Blocked Distractions (Folder 3)
+        { id: 8, host: "buzzfeed.com", uriStatus: UriStatusMap[2], folderId: 3, preferredBrowserPackage: null, isPreferenceEnabled: true, createdAt: formatTimestamp(now - 24 * oneDay), updatedAt: formatTimestamp(now - 1 * oneDay) },
+        { id: 9, host: "some-game-site.com", uriStatus: UriStatusMap[2], folderId: 6, preferredBrowserPackage: null, isPreferenceEnabled: true, createdAt: formatTimestamp(now - 9 * oneDay), updatedAt: formatTimestamp(now - 9 * oneDay) },
+        { id: 10, host: "clickbaitnews.com", uriStatus: UriStatusMap[2], folderId: 10, preferredBrowserPackage: null, isPreferenceEnabled: true, createdAt: formatTimestamp(now - 4 * oneDay), updatedAt: formatTimestamp(now - 1 * oneDay) },
+        // Developer Resources (Folder 5)
+        { id: 11, host: "github.com", uriStatus: UriStatusMap[1], folderId: 5, preferredBrowserPackage: "com.android.chrome", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 14 * oneDay), updatedAt: formatTimestamp(now - 1 * oneDay) },
+        { id: 12, host: "stackoverflow.com", uriStatus: UriStatusMap[1], folderId: 5, preferredBrowserPackage: "com.android.chrome", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 13 * oneDay), updatedAt: formatTimestamp(now - 2 * oneDay) },
+        { id: 13, host: "developer.android.com", uriStatus: UriStatusMap[1], folderId: 5, preferredBrowserPackage: "org.mozilla.firefox", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 12 * oneDay), updatedAt: formatTimestamp(now - 3 * oneDay) },
+        // Shopping (Folder 7 & 8)
+        { id: 14, host: "amazon.com", uriStatus: UriStatusMap[1], folderId: 7, preferredBrowserPackage: "com.amazon.mShop.android.shopping", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 39 * oneDay), updatedAt: formatTimestamp(now - 6 * oneDay) },
+        { id: 15, host: "ebay.com", uriStatus: UriStatusMap[1], folderId: 7, preferredBrowserPackage: null, isPreferenceEnabled: false, createdAt: formatTimestamp(now - 38 * oneDay), updatedAt: formatTimestamp(now - 10 * oneDay) },
+        { id: 16, host: "newegg.com", uriStatus: UriStatusMap[1], folderId: 8, preferredBrowserPackage: "com.android.chrome", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 34 * oneDay), updatedAt: formatTimestamp(now - 5 * oneDay) },
+        // Utility Tools (Folder 9)
+        { id: 17, host: "speedtest.net", uriStatus: UriStatusMap[1], folderId: 9, preferredBrowserPackage: null, isPreferenceEnabled: true, createdAt: formatTimestamp(now - 49 * oneDay), updatedAt: formatTimestamp(now - 19 * oneDay) },
+        { id: 18, host: "wolframalpha.com", uriStatus: UriStatusMap[1], folderId: 9, preferredBrowserPackage: "com.android.chrome", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 48 * oneDay), updatedAt: formatTimestamp(now - 18 * oneDay) },
+        // No Folder / Default Status
+        { id: 19, host: "google.com", uriStatus: UriStatusMap[0], folderId: null, preferredBrowserPackage: "com.android.chrome", isPreferenceEnabled: false, createdAt: formatTimestamp(now - 60 * oneDay), updatedAt: formatTimestamp(now - 1 * oneDay) },
+        { id: 20, host: "wikipedia.org", uriStatus: UriStatusMap[0], folderId: null, preferredBrowserPackage: null, isPreferenceEnabled: true, createdAt: formatTimestamp(now - 55 * oneDay), updatedAt: formatTimestamp(now - 10 * oneDay) },
+        { id: 21, host: "duckduckgo.com", uriStatus: UriStatusMap[1], folderId: null, preferredBrowserPackage: "com.duckduckgo.mobile.android", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 50 * oneDay), updatedAt: formatTimestamp(now - 5 * oneDay) },
+        { id: 22, host: "reddit.com", uriStatus: UriStatusMap[1], folderId: 1, preferredBrowserPackage: "com.reddit.frontpage", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 20 * oneDay), updatedAt: formatTimestamp(now - 1 * oneDay) },
+        { id: 23, host: "medium.com", uriStatus: UriStatusMap[1], folderId: 5, preferredBrowserPackage: "com.medium.reader", isPreferenceEnabled: false, createdAt: formatTimestamp(now - 10 * oneDay), updatedAt: formatTimestamp(now - 2 * oneDay) },
+        { id: 24, host: "forbes.com", uriStatus: UriStatusMap[0], folderId: 2, preferredBrowserPackage: null, isPreferenceEnabled: true, createdAt: formatTimestamp(now - 15 * oneDay), updatedAt: formatTimestamp(now - 3 * oneDay) }, // In news folder, but status NONE
+        { id: 25, host: "techcrunch.com", uriStatus: UriStatusMap[1], folderId: 5, preferredBrowserPackage: "com.android.chrome", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 8 * oneDay), updatedAt: formatTimestamp(now - 1 * oneDay) },
+        { id: 26, host: "another-distraction.com", uriStatus: UriStatusMap[2], folderId: 3, preferredBrowserPackage: null, isPreferenceEnabled: true, createdAt: formatTimestamp(now - 5 * oneDay), updatedAt: formatTimestamp(now - 1 * oneDay) },
+        { id: 27, host: "yet-another-game.com", uriStatus: UriStatusMap[2], folderId: 6, preferredBrowserPackage: null, isPreferenceEnabled: true, createdAt: formatTimestamp(now - 3 * oneDay), updatedAt: formatTimestamp(now - 1 * oneDay) },
+        { id: 28, host: "local-news.com", uriStatus: UriStatusMap[1], folderId: 2, preferredBrowserPackage: "org.mozilla.firefox", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 7 * oneDay), updatedAt: formatTimestamp(now - 2 * oneDay) },
+        { id: 29, host: "specific-tool.com", uriStatus: UriStatusMap[1], folderId: 9, preferredBrowserPackage: "com.brave.browser", isPreferenceEnabled: true, createdAt: formatTimestamp(now - 12 * oneDay), updatedAt: formatTimestamp(now - 4 * oneDay) },
+        { id: 30, host: "shopping-deal-site.com", uriStatus: UriStatusMap[1], folderId: 7, preferredBrowserPackage: null, isPreferenceEnabled: false, createdAt: formatTimestamp(now - 18 * oneDay), updatedAt: formatTimestamp(now - 8 * oneDay) }
+    ];
+
+    const uriRecordsData = [
+        // Interactions related to facebook.com (Rule ID 1)
+        { id: 1, uriString: "https://facebook.com/feed", host: "facebook.com", timestamp: formatTimestamp(now - 2 * oneDay + oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.facebook.katana", associatedHostRuleId: 1 },
+        { id: 2, uriString: "https://m.facebook.com/story/123", host: "facebook.com", timestamp: formatTimestamp(now - 1 * oneDay - 2 * oneHour), uriSource: UriSourceMap[2], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.facebook.katana", associatedHostRuleId: 1 },
+        { id: 3, uriString: "https://www.facebook.com/groups/abc", host: "facebook.com", timestamp: formatTimestamp(now - 5 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[10], chosenBrowserPackage: "com.facebook.katana", associatedHostRuleId: 1 }, // Preference Set
+
+        // Interactions related to twitter.com (Rule ID 2)
+        { id: 4, uriString: "https://twitter.com/user/status/123", host: "twitter.com", timestamp: formatTimestamp(now - 3 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.twitter.android", associatedHostRuleId: 2 },
+        { id: 5, uriString: "https://twitter.com/explore/tabs/trending", host: "twitter.com", timestamp: formatTimestamp(now - 10 * oneHour), uriSource: UriSourceMap[3], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 2 }, // Opened once, maybe different browser
+
+        // Interactions related to instagram.com (Rule ID 3, preference disabled)
+        { id: 6, uriString: "https://instagram.com/p/CXYZ123", host: "instagram.com", timestamp: formatTimestamp(now - 5 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 3 },
+        { id: 7, uriString: "https://www.instagram.com/reels/short", host: "instagram.com", timestamp: formatTimestamp(now - 2 * oneDay + 3 * oneHour), uriSource: UriSourceMap[2], interactionAction: InteractionActionMap[1], chosenBrowserPackage: null, associatedHostRuleId: 3 }, // Dismissed
+
+        // Interactions related to linkedin.com (Rule ID 4)
+        { id: 8, uriString: "https://linkedin.com/in/johndoe", host: "linkedin.com", timestamp: formatTimestamp(now - 1 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.linkedin.android", associatedHostRuleId: 4 },
+
+        // Interactions related to nytimes.com (Rule ID 5)
+        { id: 9, uriString: "https://www.nytimes.com/2023/10/26/world/news.html", host: "nytimes.com", timestamp: formatTimestamp(now - 12 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 5 },
+        { id: 10, uriString: "https://nytimes.com/section/technology", host: "nytimes.com", timestamp: formatTimestamp(now - 6 * oneHour), uriSource: UriSourceMap[3], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 5 },
+
+        // Interactions related to bbc.com (Rule ID 6, no preferred browser set in rule, but preference enabled)
+        { id: 11, uriString: "https://www.bbc.com/news/world-europe-123456", host: "bbc.com", timestamp: formatTimestamp(now - 2 * oneDay - 5 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "org.mozilla.firefox", associatedHostRuleId: 6 }, // User chose firefox
+        { id: 12, uriString: "https://www.bbc.com/sport", host: "bbc.com", timestamp: formatTimestamp(now - 1 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[10], chosenBrowserPackage: "org.mozilla.firefox", associatedHostRuleId: 6 }, // User set preference for firefox
+
+        // Interactions related to buzzfeed.com (Rule ID 8, BLOCKED)
+        { id: 13, uriString: "https://buzzfeed.com/quizzes/fun-quiz", host: "buzzfeed.com", timestamp: formatTimestamp(now - 20 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[2], chosenBrowserPackage: null, associatedHostRuleId: 8 }, // BLOCKED_URI_ENFORCED
+        { id: 14, uriString: "http://www.buzzfeed.com/tasty/best-recipes", host: "buzzfeed.com", timestamp: formatTimestamp(now - 15 * oneHour), uriSource: UriSourceMap[2], interactionAction: InteractionActionMap[2], chosenBrowserPackage: null, associatedHostRuleId: 8 },
+
+        // Interactions related to some-game-site.com (Rule ID 9, BLOCKED)
+        { id: 15, uriString: "https://some-game-site.com/play", host: "some-game-site.com", timestamp: formatTimestamp(now - 8 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[2], chosenBrowserPackage: null, associatedHostRuleId: 9 },
+
+        // Interactions related to github.com (Rule ID 11)
+        { id: 16, uriString: "https://github.com/username/repo", host: "github.com", timestamp: formatTimestamp(now - 10 * oneDay), uriSource: UriSourceMap[3], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 11 },
+        { id: 17, uriString: "https://github.com/orgs/community/discussions/123", host: "github.com", timestamp: formatTimestamp(now - 1 * oneDay + 6 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 11 },
+
+        // Interactions related to stackoverflow.com (Rule ID 12)
+        { id: 18, uriString: "https://stackoverflow.com/questions/12345/how-to-do-x", host: "stackoverflow.com", timestamp: formatTimestamp(now - 9 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 12 },
+
+        // Interactions related to developer.android.com (Rule ID 13)
+        { id: 19, uriString: "https://developer.android.com/guide/topics/ui/compose", host: "developer.android.com", timestamp: formatTimestamp(now - 8 * oneDay - 3 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "org.mozilla.firefox", associatedHostRuleId: 13 },
+        { id: 20, uriString: "https://developer.android.com/reference/kotlin/androidx/room/Entity", host: "developer.android.com", timestamp: formatTimestamp(now - 2 * oneHour), uriSource: UriSourceMap[3], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "org.mozilla.firefox", associatedHostRuleId: 13 },
+
+        // Interactions related to amazon.com (Rule ID 14)
+        { id: 21, uriString: "https://www.amazon.com/dp/B08XYZ123", host: "amazon.com", timestamp: formatTimestamp(now - 30 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.amazon.mShop.android.shopping", associatedHostRuleId: 14 },
+
+        // Interactions related to google.com (Rule ID 19, no folder, preference disabled)
+        { id: 22, uriString: "https://google.com/search?q=android+room", host: "google.com", timestamp: formatTimestamp(now - 50 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 19 },
+        { id: 23, uriString: "https://www.google.com/maps", host: "google.com", timestamp: formatTimestamp(now - 45 * oneDay), uriSource: UriSourceMap[3], interactionAction: InteractionActionMap[1], chosenBrowserPackage: null, associatedHostRuleId: 19 }, // Dismissed
+
+        // Interactions related to wikipedia.org (Rule ID 20, no folder, preference enabled, no preferred browser)
+        { id: 24, uriString: "https://en.wikipedia.org/wiki/Kotlin_(programming_language)", host: "wikipedia.org", timestamp: formatTimestamp(now - 40 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.brave.browser", associatedHostRuleId: 20 },
+        { id: 25, uriString: "https://wikipedia.org/wiki/Database", host: "wikipedia.org", timestamp: formatTimestamp(now - 3 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[10], chosenBrowserPackage: "com.brave.browser", associatedHostRuleId: 20 }, // Set preference
+
+        // Interactions for a host not in host_rules
+        { id: 26, uriString: "https://www.random-untracked-blog.com/article-1", host: "random-untracked-blog.com", timestamp: formatTimestamp(now - 7 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: null },
+        { id: 27, uriString: "https://another-new-site.net/page?id=1", host: "another-new-site.net", timestamp: formatTimestamp(now - 6 * oneDay), uriSource: UriSourceMap[2], interactionAction: InteractionActionMap[1], chosenBrowserPackage: null, associatedHostRuleId: null },
+        { id: 28, uriString: "https://coolmathgames.com", host: "coolmathgames.com", timestamp: formatTimestamp(now - 5 * oneDay), uriSource: UriSourceMap[3], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: null },
+
+        // More varied interactions
+        { id: 29, uriString: "https://reddit.com/r/androiddev", host: "reddit.com", timestamp: formatTimestamp(now - 19 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.reddit.frontpage", associatedHostRuleId: 22 },
+        { id: 30, uriString: "https://medium.com/@user/my-article", host: "medium.com", timestamp: formatTimestamp(now - 9 * oneDay), uriSource: UriSourceMap[2], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.medium.reader", associatedHostRuleId: 23 },
+        { id: 31, uriString: "https://forbes.com/sites/advisor/best-credit-cards/", host: "forbes.com", timestamp: formatTimestamp(now - 14 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 24 },
+        { id: 32, uriString: "https://techcrunch.com/2023/10/25/latest-gadget/", host: "techcrunch.com", timestamp: formatTimestamp(now - 7 * oneDay), uriSource: UriSourceMap[3], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 25 },
+        { id: 33, uriString: "https://another-distraction.com/page1", host: "another-distraction.com", timestamp: formatTimestamp(now - 4 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[2], chosenBrowserPackage: null, associatedHostRuleId: 26 },
+        { id: 34, uriString: "https://yet-another-game.com/level5", host: "yet-another-game.com", timestamp: formatTimestamp(now - 2 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[2], chosenBrowserPackage: null, associatedHostRuleId: 27 },
+        { id: 35, uriString: "https://local-news.com/story-of-the-day", host: "local-news.com", timestamp: formatTimestamp(now - 6 * oneDay), uriSource: UriSourceMap[2], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "org.mozilla.firefox", associatedHostRuleId: 28 },
+        { id: 36, uriString: "https://specific-tool.com/feature/abc", host: "specific-tool.com", timestamp: formatTimestamp(now - 11 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.brave.browser", associatedHostRuleId: 29 },
+        { id: 37, uriString: "https://shopping-deal-site.com/product/12345", host: "shopping-deal-site.com", timestamp: formatTimestamp(now - 17 * oneDay), uriSource: UriSourceMap[3], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 30 },
+        { id: 38, uriString: "https://duckduckgo.com/?q=privacy", host: "duckduckgo.com", timestamp: formatTimestamp(now - 48 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.duckduckgo.mobile.android", associatedHostRuleId: 21 },
+        { id: 39, uriString: "https://facebook.com/events/123", host: "facebook.com", timestamp: formatTimestamp(now - 3 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[1], chosenBrowserPackage: null, associatedHostRuleId: 1 }, // Dismissed
+        { id: 40, uriString: "https://twitter.com/settings/account", host: "twitter.com", timestamp: formatTimestamp(now - 2 * oneHour), uriSource: UriSourceMap[3], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.twitter.android", associatedHostRuleId: 2 },
+        { id: 41, uriString: "https://instagram.com/explore/", host: "instagram.com", timestamp: formatTimestamp(now - 1 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.instagram.android", associatedHostRuleId: 3 },
+        { id: 42, uriString: "https://linkedin.com/feed/", host: "linkedin.com", timestamp: formatTimestamp(now - 4 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.linkedin.android", associatedHostRuleId: 4 },
+        { id: 43, uriString: "https://nytimes.com/subscription", host: "nytimes.com", timestamp: formatTimestamp(now - 7 * oneHour), uriSource: UriSourceMap[3], interactionAction: InteractionActionMap[1], chosenBrowserPackage: null, associatedHostRuleId: 5 },
+        { id: 44, uriString: "https://bbc.com/weather", host: "bbc.com", timestamp: formatTimestamp(now - 9 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "org.mozilla.firefox", associatedHostRuleId: 6 },
+        { id: 45, uriString: "https://buzzfeed.com/videos", host: "buzzfeed.com", timestamp: formatTimestamp(now - 11 * oneHour), uriSource: UriSourceMap[2], interactionAction: InteractionActionMap[2], chosenBrowserPackage: null, associatedHostRuleId: 8 },
+        { id: 46, uriString: "https://github.com/explore", host: "github.com", timestamp: formatTimestamp(now - 13 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 11 },
+        { id: 47, uriString: "https://stackoverflow.com/users/login", host: "stackoverflow.com", timestamp: formatTimestamp(now - 14 * oneHour), uriSource: UriSourceMap[3], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 12 },
+        { id: 48, uriString: "https://developer.android.com/studio", host: "developer.android.com", timestamp: formatTimestamp(now - 16 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "org.mozilla.firefox", associatedHostRuleId: 13 },
+        { id: 49, uriString: "https://amazon.com/gp/cart/view.html", host: "amazon.com", timestamp: formatTimestamp(now - 18 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.amazon.mShop.android.shopping", associatedHostRuleId: 14 },
+        { id: 50, uriString: "https://google.com/images", host: "google.com", timestamp: formatTimestamp(now - 20 * oneHour), uriSource: UriSourceMap[3], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 19 },
+        { id: 51, uriString: "https://en.wikipedia.org/wiki/Special:Random", host: "wikipedia.org", timestamp: formatTimestamp(now - 22 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.brave.browser", associatedHostRuleId: 20 },
+        { id: 52, uriString: "https://another-new-site.net/contact", host: "another-new-site.net", timestamp: formatTimestamp(now - 24 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[1], chosenBrowserPackage: null, associatedHostRuleId: null },
+        { id: 53, uriString: "https://reddit.com/r/kotlin", host: "reddit.com", timestamp: formatTimestamp(now - 26 * oneHour), uriSource: UriSourceMap[2], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.reddit.frontpage", associatedHostRuleId: 22 },
+        { id: 54, uriString: "https://medium.com/topic/technology", host: "medium.com", timestamp: formatTimestamp(now - 28 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.medium.reader", associatedHostRuleId: 23 },
+        { id: 55, uriString: "https://techcrunch.com/startups", host: "techcrunch.com", timestamp: formatTimestamp(now - 30 * oneHour), uriSource: UriSourceMap[3], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 25 },
+        { id: 56, uriString: "https://www.newegg.com/daily-deals", host: "newegg.com", timestamp: formatTimestamp(now - 4 * oneDay + 2 * oneHour), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 16 },
+        { id: 57, uriString: "https://www.speedtest.net/apps/android", host: "speedtest.net", timestamp: formatTimestamp(now - 18 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.ookla.speedtest", associatedHostRuleId: 17 },
+        { id: 58, uriString: "https://www.wolframalpha.com/examples/math/", host: "wolframalpha.com", timestamp: formatTimestamp(now - 17 * oneDay), uriSource: UriSourceMap[3], interactionAction: InteractionActionMap[12], chosenBrowserPackage: "com.android.chrome", associatedHostRuleId: 18 },
+        { id: 59, uriString: "https://clickbaitnews.com/latest-gossip", host: "clickbaitnews.com", timestamp: formatTimestamp(now - 3 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[2], chosenBrowserPackage: null, associatedHostRuleId: 10 },
+        { id: 60, uriString: "https://ebay.com/sch/i.html?_nkw=vintage+watch", host: "ebay.com", timestamp: formatTimestamp(now - 9 * oneDay), uriSource: UriSourceMap[1], interactionAction: InteractionActionMap[11], chosenBrowserPackage: "com.ebay.mobile", associatedHostRuleId: 15 }
+    ];
+
+    // Render Functions
+    function renderTable(tableId, data, columns) {
+        const tableBody = document.getElementById(tableId).getElementsByTagName('tbody')[0];
+        tableBody.innerHTML = ""; // Clear existing rows
+
+        data.forEach(row => {
+            const tr = tableBody.insertRow();
+            columns.forEach(col => {
+                const td = tr.insertCell();
+                let value = row[col.key];
+
+                if (col.isBoolean) {
+                    td.innerHTML = value ? 'True' : 'False';
+                } else if (col.isRaw) { // For pre-formatted values like timestamps or enums
+                    td.innerHTML = displayValue(value);
+                }
+                else {
+                    td.innerHTML = displayValue(value);
+                }
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderTable('foldersTable', foldersData, [
+            { key: 'id' },
+            { key: 'parentFolderId' },
+            { key: 'name' },
+            { key: 'folderType', isRaw: true },
+            { key: 'createdAt', isRaw: true },
+            { key: 'updatedAt', isRaw: true }
+        ]);
+
+        renderTable('hostRulesTable', hostRulesData, [
+            { key: 'id' },
+            { key: 'host' },
+            { key: 'uriStatus', isRaw: true },
+            { key: 'folderId' },
+            { key: 'preferredBrowserPackage' },
+            { key: 'isPreferenceEnabled', isBoolean: true },
+            { key: 'createdAt', isRaw: true },
+            { key: 'updatedAt', isRaw: true }
+        ]);
+
+        renderTable('uriRecordsTable', uriRecordsData, [
+            { key: 'id' },
+            { key: 'uriString' },
+            { key: 'host' },
+            { key: 'timestamp', isRaw: true },
+            { key: 'uriSource', isRaw: true },
+            { key: 'interactionAction', isRaw: true },
+            { key: 'chosenBrowserPackage' },
+            { key: 'associatedHostRuleId' }
+        ]);
+    });
+
+</script>
+</body>
+</html>

@@ -323,7 +323,7 @@ private fun formatAction(action: InteractionAction): String {
     return when (action) {
         InteractionAction.OPENED_BY_PREFERENCE -> "OPENED_BY_PREFERENCE"
         InteractionAction.OPENED_ONCE -> "OPENED_ONCE"
-        InteractionAction.PREFERENCE_SET -> "PREFERENCE_SET"
+//        InteractionAction.PREFERENCE_SET -> "PREFERENCE_SET"
         InteractionAction.BLOCKED_URI_ENFORCED -> "BLOCKED_URI_ENFORCED"
         InteractionAction.DISMISSED -> "DISMISSED"
         else -> "Unknown"
