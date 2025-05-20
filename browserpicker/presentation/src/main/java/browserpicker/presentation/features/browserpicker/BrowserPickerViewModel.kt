@@ -39,6 +39,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -47,6 +48,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -129,7 +131,11 @@ class BrowserPickerViewModel @Inject constructor(
     private val updateUriUseCase: UpdateUriUseCase,
 ): ViewModel() {
     private val _browserState: MutableStateFlow<BrowserState> = MutableStateFlow(BrowserState(uiState = UiState.Loading))
-    val browserState: StateFlow<BrowserState> = _browserState.asStateFlow()
+    val browserState: StateFlow<BrowserState> = _browserState.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = _browserState.value
+    )
 
     fun updateBrowserState(newValue: BrowserState) {
         _browserState.update { newValue }
