@@ -110,10 +110,10 @@ interface AppError {
 }
 ```
 
-## Project Detail:
-- Title: Browser Picker Android App
-- Target version: Android 15+ (SDK 35)
-- Minimum supported version: Android 10 (SDK 29)
+## Project Detail: 
+- Title: Browser Picker Android App 
+- Target version: Android 15+ (SDK 35) 
+- Minimum supported version: Android 10 (SDK 29) 
 
 ## Project overview:
 - The project is a *Browser Picker Android app* built entirely with *Jetpack Compose, targeting **Android 15+*.
