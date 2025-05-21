@@ -144,5 +144,11 @@ interface AppError {
 - Use Chain of thoughts and reasoning to do a thorough in-depth analysis based on my project's usecase and requirements to implement the code.
 - Whenever you are about to implement the code I want you to retrace, rethink and analyse yourselves repeatedly. Once you have done with the planning I want you to re-evaluate yourself again to ensure you follow best practices and cover all tracks to implement the code based on my usecases and requirements.
 
-## Goals:
-- Your goal is to analyse the code that I have shared and tell me if my current code database structure is sufficient for my usecase and requirements. I want you to say yes or no follow by detailed explanation and followed by code implementation for Entity classes if necessary else don't implement the code.
+## Goal:
+- I have shared the portion of the code that I have already implemented in the data layer and domain layer. I want you to analyse the code and understand the code structure that has been implemented so that we can proceed further and focus on the presentation layer.
+- I prefer to focus on the presentation layer for now and your goal will be to implement the necessary code in the presentation layer based on the feature.
+- Ideally I prefer to focus on one feature at a time to implement the entire code for that particular feature and once it's done then I prefer to move to the next feature.
+- If you have any doubts or more information or questions regarding the project requirements then I want you to ask them before proceeding so that you have complete understanding of the project. Once you have the complete understanding of the project and its requirement then I want you to start with code implementation starting with a particular feature and implement all the necessary code to implement the feature.
+- I believe that I have already shared the necessary code from the data layer and domain layer to ensure you understand the current code implementation and I believe it's sufficient to proceed with the presentation layer, if not and if you need any additional code then I want you to ask me so that I can share those implemented code from the data and domain layer.
+- Focus on implementing one feature at a time. Ensure you implement all the necessary code to complete that feature and functionality. Add any additional DataClasses, Enums, Sealed interface/Class. And I prefer not to implement a UseCase class and directly use the Repository in the ViewModel.
+- Follow best practices to implement all the code in the presentation layer based on my specific usecase and requirements.
