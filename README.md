@@ -23,7 +23,6 @@ abstract class BrowserPickerViewModel @Inject constructor(
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     @MainDispatcher private val mainDispatcher: CoroutineDispatcher,
-    private val getInstalledBrowserAppsUseCase: GetInstalledBrowserAppsUseCase,
     private val uriHistoryRepository: UriHistoryRepository,
     // Add additional dependencies when necessary...
 ): ViewModel() {
